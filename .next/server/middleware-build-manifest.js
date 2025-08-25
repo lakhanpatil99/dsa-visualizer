@@ -3,71 +3,24 @@ self.__BUILD_MANIFEST = {
     "static/chunks/polyfills.js"
   ],
   "devFiles": [
-    "static/chunks/react-refresh.js"
+    "static/chunks/fallback/react-refresh.js"
   ],
-  "ampDevFiles": [],
+  "ampDevFiles": [
+    "static/chunks/fallback/webpack.js",
+    "static/chunks/fallback/amp.js"
+  ],
   "lowPriorityFiles": [],
   "rootMainFiles": [],
   "pages": {
-    "/": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/index.js"
-    ],
     "/_app": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/_app.js"
+      "static/chunks/fallback/webpack.js",
+      "static/chunks/fallback/main.js",
+      "static/chunks/fallback/pages/_app.js"
     ],
     "/_error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/_error.js"
-    ],
-    "/app": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/app.js"
-    ],
-    "/dashboard": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/dashboard.js"
-    ],
-    "/data-structures": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/data-structures.js"
-    ],
-    "/data-structures/linked-list": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/data-structures/linked-list.js"
-    ],
-    "/data-structures/queue": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/data-structures/queue.js"
-    ],
-    "/graphs": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/graphs.js"
-    ],
-    "/login": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/login.js"
-    ],
-    "/register": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/register.js"
-    ],
-    "/trees": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/trees.js"
+      "static/chunks/fallback/webpack.js",
+      "static/chunks/fallback/main.js",
+      "static/chunks/fallback/pages/_error.js"
     ]
   },
   "ampFirstPages": []

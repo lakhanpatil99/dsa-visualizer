@@ -1,18 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/api/auth/user": "pages/api/auth/user.js",
-  "/register": "pages/register.js",
-  "/login": "pages/login.js",
-  "/api/auth/progress": "pages/api/auth/progress.js",
-  "/graphs": "pages/graphs.js",
-  "/api/auth/login": "pages/api/auth/login.js",
-  "/app": "pages/app.js",
-  "/data-structures": "pages/data-structures.js",
-  "/trees": "pages/trees.js",
-  "/dashboard": "pages/dashboard.js",
-  "/data-structures/queue": "pages/data-structures/queue.js",
-  "/data-structures/linked-list": "pages/data-structures/linked-list.js"
-}
+{}
