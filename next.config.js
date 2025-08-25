@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable static export for GitHub Pages
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
+  
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
     // Production optimizations
