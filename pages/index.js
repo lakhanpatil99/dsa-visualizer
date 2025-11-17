@@ -7,10 +7,17 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>AlgoMania - Interactive Algorithm Visualizer</title>
-        <meta name="description" content="Master Data Structures & Algorithms through interactive visualizations" />
-      </Head>
+     <Head>
+  <title>AlgoMania - Interactive Algorithm Visualizer</title>
+
+  {/* Favicon Logo */}
+  <link rel="icon" href="/WhatsApp Image 2025-11-17 at 18.26.59_8bd9e24d.jpg" />
+
+  <meta
+    name="description"
+    content="Master Data Structures & Algorithms through interactive visualizations"
+  />
+</Head>
 
       <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
         {/* Header */}
