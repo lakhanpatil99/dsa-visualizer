@@ -7,17 +7,24 @@ export default function Home() {
 
   return (
     <>
-     <Head>
-  <title>AlgoMania - Interactive Algorithm Visualizer</title>
+      <Head>
+        <title>AlgoMania - Interactive Algorithm Visualizer</title>
 
-  {/* Favicon Logo */}
-  <link rel="icon" href="/WhatsApp Image 2025-11-17 at 18.26.59_8bd9e24d.jpg" />
+        {/* Favicon Logo */}
+        <link rel="icon" href="/WhatsApp Image 2025-11-17 at 18.26.59_8bd9e24d.jpg" />
 
-  <meta
-    name="description"
-    content="Master Data Structures & Algorithms through interactive visualizations"
-  />
-</Head>
+        <meta
+          name="description"
+          content="Master Data Structures & Algorithms through interactive visualizations"
+        />
+
+        {/* ✅ GOOGLE ADSENSE SCRIPT (PROPER PLACE) */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8602333070445192"
+          crossOrigin="anonymous"
+        ></script>
+      </Head>
 
       <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
         {/* Header */}
@@ -66,7 +73,6 @@ export default function Home() {
 
             {/* Feature Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {/* Sorting Algorithms */}
               <div className={`p-6 rounded-lg border transition-all duration-300 ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-700 text-white' 
@@ -81,7 +87,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Graph Algorithms */}
               <div className={`p-6 rounded-lg border transition-all duration-300 ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-700 text-white' 
@@ -96,7 +101,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Tree Data Structures */}
               <div className={`p-6 rounded-lg border transition-all duration-300 ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-700 text-white' 
@@ -111,7 +115,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Data Structures */}
               <div className={`p-6 rounded-lg border transition-all duration-300 ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-700 text-white' 
@@ -161,18 +164,6 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-
-            {/* Quick Access for Existing Users */}
-            <div className="mt-8">
-              <p className={`text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                Already have an account? 
-                <Link href="/login" className="text-blue-500 hover:text-blue-400 ml-1">
-                  Login here
-                </Link>
-              </p>
-            </div>
           </div>
         </div>
 
@@ -191,3 +182,4 @@ export default function Home() {
     </>
   );
 }
+
