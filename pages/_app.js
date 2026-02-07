@@ -1,13 +1,13 @@
 import '../styles/globals.css';
-import AuthContext from "../context/AuthContext.js";
-import ThemeContext from "../context/ThemeContext.js";
+import { AuthProvider } from "../context/AuthContext";
+import { ThemeProvider } from "../context/ThemeContext";
 
 export default function MyApp({ Component, pageProps }) {
   return (
-    <AuthContext>
-      <ThemeContext>
+    <AuthProvider>
+      <ThemeProvider>
         <Component {...pageProps} />
-      </ThemeContext>
-    </AuthContext>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
