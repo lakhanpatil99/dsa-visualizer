@@ -1,5 +1,1 @@
-{
-  "routes": [
-    { "src": "/ads.txt", "dest": "/ads.txt" }
-  ]
-}
+{ "routes": [ { "src": "/ads.txt", "dest": "/api/ads" } ] }
