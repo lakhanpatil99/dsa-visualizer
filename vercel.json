@@ -1,1 +1,0 @@
-{ "routes": [ { "src": "/ads.txt", "dest": "/api/ads" } ] }
