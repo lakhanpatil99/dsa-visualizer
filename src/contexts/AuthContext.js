@@ -56,15 +56,11 @@ export const AuthProvider = ({ children }) => {
       return profile;
     } catch (err) {
       console.error('Backend user sync failed:', err);
-      // Fallback: don't permanently break UI if backend is temporarily unreachable
-      setDbUser({
-        firebaseUid: user.uid,
-        email: user.email,
-        displayName: user.displayName || user.email?.split('@')[0] || 'User',
-        emailVerified: user.emailVerified
-      });
-      setAuthState(AuthStates.AUTHENTICATED);
-      return null;
+      // Fail-closed with recoverable state: do not create fake authenticated user on database failure
+      setDbUser(null);
+      setAuthError('Unable to synchronize profile with database. Please click retry to reconnect.');
+      setAuthState(AuthStates.AUTH_ERROR);
+      throw err;
     }
   }, []);
 
@@ -86,9 +82,8 @@ export const AuthProvider = ({ children }) => {
 
       setFirebaseUser(user);
 
-      // Check verification status
-      const isGoogle = user.providerData.some((p) => p.providerId === 'google.com');
-      const isVerified = user.emailVerified || isGoogle;
+      // Check authoritative email_verified flag
+      const isVerified = user.emailVerified === true;
 
       if (!isVerified) {
         setAuthState(AuthStates.EMAIL_VERIFICATION_REQUIRED);
@@ -288,6 +283,21 @@ export const AuthProvider = ({ children }) => {
     return new ProgressService(idToken, getIdToken);
   }, [idToken, getIdToken]);
 
+  // Retry backend synchronization
+  const retrySync = useCallback(async () => {
+    if (!firebaseUser) return null;
+    try {
+      setAuthError(null);
+      const token = await getIdToken(true);
+      if (token) {
+        return await syncWithBackend(firebaseUser, token);
+      }
+    } catch (err) {
+      console.error('Retry sync failed:', err);
+      return null;
+    }
+  }, [firebaseUser, getIdToken, syncWithBackend]);
+
   // Unified user object for backward compatibility with existing components
   const unifiedUser = useMemo(() => {
     if (!firebaseUser) return null;
@@ -311,7 +321,7 @@ export const AuthProvider = ({ children }) => {
     authState,
     loading: authState === AuthStates.INITIALIZING || authState === AuthStates.AUTHENTICATING || authState === AuthStates.PROFILE_SYNCHRONIZING,
     isAuthenticated: authState === AuthStates.AUTHENTICATED,
-    isEmailVerified: !!firebaseUser && (firebaseUser.emailVerified || firebaseUser.providerData.some(p => p.providerId === 'google.com')),
+    isEmailVerified: !!firebaseUser && firebaseUser.emailVerified === true,
     
     // User objects
     user: unifiedUser,
@@ -332,6 +342,7 @@ export const AuthProvider = ({ children }) => {
     refreshUser,
     resendVerification,
     forgotPassword,
+    retrySync,
     progressService
   };
 

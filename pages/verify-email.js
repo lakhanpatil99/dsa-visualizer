@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../src/contexts/AuthContext';
 import EmailVerificationGuard from '../src/components/EmailVerificationGuard';
+import { confirmEmailVerification, getFriendlyAuthErrorMessage } from '../lib/authService';
 
 export default function VerifyEmail() {
   const { user, refreshUser, resendVerification, logout } = useAuth();
@@ -12,6 +13,40 @@ export default function VerifyEmail() {
   const [isResending, setIsResending] = useState(false);
   const [notification, setNotification] = useState({ type: '', text: '' });
   const router = useRouter();
+
+  // Handle direct verification link with action code (oobCode)
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { oobCode, mode } = router.query;
+    if (oobCode && (mode === 'verifyEmail' || mode === 'action' || !mode)) {
+      setIsChecking(true);
+      setNotification({
+        type: 'info',
+        text: 'Verifying your email code...'
+      });
+
+      confirmEmailVerification(oobCode)
+        .then(async () => {
+          setNotification({
+            type: 'success',
+            text: 'Your email address has been successfully verified! Loading your AlgoMania workspace...'
+          });
+          await refreshUser();
+          setTimeout(() => {
+            router.replace('/app');
+          }, 1500);
+        })
+        .catch((err) => {
+          setNotification({
+            type: 'error',
+            text: getFriendlyAuthErrorMessage(err)
+          });
+        })
+        .finally(() => {
+          setIsChecking(false);
+        });
+    }
+  }, [router.isReady, router.query, refreshUser, router]);
 
   // Cooldown countdown timer
   useEffect(() => {

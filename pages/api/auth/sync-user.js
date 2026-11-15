@@ -32,24 +32,28 @@ async function handler(req, res) {
 
     if (!user && normalizedEmail) {
       // 2. Legacy Account Reconciliation: check if user exists with matching email
-      user = await User.findOne({ email: normalizedEmail });
+      // SECURITY REQUIREMENT: Require authoritative verified identity before linking
+      // an existing legacy record by email. Unverified accounts cannot claim existing profiles.
+      if (emailVerified === true) {
+        user = await User.findOne({ email: normalizedEmail });
 
-      if (user) {
-        // Link legacy account to Firebase identity
-        user.firebaseUid = firebaseUid;
-        if (!user.displayName && name) user.displayName = name;
-        user.emailVerified = !!emailVerified;
-        user.providerId = provider || 'password';
-        user.lastLoginAt = new Date();
-        user.updatedAt = new Date();
-        await user.save();
+        if (user) {
+          // Link legacy account to Firebase identity
+          user.firebaseUid = firebaseUid;
+          if (!user.displayName && name) user.displayName = name;
+          user.emailVerified = true;
+          user.providerId = provider || 'password';
+          user.lastLoginAt = new Date();
+          user.updatedAt = new Date();
+          await user.save();
 
-        return res.status(200).json({
-          success: true,
-          message: 'Legacy account successfully linked',
-          migrated: true,
-          user: user.toJSON()
-        });
+          return res.status(200).json({
+            success: true,
+            message: 'Legacy account successfully linked',
+            migrated: true,
+            user: user.toJSON()
+          });
+        }
       }
     }
 
