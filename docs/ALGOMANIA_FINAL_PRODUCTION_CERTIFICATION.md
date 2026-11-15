@@ -12,9 +12,15 @@
 
 ## 1. Original Root Causes Identified
 
-1. **Blank Homepage (White Screen):**
-   - **Root Cause:** In `next.config.js`, `config.optimization.sideEffects = false;` was explicitly applied in client production builds. Webpack aggressively tree-shook away Tailwind CSS directives, side-effect imports, and React Context providers, rendering an empty DOM tree.
-   - **Resolution:** Removed the global `sideEffects = false` override, allowing Webpack to safely follow package-level definitions.
+1. **Blank Homepage (White Screen) — Primary Root Cause Discovery:**
+   - **Root Cause:** An obsolete Create React App template file was present at `public/index.html` along with `public/_redirects` containing `/* /index.html 200`. In Next.js and Vercel routing, static files inside the `public/` directory take precedence over dynamic Next.js routes. As a result, requests to `GET /` were directly served `public/index.html`—which contained only `<div id="root"></div>`, unreplaced `%PUBLIC_URL%` tokens (`%PUBLIC_URL%/favicon.ico`, `%PUBLIC_URL%/manifest.json`), and ZERO application scripts. This explained why only 3 requests (`/`, `/%PUBLIC_URL%/manifest.json`, `/%PUBLIC_URL%/favicon.ico`) were captured with zero Next.js chunk downloads!
+   - **Resolution:**
+     1. Permanently deleted the obsolete `public/index.html` and `public/_redirects` SPA rewrite rules.
+     2. Cleaned up `next.config.js` by removing custom `splitChunks` and `sideEffects = false` overrides to let Next.js 14 handle optimal chunking natively (`framework-[hash].js`, `main-[hash].js`, `_app-[hash].js`).
+     3. Migrated `public/manifest.json` to root-relative paths (`/favicon.ico`, `/logo192.png`, `/logo512.png`).
+     4. Updated `pages/_document.js` with standard root-relative metadata (`/favicon.ico`, `/manifest.json`, `/logo192.png`).
+     5. Moved `pages/ads.txt` to `public/ads.txt` and purged `public/iouhui`.
+     6. Verified Next.js compiled `.next/server/pages/index.html` containing full `<div id="__next">` UI and Next.js script chunk tags.
    - **Status:** **PASS**
 
 2. **Node.js Engine Compatibility Warning:**
