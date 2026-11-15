@@ -19,72 +19,65 @@ export default function QueuePage() {
 
       <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
         {/* Header with Navigation */}
-        <div className={`p-6 border-b transition-all duration-300 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700 text-white' 
-            : 'bg-white border-gray-200 text-gray-900'
-        }`}>
+        <div className={`p-6 border-b transition-all duration-300 ${isDarkMode
+          ? 'bg-gray-800 border-gray-700 text-white'
+          : 'bg-white border-gray-200 text-gray-900'
+          }`}>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-green-600 mb-2">
                 Queue Data Structure
               </h1>
-              <p className={`text-lg ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
+              <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                 FIFO (First In, First Out) - Interactive Visualization
               </p>
             </div>
-            
+
             {/* Navigation Menu */}
             <div className="flex items-center space-x-6">
               <Link
                 href="/app"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Sorting
               </Link>
               <Link
                 href="/graphs"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Graphs
               </Link>
               <Link
                 href="/trees"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Trees
               </Link>
               <Link
                 href="/data-structures"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
               >
                 Data Structures
               </Link>
               <Link
                 href="/dashboard"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Dashboard
               </Link>
@@ -94,18 +87,16 @@ export default function QueuePage() {
             <div className="flex items-center space-x-4">
               {isAuthenticated && (
                 <div className="flex items-center space-x-3">
-                  <span className={`text-sm ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
                     Welcome, {user?.username || user?.name}!
                   </span>
                   <button
                     onClick={logout}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isDarkMode 
-                        ? 'bg-red-600 hover:bg-red-700 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isDarkMode
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                      }`}
                   >
                     Logout
                   </button>
@@ -115,11 +106,10 @@ export default function QueuePage() {
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
-                className={`p-2 rounded-md transition-colors ${
-                  isDarkMode 
-                    ? 'text-yellow-400 hover:bg-gray-700' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                className={`p-2 rounded-md transition-colors ${isDarkMode
+                  ? 'text-yellow-400 hover:bg-gray-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
                 aria-label="Toggle dark mode"
               >
                 {isDarkMode ? (
@@ -137,11 +127,10 @@ export default function QueuePage() {
         </div>
 
         {/* Breadcrumb */}
-        <div className={`px-6 py-3 border-b ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700 text-gray-300' 
-            : 'bg-gray-50 border-gray-200 text-gray-600'
-        }`}>
+        <div className={`px-6 py-3 border-b ${isDarkMode
+          ? 'bg-gray-800 border-gray-700 text-gray-300'
+          : 'bg-gray-50 border-gray-200 text-gray-600'
+          }`}>
           <div className="flex items-center space-x-2 text-sm">
             <Link href="/data-structures" className="hover:text-blue-500">
               Data Structures

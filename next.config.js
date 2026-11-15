@@ -8,16 +8,15 @@ const nextConfig = {
 
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
-    // Production client-side optimizations only
+    // Production optimizations
     if (!dev && !isServer) {
+      // Enable tree shaking
       config.optimization.usedExports = true;
 
-      // IMPORTANT: Do NOT set sideEffects to false globally.
-      // Setting it to false causes webpack to tree-shake CSS imports,
-      // React context providers, and other side-effectful modules,
-      // resulting in a blank white screen in production.
-      // Let webpack use each package's own sideEffects field from package.json.
+      // Do NOT set sideEffects = false globally: it causes Webpack to tree-shake
+      // CSS stylesheets and React context providers, resulting in a blank screen.
 
+      // Split chunks for better caching
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {

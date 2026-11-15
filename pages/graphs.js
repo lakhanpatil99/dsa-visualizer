@@ -19,72 +19,65 @@ export default function Graphs() {
 
       <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
         {/* Header with Navigation */}
-        <div className={`p-6 border-b transition-all duration-300 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700 text-white' 
-            : 'bg-white border-gray-200 text-gray-900'
-        }`}>
+        <div className={`p-6 border-b transition-all duration-300 ${isDarkMode
+          ? 'bg-gray-800 border-gray-700 text-white'
+          : 'bg-white border-gray-200 text-gray-900'
+          }`}>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-blue-600 mb-2">
                 AlgoMania
               </h1>
-              <p className={`text-lg ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
+              <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                 Interactive Graph Visualizer
               </p>
             </div>
-            
+
             {/* Navigation Menu */}
             <div className="flex items-center space-x-6">
               <Link
                 href="/app"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Sorting
               </Link>
               <Link
                 href="/graphs"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
               >
                 Graphs
               </Link>
               <Link
                 href="/trees"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Trees
               </Link>
               <Link
                 href="/data-structures"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Data Structures
               </Link>
               <Link
                 href="/dashboard"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
+                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
               >
                 Dashboard
               </Link>
@@ -96,9 +89,8 @@ export default function Graphs() {
                 <div className="flex items-center space-x-3">
                   <Link
                     href="/account"
-                    className={`text-sm font-medium hover:underline ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                    }`}
+                    className={`text-sm font-medium hover:underline ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}
                   >
                     Welcome, {user?.displayName || user?.username || user?.name}!
                   </Link>
@@ -120,11 +112,10 @@ export default function Graphs() {
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
-                className={`p-2 rounded-md transition-colors ${
-                  isDarkMode 
-                    ? 'text-yellow-400 hover:bg-gray-700' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                className={`p-2 rounded-md transition-colors ${isDarkMode
+                  ? 'text-yellow-400 hover:bg-gray-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
                 aria-label="Toggle dark mode"
               >
                 {isDarkMode ? (

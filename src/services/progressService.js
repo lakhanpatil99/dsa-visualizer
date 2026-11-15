@@ -56,10 +56,10 @@ class ProgressService {
       const activeToken = await this.getValidToken();
       let url = this.baseURL;
       const params = new URLSearchParams();
-      
+
       if (algorithmType) params.append('algorithmType', algorithmType);
       if (algorithmName) params.append('algorithmName', algorithmName);
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
@@ -95,7 +95,7 @@ class ProgressService {
         mastered: list.filter(p => p.completionStatus === 'mastered').length,
         totalTimeSpent: list.reduce((sum, p) => sum + (p.timeSpent || 0), 0)
       };
-      
+
       return summary;
     } catch (error) {
       console.error('Error getting progress summary:', error);
@@ -108,15 +108,15 @@ class ProgressService {
     try {
       const currentProgress = await this.fetchProgress(algorithmType, algorithmName);
       let progressData = {};
-      
+
       if (currentProgress.progress && currentProgress.progress.length > 0) {
         progressData = currentProgress.progress[0];
       }
-      
+
       progressData.completionStatus = status;
       progressData.algorithmType = algorithmType;
       progressData.algorithmName = algorithmName;
-      
+
       return await this.saveProgress(progressData);
     } catch (error) {
       console.error('Error updating completion status:', error);
