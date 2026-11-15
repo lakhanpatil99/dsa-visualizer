@@ -1,19 +1,56 @@
-import { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-const ThemeContext = createContext(null);
+export const DarkModeContext = createContext({
+  isDarkMode: true,
+  toggleDarkMode: () => {},
+  setIsDarkMode: () => {}
+});
+
+export const ThemeContext = DarkModeContext;
 
 export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('darkMode');
+      if (saved !== null) {
+        setIsDarkMode(JSON.parse(saved));
+      }
+    } catch (e) {
+      // Ignore local storage error during SSR
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('darkMode', JSON.stringify(next));
+        if (next) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   return (
-    <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode }}>
+    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode, setIsDarkMode }}>
       {children}
-    </ThemeContext.Provider>
+    </DarkModeContext.Provider>
   );
 };
 
-export const useTheme = () => {
-  return useContext(ThemeContext);
-};
-
-export default ThemeContext;
+export const useTheme = () => useContext(DarkModeContext);
+export default DarkModeContext;

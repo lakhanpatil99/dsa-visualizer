@@ -1,34 +1,13 @@
-import { useState, useEffect, useContext } from 'react';
+import { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DarkModeContext } from '../src/App';
 import { useAuth } from '../src/contexts/AuthContext';
+import ProtectedRoute from '../src/components/ProtectedRoute';
 
 export default function DataStructures() {
   const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-  const { user, logout, isAuthenticated, loading } = useAuth();
-
-  // Check authentication
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated, loading]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect to login
-  }
+  const { user, logout, isAuthenticated } = useAuth();
 
   const dataStructureCategories = [
     {
@@ -88,7 +67,7 @@ export default function DataStructures() {
   ];
 
   return (
-    <>
+    <ProtectedRoute>
       <Head>
         <title>Data Structures - AlgoMania</title>
         <meta name="description" content="Interactive data structure visualizations" />
@@ -327,6 +306,6 @@ export default function DataStructures() {
           </div>
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

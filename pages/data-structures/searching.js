@@ -1,38 +1,17 @@
-import { useState, useEffect, useContext } from 'react';
+import { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DarkModeContext } from '../../src/App';
 import { useAuth } from '../../src/contexts/AuthContext';
 import DataStructureVisualizer from '../../src/pages/DataStructureVisualizer';
+import ProtectedRoute from '../../src/components/ProtectedRoute';
 
 export default function SearchingPage() {
   const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-  const { user, logout, isAuthenticated, loading } = useAuth();
-
-  // Check authentication
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated, loading]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect to login
-  }
+  const { user, logout, isAuthenticated } = useAuth();
 
   return (
-    <>
+    <ProtectedRoute>
       <Head>
         <title>Searching Algorithms - Data Structures | AlgoMania</title>
         <meta name="description" content="Interactive searching algorithms visualization" />
@@ -177,6 +156,6 @@ export default function SearchingPage() {
           <DataStructureVisualizer />
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

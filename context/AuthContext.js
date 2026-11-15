@@ -1,17 +1,2 @@
-import { createContext, useContext } from "react";
-
-const AuthContext = createContext(null);
-
-export const AuthProvider = ({ children }) => {
-  return (
-    <AuthContext.Provider value={{ user: null }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
-
-export default AuthContext;
+export * from '../src/contexts/AuthContext';
+export { default } from '../src/contexts/AuthContext';

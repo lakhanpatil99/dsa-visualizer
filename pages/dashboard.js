@@ -1,40 +1,17 @@
-import { useState, useEffect, useContext } from 'react';
-import { useRouter } from 'next/router';
+import { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DarkModeContext } from '../src/App';
 import { useAuth } from '../src/contexts/AuthContext';
 import ProgressDashboard from '../src/components/ProgressDashboard';
+import ProtectedRoute from '../src/components/ProtectedRoute';
 
 export default function Dashboard() {
   const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-  const { user, logout, isAuthenticated, loading } = useAuth();
-  const router = useRouter();
-
-  // Check authentication
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated, loading]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect to login
-  }
+  const { user, logout, isAuthenticated } = useAuth();
 
   return (
-    <>
+    <ProtectedRoute>
       <Head>
         <title>Dashboard - AlgoMania</title>
         <meta name="description" content="Your DSA learning dashboard" />
@@ -113,22 +90,27 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            {/* User Info and Dark Mode Toggle */}
+            {/* User Info and Controls */}
             <div className="flex items-center space-x-4">
               {isAuthenticated && (
                 <div className="flex items-center space-x-3">
-                  <span className={`text-sm ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    Welcome, {user?.username || user?.name}!
-                  </span>
+                  <Link
+                    href="/account"
+                    className={`text-sm font-medium hover:underline ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    Welcome, {user?.displayName || user?.username || user?.name}!
+                  </Link>
+                  <Link
+                    href="/account"
+                    className="px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Settings
+                  </Link>
                   <button
                     onClick={logout}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isDarkMode 
-                        ? 'bg-red-600 hover:bg-red-700 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    }`}
+                    className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
                   >
                     Logout
                   </button>
@@ -159,112 +141,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Main Content Area - Your Actual ProgressDashboard */}
-        <div className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h2 className={`text-3xl font-bold mb-4 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                Welcome to Your Dashboard
-              </h2>
-              <p className={`text-lg ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Track your learning progress across all algorithms and data structures
-              </p>
-            </div>
-            
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className={`p-6 rounded-lg border ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-white' 
-                  : 'bg-white border-gray-200 text-gray-800'
-              }`}>
-                <div className="text-3xl font-bold text-blue-600">6</div>
-                <div className="text-sm text-gray-500">Data Structures</div>
-              </div>
-              <div className={`p-6 rounded-lg border ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-white' 
-                  : 'bg-white border-gray-200 text-gray-800'
-              }`}>
-                <div className="text-3xl font-bold text-green-600">8</div>
-                <div className="text-sm text-gray-500">Sorting Algorithms</div>
-              </div>
-              <div className={`p-6 rounded-lg border ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-white' 
-                  : 'bg-white border-gray-200 text-gray-800'
-              }`}>
-                <div className="text-3xl font-bold text-purple-600">5</div>
-                <div className="text-sm text-gray-500">Graph Algorithms</div>
-              </div>
-              <div className={`p-6 rounded-lg border ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-white' 
-                  : 'bg-white border-gray-200 text-gray-800'
-              }`}>
-                <div className="text-3xl font-bold text-yellow-600">4</div>
-                <div className="text-sm text-gray-500">Tree Structures</div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className={`p-6 rounded-lg border ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-600 text-white' 
-                : 'bg-white border-gray-200 text-gray-800'
-            }`}>
-              <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link
-                  href="/app"
-                  className={`p-4 rounded-lg border-2 border-dashed text-center transition-colors ${
-                    isDarkMode 
-                      ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-700' 
-                      : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">🎯</div>
-                  <div className="font-medium">Start Sorting</div>
-                  <div className="text-sm text-gray-500">Learn sorting algorithms</div>
-                </Link>
-                <Link
-                  href="/data-structures"
-                  className={`p-4 rounded-lg border-2 border-dashed text-center transition-colors ${
-                    isDarkMode 
-                      ? 'border-gray-600 hover:border-green-500 hover:bg-gray-700' 
-                      : 'border-gray-300 hover:border-green-500 hover:bg-green-50'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">🏗️</div>
-                  <div className="font-medium">Data Structures</div>
-                  <div className="text-sm text-gray-500">Master fundamentals</div>
-                </Link>
-                <Link
-                  href="/graphs"
-                  className={`p-4 rounded-lg border-2 border-dashed text-center transition-colors ${
-                    isDarkMode 
-                      ? 'border-gray-600 hover:border-purple-500 hover:bg-gray-700' 
-                      : 'border-gray-300 hover:border-purple-500 hover:bg-purple-50'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">📊</div>
-                  <div className="font-medium">Graph Algorithms</div>
-                  <div className="text-sm text-gray-500">Explore connections</div>
-                </Link>
-              </div>
-            </div>
-
-            {/* Progress Dashboard Component */}
-            <div className="mt-8">
-              <ProgressDashboard />
-            </div>
-          </div>
+        {/* Dashboard Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ProgressDashboard />
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

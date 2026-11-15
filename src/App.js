@@ -10,8 +10,11 @@ import Register from './pages/Register';
 import ProgressDashboard from './components/ProgressDashboard';
 import { AuthProvider } from './contexts/AuthContext';
 
-// Dark mode context
-export const DarkModeContext = React.createContext();
+// Dark mode context with safe fallback to prevent destructuring crash
+export const DarkModeContext = React.createContext({
+  isDarkMode: true,
+  toggleDarkMode: () => {}
+});
 
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {

@@ -1,24 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useAuth } from '../src/contexts/AuthContext';
+import { DarkModeContext } from '../context/ThemeContext';
 
 export default function Home() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <>
       <Head>
         <title>AlgoMania - Interactive Algorithm Visualizer</title>
-
-        {/* Favicon Logo */}
         <link rel="icon" href="/WhatsApp Image 2025-11-17 at 18.26.59_8bd9e24d.jpg" />
-
         <meta
           name="description"
           content="Master Data Structures & Algorithms through interactive visualizations"
         />
-
-        {/* ✅ GOOGLE ADSENSE SCRIPT (PROPER PLACE) */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8602333070445192"
@@ -33,7 +31,7 @@ export default function Home() {
             ? 'bg-gray-800 border-gray-700 text-white' 
             : 'bg-white border-gray-200 text-gray-900'
         }`}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
             <div>
               <h1 className="text-4xl font-bold text-blue-600 mb-2">
                 AlgoMania
@@ -44,12 +42,68 @@ export default function Home() {
                 Interactive Algorithm & Data Structure Visualizer
               </p>
             </div>
-            <div className="text-right">
-              <div className={`text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                © Lakhansing Reserved 2025
-              </div>
+            
+            <div className="flex items-center space-x-4">
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href="/account"
+                    className={`text-sm font-medium hover:underline ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    Welcome, {user?.displayName || user?.name}!
+                  </Link>
+                  <Link
+                    href="/app"
+                    className="px-4 py-2 rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                  >
+                    Launch App
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="px-3 py-2 rounded-md font-medium text-xs bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href="/login"
+                    className="px-4 py-2 rounded-md font-medium text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="px-4 py-2 rounded-md font-medium text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-md transition-colors ${
+                  isDarkMode 
+                    ? 'text-yellow-400 hover:bg-gray-700' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -97,7 +151,7 @@ export default function Home() {
                 <p className={`text-sm ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
-                  Explore BFS, DFS, Dijkstra's algorithm, and shortest path problems interactively.
+                  Explore BFS, DFS, Dijkstra&apos;s algorithm, and shortest path problems interactively.
                 </p>
               </div>
 
@@ -111,7 +165,7 @@ export default function Home() {
                 <p className={`text-sm ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
-                  Master binary trees, AVL trees, red-black trees, and more with interactive visualizations.
+                  Learn binary search trees, traversals (inorder, preorder, postorder) with animated operations.
                 </p>
               </div>
 
@@ -130,38 +184,32 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Authentication Buttons */}
+            {/* Authentication Buttons / App Access */}
             <div className="space-y-4">
-              <div className="text-lg font-medium mb-4">
-                <span className={`${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  Get started with AlgoMania:
-                </span>
-              </div>
-              
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/login"
-                  className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 ${
-                    isDarkMode 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
-                  }`}
-                >
-                  Login to Continue
-                </Link>
-                
-                <Link
-                  href="/register"
-                  className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 ${
-                    isDarkMode 
-                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl' 
-                      : 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl'
-                  }`}
-                >
-                  Create New Account
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/app"
+                    className="px-8 py-4 rounded-lg font-semibold text-lg text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    Go to Interactive Visualizer 🚀
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="px-8 py-4 rounded-lg font-semibold text-lg text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      Login to Continue
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="px-8 py-4 rounded-lg font-semibold text-lg text-white bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      Create Free Account
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -182,4 +230,3 @@ export default function Home() {
     </>
   );
 }
-

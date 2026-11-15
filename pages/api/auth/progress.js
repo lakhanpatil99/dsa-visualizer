@@ -2,79 +2,114 @@ import dbConnect from '../../../lib/dbConnect';
 import { withAuth } from '../../../lib/auth';
 import Progress from '../../../models/Progress';
 
+/**
+ * Progress Management API (Protected)
+ * Requires authenticated session and email verification.
+ */
 async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({
+      success: false,
+      message: 'Method not allowed. Supported methods: GET, POST.'
+    });
   }
 
   try {
     await dbConnect();
-    
-    const { userId } = req.user; // From JWT token via withAuth middleware
-    
+    const { firebaseUid } = req.user;
+    const dbUserId = req.dbUser?._id;
+
     if (req.method === 'POST') {
-      // Save progress
-      const { algorithmType, algorithmName, progressData, completionStatus } = req.body;
-      
+      const { 
+        algorithmType, 
+        algorithmName, 
+        progressData, 
+        completionStatus,
+        stepsCompleted,
+        totalSteps,
+        timeSpent,
+        lastStep,
+        notes 
+      } = req.body;
+
       if (!algorithmType || !algorithmName) {
-        return res.status(400).json({ 
-          message: 'Algorithm type and name are required' 
+        return res.status(400).json({
+          success: false,
+          message: 'Algorithm type and name are required'
         });
       }
 
-      // Create or update progress record
+      const validTypes = ['sorting', 'data-structures', 'trees', 'graphs'];
+      if (!validTypes.includes(algorithmType)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid algorithm type. Allowed: ${validTypes.join(', ')}`
+        });
+      }
+
       const progressRecord = {
-        userId,
+        firebaseUid,
+        ...(dbUserId ? { userId: dbUserId } : {}),
         algorithmType,
         algorithmName,
         progressData: progressData || {},
         completionStatus: completionStatus || 'in_progress',
-        stepsCompleted: req.body.stepsCompleted || 0,
-        totalSteps: req.body.totalSteps || 0,
-        timeSpent: req.body.timeSpent || 0,
-        lastStep: req.body.lastStep || '',
-        notes: req.body.notes || ''
+        stepsCompleted: Number(stepsCompleted) || 0,
+        totalSteps: Number(totalSteps) || 0,
+        timeSpent: Number(timeSpent) || 0,
+        lastStep: String(lastStep || ''),
+        notes: String(notes || '')
       };
 
-      // Use findOneAndUpdate with upsert for better handling
+      // Perform atomic upsert matching on firebaseUid and algorithm
       const result = await Progress.findOneAndUpdate(
-        { 
-          userId, 
-          algorithmType, 
-          algorithmName 
+        {
+          $or: [
+            { firebaseUid, algorithmType, algorithmName },
+            ...(dbUserId ? [{ userId: dbUserId, algorithmType, algorithmName }] : [])
+          ]
         },
         progressRecord,
-        { 
-          upsert: true, 
+        {
+          upsert: true,
           new: true,
-          runValidators: true
+          runValidators: true,
+          setDefaultsOnInsert: true
         }
       );
 
-      res.status(200).json({
+      return res.status(200).json({
+        success: true,
         message: 'Progress saved successfully',
         progressId: result._id,
-        progress: result
+        progress: result.toJSON()
       });
 
     } else if (req.method === 'GET') {
-      // Fetch progress
       const { algorithmType, algorithmName } = req.query;
-      
-      let query = { userId };
-      
-      // If specific algorithm is requested, filter by it
-      if (algorithmType && algorithmName) {
-        query.algorithmType = algorithmType;
-        query.algorithmName = algorithmName;
+
+      const userMatchConditions = [{ firebaseUid }];
+      if (dbUserId) {
+        userMatchConditions.push({ userId: dbUserId });
       }
-      
-      const progressRecords = await Progress
-        .find(query)
+
+      const query = {
+        $or: userMatchConditions
+      };
+
+      if (algorithmType) {
+        query.algorithmType = String(algorithmType);
+      }
+      if (algorithmName) {
+        query.algorithmName = String(algorithmName);
+      }
+
+      const progressRecords = await Progress.find(query)
         .sort({ updatedAt: -1 })
         .lean();
 
-      res.status(200).json({
+      return res.status(200).json({
+        success: true,
         message: 'Progress fetched successfully',
         progress: progressRecords
       });
@@ -82,10 +117,12 @@ async function handler(req, res) {
 
   } catch (error) {
     console.error('Progress API error:', error);
-    res.status(500).json({ 
-      message: 'Internal server error' 
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error processing progress data.'
     });
   }
 }
 
-export default withAuth(handler);
+// Enforce email verification for saving/fetching progress
+export default withAuth(handler, { requireEmailVerified: true });

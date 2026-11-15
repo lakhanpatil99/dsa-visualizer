@@ -4,7 +4,12 @@ const ProgressSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
+    index: true
+  },
+  firebaseUid: {
+    type: String,
+    required: false,
     index: true
   },
   algorithmType: {
@@ -52,11 +57,13 @@ const ProgressSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound index for efficient queries
-ProgressSchema.index({ userId: 1, algorithmType: 1, algorithmName: 1 }, { unique: true });
+// Index for Firebase UID lookups
+ProgressSchema.index({ firebaseUid: 1, algorithmType: 1, algorithmName: 1 });
+// Compound index for legacy lookups
+ProgressSchema.index({ userId: 1, algorithmType: 1, algorithmName: 1 });
 
-// Prevent sensitive data from being returned
-ProgressSchema.methods.toJSON = function() {
+// Prevent sensitive metadata from being returned
+ProgressSchema.methods.toJSON = function () {
   const progress = this.toObject();
   delete progress.__v;
   return progress;

@@ -1,23 +1,45 @@
 class ProgressService {
-  constructor(token) {
-    this.token = token;
+  constructor(tokenOrProvider, tokenProvider = null) {
+    if (typeof tokenOrProvider === 'function') {
+      this.tokenProvider = tokenOrProvider;
+      this.token = null;
+    } else {
+      this.token = tokenOrProvider;
+      this.tokenProvider = tokenProvider;
+    }
     this.baseURL = '/api/auth/progress';
+  }
+
+  async getValidToken() {
+    if (this.tokenProvider) {
+      try {
+        const fresh = await this.tokenProvider();
+        if (fresh) {
+          this.token = fresh;
+          return fresh;
+        }
+      } catch (e) {
+        console.warn('Failed to retrieve fresh token from provider:', e);
+      }
+    }
+    return this.token;
   }
 
   // Save progress for a specific algorithm
   async saveProgress(progressData) {
     try {
+      const activeToken = await this.getValidToken();
       const response = await fetch(this.baseURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
+          'Authorization': `Bearer ${activeToken}`
         },
         body: JSON.stringify(progressData)
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.message || 'Failed to save progress');
       }
 
@@ -31,6 +53,7 @@ class ProgressService {
   // Fetch progress for a specific algorithm or all progress
   async fetchProgress(algorithmType = null, algorithmName = null) {
     try {
+      const activeToken = await this.getValidToken();
       let url = this.baseURL;
       const params = new URLSearchParams();
       
@@ -44,12 +67,12 @@ class ProgressService {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${this.token}`
+          'Authorization': `Bearer ${activeToken}`
         }
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.message || 'Failed to fetch progress');
       }
 
@@ -64,12 +87,13 @@ class ProgressService {
   async getProgressSummary() {
     try {
       const allProgress = await this.fetchProgress();
+      const list = allProgress.progress || [];
       const summary = {
-        totalAlgorithms: allProgress.progress.length,
-        completed: allProgress.progress.filter(p => p.completionStatus === 'completed').length,
-        inProgress: allProgress.progress.filter(p => p.completionStatus === 'in_progress').length,
-        mastered: allProgress.progress.filter(p => p.completionStatus === 'mastered').length,
-        totalTimeSpent: allProgress.progress.reduce((sum, p) => sum + (p.timeSpent || 0), 0)
+        totalAlgorithms: list.length,
+        completed: list.filter(p => p.completionStatus === 'completed').length,
+        inProgress: list.filter(p => p.completionStatus === 'in_progress').length,
+        mastered: list.filter(p => p.completionStatus === 'mastered').length,
+        totalTimeSpent: list.reduce((sum, p) => sum + (p.timeSpent || 0), 0)
       };
       
       return summary;

@@ -1,38 +1,17 @@
-import { useState, useEffect, useContext } from 'react';
+import { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DarkModeContext } from '../src/App';
 import { useAuth } from '../src/contexts/AuthContext';
 import GraphVisualizer from '../src/pages/GraphVisualizer';
+import ProtectedRoute from '../src/components/ProtectedRoute';
 
 export default function Graphs() {
   const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-  const { user, logout, isAuthenticated, loading } = useAuth();
-
-  // Check authentication
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated, loading]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect to login
-  }
+  const { user, logout, isAuthenticated } = useAuth();
 
   return (
-    <>
+    <ProtectedRoute>
       <Head>
         <title>Graph Algorithms - AlgoMania</title>
         <meta name="description" content="Interactive graph algorithm visualizations" />
@@ -48,12 +27,12 @@ export default function Graphs() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-blue-600 mb-2">
-                Graph Algorithms
+                AlgoMania
               </h1>
               <p className={`text-lg ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                Interactive Graph Visualization
+                Interactive Graph Visualizer
               </p>
             </div>
             
@@ -115,18 +94,23 @@ export default function Graphs() {
             <div className="flex items-center space-x-4">
               {isAuthenticated && (
                 <div className="flex items-center space-x-3">
-                  <span className={`text-sm ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    Welcome, {user?.username || user?.name}!
-                  </span>
+                  <Link
+                    href="/account"
+                    className={`text-sm font-medium hover:underline ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    Welcome, {user?.displayName || user?.username || user?.name}!
+                  </Link>
+                  <Link
+                    href="/account"
+                    className="px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Settings
+                  </Link>
                   <button
                     onClick={logout}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isDarkMode 
-                        ? 'bg-red-600 hover:bg-red-700 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    }`}
+                    className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
                   >
                     Logout
                   </button>
@@ -157,11 +141,11 @@ export default function Graphs() {
           </div>
         </div>
 
-        {/* Main Content Area - Your Actual GraphVisualizer */}
+        {/* Main Content Area */}
         <div className="flex-1">
           <GraphVisualizer />
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }
