@@ -105,7 +105,16 @@ async function handler(req, res) {
     // Handle potential duplicate key race condition safely
     if (error.code === 11000) {
       try {
-        const existing = await User.findOne({ firebaseUid: req.user.firebaseUid });
+        let existing = await User.findOne({ firebaseUid: req.user?.firebaseUid });
+        if (!existing && req.user?.email) {
+          existing = await User.findOne({ email: req.user.email.toLowerCase().trim() });
+          if (existing && req.user?.emailVerified === true && !existing.firebaseUid) {
+            existing.firebaseUid = req.user.firebaseUid;
+            existing.emailVerified = true;
+            existing.lastLoginAt = new Date();
+            await existing.save();
+          }
+        }
         if (existing) {
           return res.status(200).json({
             success: true,
@@ -114,12 +123,13 @@ async function handler(req, res) {
           });
         }
       } catch (e) {
-        // Fall through
+        // Fall through to 500 error
       }
     }
 
     return res.status(500).json({
       success: false,
+      code: 'DATABASE_ERROR',
       message: 'Failed to synchronize user profile. Please try again later.'
     });
   }

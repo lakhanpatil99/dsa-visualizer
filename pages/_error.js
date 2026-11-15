@@ -22,8 +22,12 @@ function Error({ statusCode }) {
 }
 
 Error.getInitialProps = ({ res, err }) => {
-  const statusCode = res ? res.statusCode : err ? err.statusCode : 404;
-  return { statusCode };
+  const statusCode = res && res.statusCode && res.statusCode !== 200
+    ? res.statusCode
+    : err
+      ? (err.statusCode || 500)
+      : 404;
+  return { statusCode: statusCode || 500 };
 };
 
 export default Error;

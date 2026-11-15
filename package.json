@@ -18,6 +18,9 @@
     "react-router-dom": "^7.13.0",
     "three": "^0.187.0"
   },
+  "overrides": {
+    "jose": "^5.10.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
