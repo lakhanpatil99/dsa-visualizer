@@ -12,16 +12,11 @@ export default function Home() {
     <>
       <Head>
         <title>AlgoMania - Interactive Algorithm Visualizer</title>
-        <link rel="icon" href="/WhatsApp Image 2025-11-17 at 18.26.59_8bd9e24d.jpg" />
+        <link rel="icon" href="/favicon.ico" />
         <meta
           name="description"
           content="Master Data Structures & Algorithms through interactive visualizations"
         />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8602333070445192"
-          crossOrigin="anonymous"
-        ></script>
       </Head>
 
       <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
