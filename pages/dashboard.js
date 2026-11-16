@@ -1,141 +1,37 @@
-import { useContext } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
-import { DarkModeContext } from '../src/App';
-import { useAuth } from '../src/contexts/AuthContext';
+import Navbar from '../src/components/Navbar';
+import Footer from '../src/components/Footer';
 import ProgressDashboard from '../src/components/ProgressDashboard';
 import ProtectedRoute from '../src/components/ProtectedRoute';
 
-export default function Dashboard() {
-  const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-  const { user, logout, isAuthenticated } = useAuth();
-
+export default function DashboardPage() {
   return (
     <ProtectedRoute>
       <Head>
-        <title>Dashboard - AlgoMania</title>
-        <meta name="description" content="Your DSA learning dashboard" />
+        <title>Learning Dashboard - AlgoMania</title>
+        <meta name="description" content="Track your computer science algorithms learning progress, completed simulations, and mastery across sorting, graphs, and trees." />
       </Head>
 
-      <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-        {/* Header */}
-        <div className={`p-6 border-b transition-all duration-300 ${isDarkMode
-          ? 'bg-gray-800 border-gray-700 text-white'
-          : 'bg-white border-gray-200 text-gray-900'
-          }`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-blue-600 mb-2">
-                AlgoMania Dashboard 🚀
-              </h1>
-              <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                Interactive learning platform for Data Structures & Algorithms
-              </p>
-            </div>
+      <div className="min-h-screen flex flex-col bg-[#F8F5ED] dark:bg-[#1A1916] text-[#24231F] dark:text-[#FFFDF8] transition-colors selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
+        <Navbar />
 
-            {/* Navigation Menu */}
-            <div className="flex items-center space-x-6">
-              <Link
-                href="/app"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
-                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-              >
-                Sorting
-              </Link>
-              <Link
-                href="/graphs"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
-                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-              >
-                Graphs
-              </Link>
-              <Link
-                href="/trees"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
-                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-              >
-                Trees
-              </Link>
-              <Link
-                href="/data-structures"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
-                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-              >
-                Data Structures
-              </Link>
-              <Link
-                href="/dashboard"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-              >
-                Dashboard
-              </Link>
-            </div>
-
-            {/* User Info and Controls */}
-            <div className="flex items-center space-x-4">
-              {isAuthenticated && (
-                <div className="flex items-center space-x-3">
-                  <Link
-                    href="/account"
-                    className={`text-sm font-medium hover:underline ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                      }`}
-                  >
-                    Welcome, {user?.displayName || user?.username || user?.name}!
-                  </Link>
-                  <Link
-                    href="/account"
-                    className="px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    Settings
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-md transition-colors ${isDarkMode
-                  ? 'text-yellow-400 hover:bg-gray-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                aria-label="Toggle dark mode"
-              >
-                {isDarkMode ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                  </svg>
-                )}
-              </button>
-            </div>
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-8">
+          <div className="space-y-2">
+            <span className="text-[11px] font-mono tracking-widest text-[#EF592A] uppercase font-bold">
+              STUDENT WORKSPACE
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight">
+              Learning Dashboard.
+            </h1>
+            <p className="text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95]">
+              Real-time synchronization of your completed algorithmic walkthroughs and asymptotic trade-off studies.
+            </p>
           </div>
-        </div>
 
-        {/* Dashboard Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <ProgressDashboard />
-        </div>
+        </main>
+
+        <Footer />
       </div>
     </ProtectedRoute>
   );

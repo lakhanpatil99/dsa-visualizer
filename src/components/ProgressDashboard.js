@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { DarkModeContext } from '../App';
+import { DarkModeContext } from '../../context/ThemeContext';
 import ProtectedFeature from './ProtectedFeature';
 
 const ProgressDashboard = () => {
@@ -28,24 +28,24 @@ const ProgressDashboard = () => {
       
       setProgressSummary(summary);
       setAllProgress(progress.progress || []);
-    } catch (error) {
+    } catch (err) {
       setError('Failed to load progress data');
-      console.error('Error loading progress:', error);
+      console.error('Error loading progress:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-[#E4E9DD] text-[#28533D] dark:bg-[#28382F] dark:text-[#E4E9DD]';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-[#FDEDEA] text-[#EF592A] dark:bg-[#3D251D]';
       case 'mastered':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-[#ECEAE4] text-[#24231F] dark:bg-[#2D2A24] dark:text-[#FFFDF8]';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-[#FAF8F3] text-[#69665F] dark:bg-[#1D1C19]';
     }
   };
 
@@ -58,27 +58,23 @@ const ProgressDashboard = () => {
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center p-8 ${
-        isDarkMode ? 'text-gray-300' : 'text-gray-600'
-      }`}>
-        <svg className="animate-spin h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <div className="flex items-center justify-center p-12 text-xs font-mono text-[#69665F]">
+        <svg className="animate-spin h-5 w-5 mr-3 text-[#EF592A]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        Loading progress...
+        Synchronizing learning profile...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`p-4 bg-red-100 border border-red-400 text-red-700 rounded ${
-        isDarkMode ? 'bg-red-900 border-red-700 text-red-200' : ''
-      }`}>
+      <div className="p-4 rounded-xl border font-mono text-xs bg-[#FDEDEA] text-[#C93B14] border-[#EF592A]/30">
         {error}
         <button 
           onClick={loadProgressData}
-          className="ml-2 underline hover:no-underline"
+          className="ml-3 underline font-bold"
         >
           Retry
         </button>
@@ -88,108 +84,101 @@ const ProgressDashboard = () => {
 
   return (
     <ProtectedFeature>
-      <div className={`p-6 rounded-lg border ${
-        isDarkMode 
-          ? 'bg-gray-800 border-gray-600 text-white' 
-          : 'bg-white border-gray-200 text-gray-800'
-      }`}>
-        <h2 className="text-2xl font-bold mb-6">Your Learning Progress</h2>
-        
+      <div className="space-y-8">
         {/* Progress Summary Cards */}
         {progressSummary && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-200'
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`p-5 rounded-2xl border transition-all ${
+              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
             }`}>
-              <div className="text-2xl font-bold text-blue-600">{progressSummary.totalAlgorithms}</div>
-              <div className="text-sm">Total Algorithms</div>
+              <span className="block text-[10px] font-mono tracking-widest text-[#69665F] dark:text-[#A09D95] uppercase font-bold">
+                TOTAL TRACKED
+              </span>
+              <div className="text-3xl font-black font-mono text-[#24231F] dark:text-[#FFFDF8] mt-1">
+                {progressSummary.totalAlgorithms || 0}
+              </div>
             </div>
             
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-green-50 border-green-200'
+            <div className={`p-5 rounded-2xl border transition-all ${
+              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
             }`}>
-              <div className="text-2xl font-bold text-green-600">{progressSummary.completed}</div>
-              <div className="text-sm">Completed</div>
+              <span className="block text-[10px] font-mono tracking-widest text-[#28533D] dark:text-[#E4E9DD] uppercase font-bold">
+                COMPLETED
+              </span>
+              <div className="text-3xl font-black font-mono text-[#28533D] dark:text-[#E4E9DD] mt-1">
+                {progressSummary.completed || 0}
+              </div>
             </div>
             
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-yellow-50 border-yellow-200'
+            <div className={`p-5 rounded-2xl border transition-all ${
+              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
             }`}>
-              <div className="text-2xl font-bold text-yellow-600">{progressSummary.inProgress}</div>
-              <div className="text-sm">In Progress</div>
+              <span className="block text-[10px] font-mono tracking-widest text-[#EF592A] uppercase font-bold">
+                IN PROGRESS
+              </span>
+              <div className="text-3xl font-black font-mono text-[#EF592A] mt-1">
+                {progressSummary.inProgress || 0}
+              </div>
             </div>
             
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-purple-50 border-purple-200'
+            <div className={`p-5 rounded-2xl border transition-all ${
+              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
             }`}>
-              <div className="text-2xl font-bold text-purple-600">{progressSummary.mastered}</div>
-              <div className="text-sm">Mastered</div>
+              <span className="block text-[10px] font-mono tracking-widest text-[#24231F] dark:text-[#FFFDF8] uppercase font-bold">
+                MASTERED
+              </span>
+              <div className="text-3xl font-black font-mono text-[#24231F] dark:text-[#FFFDF8] mt-1">
+                {progressSummary.mastered || 0}
+              </div>
             </div>
           </div>
         )}
 
         {/* Detailed Progress List */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Algorithm Details</h3>
+        <div className={`p-6 rounded-2xl border transition-all ${
+          isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+        }`}>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-base font-black tracking-tight text-[#24231F] dark:text-[#FFFDF8]">
+              Algorithm Mastery Records
+            </h3>
+            <span className="text-xs font-mono text-[#69665F] dark:text-[#A09D95]">
+              {allProgress.length} recorded sessions
+            </span>
+          </div>
           
           {allProgress.length === 0 ? (
-            <div className={`text-center py-8 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <svg className="mx-auto h-12 w-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p>No progress recorded yet. Start learning algorithms to see your progress here!</p>
+            <div className="text-center py-12 text-[#69665F] dark:text-[#A09D95] space-y-2">
+              <div className="text-3xl">🧭</div>
+              <p className="text-sm font-semibold">No progress recorded yet.</p>
+              <p className="text-xs">
+                Launch any visualizer, run an algorithm simulation, and click "Save Cloud Progress" to start tracking your journey.
+              </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {allProgress.map((progress) => (
+            <div className="divide-y divide-[#DED9CE]/40 dark:divide-[#383630]/40">
+              {allProgress.map((prog) => (
                 <div 
-                  key={progress._id}
-                  className={`p-4 rounded-lg border ${
-                    isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                  }`}
+                  key={prog._id}
+                  className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-semibold">{progress.algorithmName}</h4>
-                      <p className={`text-sm ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        {progress.algorithmType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </p>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-bold text-sm text-[#24231F] dark:text-[#FFFDF8]">
+                        {prog.algorithmName}
+                      </h4>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${getStatusBadge(prog.completionStatus)}`}>
+                        {prog.completionStatus?.replace('_', ' ')?.toUpperCase()}
+                      </span>
                     </div>
-                    
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
-                      getStatusColor(progress.completionStatus)
-                    }`}>
-                      {progress.completionStatus.replace('_', ' ')}
-                    </span>
+                    <p className="text-xs text-[#69665F] dark:text-[#A09D95] font-mono">
+                      Category: {prog.algorithmType} · Steps: {prog.stepsCompleted}/{prog.totalSteps} · Time: {formatTime(prog.timeSpent || 0)}
+                    </p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    {progress.stepsCompleted > 0 && (
-                      <div>
-                        <span className="font-medium">Progress:</span> {progress.stepsCompleted}/{progress.totalSteps}
-                      </div>
-                    )}
-                    
-                    {progress.timeSpent > 0 && (
-                      <div>
-                        <span className="font-medium">Time:</span> {formatTime(progress.timeSpent)}
-                      </div>
-                    )}
-                    
-                    <div>
-                      <span className="font-medium">Last updated:</span> {new Date(progress.updatedAt).toLocaleDateString()}
-                    </div>
-                    
-                    {progress.notes && (
-                      <div className="md:col-span-2">
-                        <span className="font-medium">Notes:</span> {progress.notes}
-                      </div>
-                    )}
-                  </div>
+
+                  <span className="text-[11px] font-mono text-[#A09D95]">
+                    {new Date(prog.updatedAt).toLocaleDateString()}
+                  </span>
                 </div>
               ))}
             </div>

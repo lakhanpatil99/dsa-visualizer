@@ -1,3 +1,5 @@
+import { MinHeap } from './MinHeap.js';
+
 export class WeightedGraph {
   constructor() {
     this.adjacencyList = {};
@@ -10,6 +12,9 @@ export class WeightedGraph {
   }
 
   addEdge(vertex1, vertex2, weight) {
+    if (weight < 0) {
+      throw new Error(`Dijkstra requires non-negative edge weights; got ${weight} for edge (${vertex1}, ${vertex2})`);
+    }
     if (!this.adjacencyList[vertex1]) {
       this.addVertex(vertex1);
     }
@@ -22,16 +27,20 @@ export class WeightedGraph {
   }
 
   removeEdge(vertex1, vertex2) {
-    this.adjacencyList[vertex1] = this.adjacencyList[vertex1].filter(
-      v => v.node !== vertex2
-    );
-    this.adjacencyList[vertex2] = this.adjacencyList[vertex2].filter(
-      v => v.node !== vertex1
-    );
+    if (this.adjacencyList[vertex1]) {
+      this.adjacencyList[vertex1] = this.adjacencyList[vertex1].filter(
+        v => v.node !== vertex2
+      );
+    }
+    if (this.adjacencyList[vertex2]) {
+      this.adjacencyList[vertex2] = this.adjacencyList[vertex2].filter(
+        v => v.node !== vertex1
+      );
+    }
   }
 
   removeVertex(vertex) {
-    while (this.adjacencyList[vertex].length) {
+    while (this.adjacencyList[vertex] && this.adjacencyList[vertex].length) {
       const adjacentVertex = this.adjacencyList[vertex].pop();
       this.removeEdge(vertex, adjacentVertex.node);
     }
@@ -40,12 +49,12 @@ export class WeightedGraph {
 
   dijkstra(start, end) {
     if (!this.adjacencyList[start] || !this.adjacencyList[end]) {
-      return { path: [], distance: null }; // Return empty result if start or end node doesn't exist
+      return { path: [], distance: null };
     }
     
     const distances = {};
     const previous = {};
-    const pq = new PriorityQueue();
+    const pq = new MinHeap();
     const visited = new Set();
     
     // Initialize distances
@@ -57,8 +66,10 @@ export class WeightedGraph {
     
     pq.enqueue(start, 0);
     
-    while (pq.values.length > 0) {
-      const current = pq.dequeue().val;
+    while (!pq.isEmpty()) {
+      const minNode = pq.dequeue();
+      if (!minNode) break;
+      const current = minNode.val;
       
       if (current === end) {
         break;
@@ -99,22 +110,21 @@ export class WeightedGraph {
     }
     
     return {
-      path: path.length > 1 ? path : [],
+      path: path.length > 0 && path[0] === start ? path : [],
       distance: distances[end] === Infinity ? null : distances[end]
     };
   }
 
   getAllShortestPaths(start) {
     if (!this.adjacencyList[start]) {
-      return { distances: {}, previous: {} }; // Return empty result if start node doesn't exist
+      return { distances: {}, previous: {} };
     }
     
     const distances = {};
     const previous = {};
-    const pq = new PriorityQueue();
+    const pq = new MinHeap();
     const visited = new Set();
     
-    // Initialize distances
     for (const vertex in this.adjacencyList) {
       distances[vertex] = Infinity;
       previous[vertex] = null;
@@ -123,8 +133,10 @@ export class WeightedGraph {
     
     pq.enqueue(start, 0);
     
-    while (pq.values.length > 0) {
-      const current = pq.dequeue().val;
+    while (!pq.isEmpty()) {
+      const minNode = pq.dequeue();
+      if (!minNode) break;
+      const current = minNode.val;
       
       if (visited.has(current)) {
         continue;
@@ -159,36 +171,20 @@ export class WeightedGraph {
   }
 }
 
-class PriorityQueue {
-  constructor() {
-    this.values = [];
-  }
-
-  enqueue(val, priority) {
-    this.values.push({ val, priority });
-    this.sort();
-  }
-
-  dequeue() {
-    return this.values.shift();
-  }
-
-  sort() {
-    this.values.sort((a, b) => a.priority - b.priority);
-  }
-}
+// Re-export MinHeap for backward compatibility
+export const PriorityQueue = MinHeap;
 
 export const dijkstraPseudocode = `def dijkstra(graph, start, end):
   distances = {vertex: float('infinity') for vertex in graph}
   distances[start] = 0
   previous = {vertex: None for vertex in graph}
-  pq = PriorityQueue()
+  pq = MinHeap()
   visited = set()
   
   pq.enqueue(start, 0)
   
-  while pq:
-    current = pq.dequeue()
+  while not pq.isEmpty():
+    current = pq.dequeue().val
     
     if current == end:
       break

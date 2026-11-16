@@ -1,310 +1,126 @@
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { DarkModeContext } from '../src/App';
-import { useAuth } from '../src/contexts/AuthContext';
+import Navbar from '../src/components/Navbar';
+import Footer from '../src/components/Footer';
 import ProtectedRoute from '../src/components/ProtectedRoute';
+import { DarkModeContext } from '../context/ThemeContext';
 
-export default function DataStructures() {
-  const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-  const { user, logout, isAuthenticated } = useAuth();
+export default function DataStructuresPage() {
+  const { isDarkMode } = useContext(DarkModeContext);
 
-  const dataStructureCategories = [
+  const modules = [
     {
       id: 'stack',
-      title: 'Stack',
-      description: 'LIFO (Last In, First Out) data structure',
-      icon: '📚',
-      color: 'blue',
-      features: ['Push', 'Pop', 'Peek', 'isEmpty', 'Size'],
-      complexity: 'O(1) for all operations'
+      title: 'Stack (LIFO)',
+      desc: 'Last-In First-Out sequential storage with top pointer animations.',
+      route: '/data-structures/stack',
+      complexity: 'O(1) Push/Pop',
+      icon: '📚'
     },
     {
       id: 'queue',
-      title: 'Queue',
-      description: 'FIFO (First In, First Out) data structure',
-      icon: '🚶‍♂️',
-      color: 'green',
-      features: ['Enqueue', 'Dequeue', 'Front', 'isEmpty', 'Size'],
-      complexity: 'O(1) for all operations'
+      title: 'Queue (FIFO)',
+      desc: 'First-In First-Out linear buffer with front/rear pointer navigation.',
+      route: '/data-structures/queue',
+      complexity: 'O(1) Enqueue/Dequeue',
+      icon: '🚶'
     },
     {
       id: 'linked-list',
-      title: 'Linked Lists',
-      description: 'Dynamic data structure with nodes and pointers',
-      icon: '🔗',
-      color: 'purple',
-      features: ['Singly', 'Doubly', 'Circular', 'Insert', 'Delete', 'Search'],
-      complexity: 'O(n) for search, O(1) for insert/delete at ends'
+      title: 'Linked List',
+      desc: 'Dynamically allocated nodes connected by pointers (Singly and Doubly).',
+      route: '/data-structures/linked-list',
+      complexity: 'O(1) Insert / O(n) Access',
+      icon: '🔗'
     },
     {
       id: 'heap',
-      title: 'Heap',
-      description: 'Complete binary tree with heap property',
-      icon: '🌳',
-      color: 'yellow',
-      features: ['Max Heap', 'Min Heap', 'Insert', 'Extract', 'Heapify'],
-      complexity: 'O(log n) for insert/extract, O(n) for build'
+      title: 'Binary Heap & Priority Queue',
+      desc: 'Complete binary tree maintaining min/max heap property with sift-up/down.',
+      route: '/data-structures/heap',
+      complexity: 'O(log n) Insert/Extract',
+      icon: '🌳'
     },
     {
       id: 'hash-table',
       title: 'Hash Table',
-      description: 'Data structure for key-value pairs',
-      icon: '🗂️',
-      color: 'red',
-      features: ['Insert', 'Delete', 'Search', 'Separate Chaining', 'Open Addressing'],
-      complexity: 'O(1) average case, O(n) worst case'
+      desc: 'Key-value mapping using hashing functions and collision resolution.',
+      route: '/data-structures/hash-table',
+      complexity: 'O(1) Average Lookup',
+      icon: '🗄️'
     },
     {
       id: 'searching',
       title: 'Searching Algorithms',
-      description: 'Algorithms to find elements in data structures',
-      icon: '🔍',
-      color: 'indigo',
-      features: ['Linear Search', 'Binary Search', 'Step-by-step visualization'],
-      complexity: 'O(n) for linear, O(log n) for binary'
+      desc: 'Compare Linear, Binary, Jump, and Interpolation searches on arbitrary arrays.',
+      route: '/data-structures/searching',
+      complexity: 'O(1) to O(log n)',
+      icon: '🔍'
     }
   ];
 
   return (
     <ProtectedRoute>
       <Head>
-        <title>Data Structures - AlgoMania</title>
-        <meta name="description" content="Interactive data structure visualizations" />
+        <title>Data Structures Suite - AlgoMania Visual Lab</title>
+        <meta name="description" content="Explore foundational data structures with animated operations: Stacks, Queues, Linked Lists, Binary Heaps, Hash Tables, and Searching Algorithms." />
       </Head>
 
-      <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-        {/* Header with Navigation */}
-        <div className={`p-6 border-b transition-all duration-300 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700 text-white' 
-            : 'bg-white border-gray-200 text-gray-900'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-blue-600 mb-2">
-                Data Structures
-              </h1>
-              <p className={`text-lg ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Interactive Data Structure Visualization
-              </p>
-            </div>
-            
-            {/* Navigation Menu */}
-            <div className="flex items-center space-x-6">
-              <Link
-                href="/app"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                Sorting
-              </Link>
-              <Link
-                href="/graphs"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                Graphs
-              </Link>
-              <Link
-                href="/trees"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                Trees
-              </Link>
-              <Link
-                href="/data-structures"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                Data Structures
-              </Link>
-              <Link
-                href="/dashboard"
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                Dashboard
-              </Link>
-            </div>
+      <div className="min-h-screen flex flex-col bg-[#F8F5ED] dark:bg-[#1A1916] text-[#24231F] dark:text-[#FFFDF8] transition-colors selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
+        <Navbar />
 
-            {/* User Info and Dark Mode Toggle */}
-            <div className="flex items-center space-x-4">
-              {isAuthenticated && (
-                <div className="flex items-center space-x-3">
-                  <span className={`text-sm ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    Welcome, {user?.username || user?.name}!
-                  </span>
-                  <button
-                    onClick={logout}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isDarkMode 
-                        ? 'bg-red-600 hover:bg-red-700 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    }`}
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-md transition-colors ${
-                  isDarkMode 
-                    ? 'text-yellow-400 hover:bg-gray-700' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-                aria-label="Toggle dark mode"
-              >
-                {isDarkMode ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                  </svg>
-                )}
-              </button>
-            </div>
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-10">
+          <div className="space-y-3">
+            <span className="text-[11px] font-mono tracking-widest text-[#EF592A] uppercase font-bold">
+              02 // CORE MEMORY STRUCTURES
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight">
+              Data Structures Hub.
+            </h1>
+            <p className="text-sm sm:text-base text-[#69665F] dark:text-[#A09D95] max-w-2xl leading-relaxed">
+              Step through node insertions, deletions, pointer updates, and memory allocations in real-time.
+            </p>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className={`text-4xl font-bold mb-6 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                Data Structures Mastery
-              </h2>
-              <p className={`text-xl ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Explore and master fundamental data structures with interactive visualizations
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {modules.map((m) => (
+              <div
+                key={m.id}
+                className="flex flex-col justify-between p-6 rounded-2xl bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] shadow-2xs hover:border-[#EF592A] transition-all group"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">{m.icon}</span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#E4E9DD] dark:bg-[#28382F] text-[#28533D] dark:text-[#E4E9DD]">
+                      {m.complexity}
+                    </span>
+                  </div>
 
-            {/* Data Structure Categories Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {dataStructureCategories.map((category) => (
-                <div
-                  key={category.id}
-                  className={`p-6 rounded-lg border transition-all duration-300 hover:shadow-lg ${
-                    isDarkMode 
-                      ? 'bg-gray-800 border-gray-700 text-white hover:border-gray-600' 
-                      : 'bg-white border-gray-200 text-gray-900 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="text-6xl mb-4 text-center">{category.icon}</div>
-                  <h3 className="text-2xl font-semibold mb-3 text-center">{category.title}</h3>
-                  <p className={`text-sm mb-4 text-center ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    {category.description}
+                  <h3 className="text-xl font-extrabold tracking-tight group-hover:text-[#EF592A] transition-colors">
+                    {m.title}
+                  </h3>
+
+                  <p className="text-xs text-[#69665F] dark:text-[#A09D95] leading-relaxed">
+                    {m.desc}
                   </p>
-                  
-                  {/* Features */}
-                  <div className="mb-4">
-                    <h4 className={`font-semibold mb-2 ${
-                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                    }`}>
-                      Key Operations:
-                    </h4>
-                    <ul className="text-sm space-y-1">
-                      {category.features.map((feature, index) => (
-                        <li key={index} className="flex items-center">
-                          <span className="text-green-500 mr-2">✓</span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Complexity */}
-                  <div className={`text-xs p-2 rounded mb-4 ${
-                    isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-blue-50 text-blue-700'
-                  }`}>
-                    <div className="font-medium">Time Complexity:</div>
-                    <div className="font-mono">{category.complexity}</div>
-                  </div>
-
-                  {/* Action Button */}
-                  <button
-                    onClick={() => window.location.href = `/data-structures/${category.id}`}
-                    className={`w-full px-4 py-3 rounded-md font-semibold transition-all duration-300 ${
-                      category.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
-                      category.color === 'green' ? 'bg-green-600 hover:bg-green-700 text-white' :
-                      category.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700 text-white' :
-                      category.color === 'yellow' ? 'bg-yellow-600 hover:bg-yellow-700 text-white' :
-                      category.color === 'red' ? 'bg-red-600 hover:bg-red-700 text-white' :
-                      'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    }`}
-                  >
-                    Start Learning {category.title}
-                  </button>
                 </div>
-              ))}
-            </div>
 
-            {/* Quick Access Section */}
-            <div className={`text-center p-8 rounded-lg border ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-700 text-gray-300' 
-                : 'bg-gray-50 border-gray-200 text-gray-600'
-            }`}>
-              <div className="text-4xl mb-4">🚀</div>
-              <h3 className="text-2xl font-semibold mb-2">Ready to Master Data Structures?</h3>
-              <p className="text-lg mb-4">
-                Each data structure comes with interactive visualizations, step-by-step explanations, 
-                and complexity analysis to help you understand the concepts deeply.
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <button
-                  onClick={() => window.location.href = '/data-structures/stack'}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-semibold transition-colors"
-                >
-                  Start with Stack
-                </button>
-                <button
-                  onClick={() => window.location.href = '/data-structures/queue'}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-md font-semibold transition-colors"
-                >
-                  Try Queue
-                </button>
-                <button
-                  onClick={() => window.location.href = '/data-structures/linked-list'}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-semibold transition-colors"
-                >
-                  Explore Linked Lists
-                </button>
+                <div className="pt-6 mt-6 border-t border-[#DED9CE]/60 dark:border-[#383630]/60">
+                  <Link
+                    href={m.route}
+                    className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl font-mono text-xs font-bold bg-[#24231F] dark:bg-[#FFFDF8] text-[#FFFDF8] dark:text-[#24231F] hover:bg-[#EF592A] dark:hover:bg-[#EF592A] dark:hover:text-[#FFFDF8] transition-all shadow-xs"
+                  >
+                    <span>Launch Visualizer</span>
+                    <span>→</span>
+                  </Link>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
+        </main>
+
+        <Footer />
       </div>
     </ProtectedRoute>
   );

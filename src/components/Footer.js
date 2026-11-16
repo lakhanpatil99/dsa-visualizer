@@ -3,114 +3,119 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#080D1B] border-t border-white/[0.08] text-slate-400 py-16 transition-colors duration-300">
+    <footer className="w-full bg-[#F8F5ED] dark:bg-[#1A1916] border-t border-[#DED9CE] dark:border-[#2E2C27] py-12 sm:py-16 text-[#24231F] dark:text-[#FFFDF8] transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-          {/* Brand Col */}
-          <div className="space-y-4 md:col-span-1">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center font-black text-white text-base">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-[#DED9CE] dark:border-[#2E2C27]">
+          {/* Brand Info */}
+          <div className="md:col-span-5 space-y-4">
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg shadow-sm">
                 A
               </div>
-              <span className="text-xl font-black text-white tracking-tight">
-                Algo<span className="text-cyan-400">Mania</span>
+              <span className="text-xl font-black tracking-tight text-[#24231F] dark:text-[#FFFDF8]">
+                Algo<span className="text-[#EF592A]">Mania</span>
               </span>
             </Link>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Interactive Data Structures & Algorithms visual learning platform. Turn complex computer science concepts into intuitive step-by-step animations.
+            <p className="text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95] max-w-sm leading-relaxed">
+              An interactive visual laboratory for exploring data structures and algorithms through step-by-step state simulation and execution modeling.
             </p>
-            <div className="text-xs text-slate-500">
-              Built for students, software engineers, and coding interview preparation.
+            <div className="pt-1 text-[11px] font-mono text-[#69665F] dark:text-[#8E8B83]">
+              Curated for software engineers, computer science students, and interview preparation.
             </div>
           </div>
 
-          {/* Algorithms */}
-          <div>
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-200 mb-4">
+          {/* Column 1: Algorithms */}
+          <div className="md:col-span-2 space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] dark:text-[#FFFDF8]">
               Algorithms
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-xs text-[#69665F] dark:text-[#A09D95]">
               <li>
-                <Link href="/sorting" className="hover:text-cyan-400 transition-colors">
-                  Sorting Visualizers
+                <Link href="/sorting" className="hover:text-[#EF592A] transition-colors">
+                  Sorting Algorithms
                 </Link>
               </li>
               <li>
-                <Link href="/graphs" className="hover:text-cyan-400 transition-colors">
-                  Graph Traversal & BFS/DFS
+                <Link href="/graphs" className="hover:text-[#EF592A] transition-colors">
+                  Graph Traversals (BFS/DFS)
                 </Link>
               </li>
               <li>
-                <Link href="/trees" className="hover:text-cyan-400 transition-colors">
-                  Binary Search Trees & AVL
+                <Link href="/graphs/route-lab" className="hover:text-[#EF592A] transition-colors">
+                  Route &amp; Pathfinding Lab
                 </Link>
               </li>
               <li>
-                <Link href="/data-structures/searching" className="hover:text-cyan-400 transition-colors">
+                <Link href="/trees" className="hover:text-[#EF592A] transition-colors">
+                  Binary Search Trees
+                </Link>
+              </li>
+              <li>
+                <Link href="/data-structures/searching" className="hover:text-[#EF592A] transition-colors">
                   Searching Algorithms
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Data Structures */}
-          <div>
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-200 mb-4">
-              Data Structures
+          {/* Column 2: Advanced Labs */}
+          <div className="md:col-span-2 space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] dark:text-[#FFFDF8]">
+              Advanced Labs
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-xs text-[#69665F] dark:text-[#A09D95]">
               <li>
-                <Link href="/data-structures/linked-list" className="hover:text-cyan-400 transition-colors">
-                  Linked Lists
+                <Link href="/dynamic-programming" className="hover:text-[#EF592A] transition-colors">
+                  Dynamic Programming
                 </Link>
               </li>
               <li>
-                <Link href="/data-structures/stack" className="hover:text-cyan-400 transition-colors">
-                  Stacks (LIFO)
+                <Link href="/strings" className="hover:text-[#EF592A] transition-colors">
+                  String Pattern Matching
                 </Link>
               </li>
               <li>
-                <Link href="/data-structures/queue" className="hover:text-cyan-400 transition-colors">
-                  Queues (FIFO)
+                <Link href="/backtracking" className="hover:text-[#EF592A] transition-colors">
+                  Backtracking &amp; Recursion
                 </Link>
               </li>
               <li>
-                <Link href="/data-structures/hash-table" className="hover:text-cyan-400 transition-colors">
-                  Hash Tables
+                <Link href="/compare" className="hover:text-[#EF592A] transition-colors">
+                  Algorithm Compare Mode
                 </Link>
               </li>
               <li>
-                <Link href="/data-structures/heap" className="hover:text-cyan-400 transition-colors">
-                  Heaps & Priority Queues
+                <Link href="/algorithms" className="hover:text-[#EF592A] transition-colors">
+                  Curriculum Catalog
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Platform & Account */}
-          <div>
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-200 mb-4">
-              Platform
+          {/* Column 3: Platform */}
+          <div className="md:col-span-3 space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] dark:text-[#FFFDF8]">
+              Platform &amp; Account
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-xs text-[#69665F] dark:text-[#A09D95]">
               <li>
-                <Link href="/dashboard" className="hover:text-cyan-400 transition-colors">
+                <Link href="/app" className="hover:text-[#EF592A] transition-colors">
+                  Interactive Workspace
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard" className="hover:text-[#EF592A] transition-colors">
                   Learning Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-cyan-400 transition-colors">
+                <Link href="/login" className="hover:text-[#EF592A] transition-colors">
                   Sign In
                 </Link>
               </li>
               <li>
-                <Link href="/register" className="hover:text-cyan-400 transition-colors">
+                <Link href="/register" className="hover:text-[#EF592A] transition-colors">
                   Create Free Account
-                </Link>
-              </li>
-              <li>
-                <Link href="/account" className="hover:text-cyan-400 transition-colors">
-                  Account Settings
                 </Link>
               </li>
             </ul>
@@ -118,14 +123,14 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 space-y-4 sm:space-y-0">
-          <div>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#69665F] dark:text-[#8E8B83] gap-4">
+          <div className="font-mono">
             © {new Date().getFullYear()} AlgoMania. All rights reserved.
           </div>
-          <div className="flex items-center space-x-6">
-            <span>Interactive Learning Platform</span>
+          <div className="flex items-center space-x-4 text-[11px] font-mono">
+            <span>Next.js 14 + React 18</span>
             <span>•</span>
-            <span className="text-slate-400">Production Ready</span>
+            <span className="text-[#28533D] dark:text-[#76A889] font-bold">Deterministic Engine</span>
           </div>
         </div>
       </div>

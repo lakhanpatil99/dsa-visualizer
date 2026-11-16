@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 export const DarkModeContext = createContext({
-  isDarkMode: true,
+  isDarkMode: false,
   toggleDarkMode: () => {},
   setIsDarkMode: () => {}
 });
@@ -9,7 +9,7 @@ export const DarkModeContext = createContext({
 export const ThemeContext = DarkModeContext;
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     try {

@@ -3,7 +3,7 @@ import VisualizerCanvas from '../components/VisualizerCanvas';
 import PseudocodePanel from '../components/PseudocodePanel';
 import ComplexityBox from '../components/ComplexityBox';
 import VisualizerLayout from '../components/VisualizerLayout';
-import { DarkModeContext } from '../App';
+import { DarkModeContext } from '../../context/ThemeContext';
 import { Stack, stackPseudocode, stackComplexity } from '../algorithms/dataStructures/stack';
 import { Queue, queuePseudocode, queueComplexity } from '../algorithms/dataStructures/queue';
 import { 
@@ -21,9 +21,9 @@ import { MaxHeap, heapPseudocode, heapComplexity } from '../algorithms/dataStruc
 import { HashTable, hashTablePseudocode, hashTableComplexity } from '../algorithms/dataStructures/hashTable';
 import { SearchingAlgorithms, linearSearchPseudocode, binarySearchPseudocode, searchingComplexity } from '../algorithms/searching/searching';
 
-const DataStructureVisualizer = () => {
+const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
   const { isDarkMode } = useContext(DarkModeContext);
-  const [selectedStructure, setSelectedStructure] = useState('stack');
+  const [selectedStructure, setSelectedStructure] = useState(initialStructure);
   const [selectedLinkedListType, setSelectedLinkedListType] = useState('singly');
   const [selectedHashTableType, setSelectedHashTableType] = useState('separateChaining');
   const [selectedSearchType, setSelectedSearchType] = useState('linear');

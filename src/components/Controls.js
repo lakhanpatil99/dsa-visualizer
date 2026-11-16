@@ -1,237 +1,124 @@
 import React, { useContext } from 'react';
-import { DarkModeContext } from '../App';
+import { DarkModeContext } from '../../context/ThemeContext';
 
-const Controls = ({ 
-  isRunning, 
-  onStart, 
-  onPause, 
-  onNext, 
-  onReset, 
-  onSpeedChange, 
+export default function Controls({
+  isRunning = false,
+  onStart,
+  onPause,
+  onNext,
+  onPrevious,
+  onReset,
+  onSpeedChange,
   speed = 1,
-  canNext = false,
-  disabled = false 
-}) => {
+  canNext = true,
+  canPrevious = false,
+  currentStep = 0,
+  totalSteps = 0,
+  onScrub,
+  disabled = false
+}) {
   const { isDarkMode } = useContext(DarkModeContext);
 
-  const buttonClasses = (variant = 'default') => {
-    const baseClasses = "px-4 py-2 rounded-md font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2";
-    
-    switch (variant) {
-      case 'play':
-        return `${baseClasses} ${
-          isDarkMode 
-            ? 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500' 
-            : 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-400'
-        }`;
-      case 'pause':
-        return `${baseClasses} ${
-          isDarkMode 
-            ? 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500' 
-            : 'bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-400'
-        }`;
-      case 'next':
-        return `${baseClasses} ${
-          isDarkMode 
-            ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500' 
-            : 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-400'
-        }`;
-      case 'reset':
-        return `${baseClasses} ${
-          isDarkMode 
-            ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' 
-            : 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-400'
-        }`;
-      default:
-        return `${baseClasses} ${
-          isDarkMode 
-            ? 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500' 
-            : 'bg-gray-500 text-white hover:bg-gray-600 focus:ring-gray-400'
-        }`;
-    }
-  };
+  const speedOptions = [
+    { label: '0.5x', value: 0.5 },
+    { label: '1x', value: 1 },
+    { label: '2x', value: 2 },
+    { label: '4x', value: 4 }
+  ];
 
   return (
-    <div className={`w-full p-4 rounded-lg shadow-md transition-colors duration-200 ${
-      isDarkMode 
-        ? 'bg-gray-800 border border-gray-700' 
-        : 'bg-white border border-gray-200'
-    }`}>
-      <h3 className={`text-lg font-semibold mb-4 ${
-        isDarkMode ? 'text-white' : 'text-gray-800'
-      }`}>
-        Algorithm Controls
-      </h3>
-      
-      <div className="space-y-4">
-        {/* Control Buttons */}
-        <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
-          {/* Play Button */}
-          <button
-            onClick={onStart}
-            disabled={disabled || isRunning}
-            className={buttonClasses('play')}
-            aria-label="Start algorithm"
-          >
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-              </svg>
-              <span>Play</span>
-            </div>
-          </button>
+    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+      {/* Primary Actions: Play/Pause, Step, Prev, Reset */}
+      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        {/* Play/Pause Button */}
+        <button
+          type="button"
+          onClick={isRunning ? onPause : onStart}
+          disabled={disabled}
+          className="px-4 py-2 rounded-lg font-bold tracking-wider bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
+        >
+          <span>{isRunning ? 'PAUSE' : 'PLAY'}</span>
+          <span>{isRunning ? '⏸' : '▶'}</span>
+        </button>
 
-          {/* Pause Button */}
+        {/* Step Backward (if supported) */}
+        {onPrevious && (
           <button
-            onClick={onPause}
-            disabled={disabled || !isRunning}
-            className={buttonClasses('pause')}
-            aria-label="Pause algorithm"
+            type="button"
+            onClick={onPrevious}
+            disabled={disabled || !canPrevious || isRunning}
+            className="px-3 py-2 rounded-lg font-semibold bg-[#FFFDF8] dark:bg-[#24231F] text-[#24231F] dark:text-[#FFFDF8] border border-[#DED9CE] dark:border-[#383630] hover:border-[#24231F] dark:hover:border-[#FFFDF8] transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+            title="Step backward one operation"
           >
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 00-1 1v2a1 1 0 001 1h6a1 1 0 001-1V9a1 1 0 00-1-1H7z" clipRule="evenodd" />
-              </svg>
-              <span>Pause</span>
-            </div>
+            ⏮ PREV
           </button>
+        )}
 
-          {/* Next Step Button */}
+        {/* Step Forward */}
+        {onNext && (
           <button
+            type="button"
             onClick={onNext}
-            disabled={disabled || isRunning || !canNext}
-            className={buttonClasses('next')}
-            aria-label="Next step"
+            disabled={disabled || !canNext || isRunning}
+            className="px-3.5 py-2 rounded-lg font-semibold bg-[#FFFDF8] dark:bg-[#24231F] text-[#24231F] dark:text-[#FFFDF8] border border-[#DED9CE] dark:border-[#383630] hover:border-[#24231F] dark:hover:border-[#FFFDF8] transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+            title="Step forward one operation"
           >
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              <span>Next Step</span>
-            </div>
+            STEP ⏭
           </button>
+        )}
 
-          {/* Reset Button */}
+        {/* Reset Button */}
+        {onReset && (
           <button
+            type="button"
             onClick={onReset}
             disabled={disabled}
-            className={buttonClasses('reset')}
-            aria-label="Reset algorithm"
+            className="px-3 py-2 rounded-lg font-semibold text-[#69665F] dark:text-[#A09D95] hover:text-[#24231F] dark:hover:text-[#FFFDF8] border border-[#DED9CE] dark:border-[#383630] hover:bg-[#FFFDF8] dark:hover:bg-[#24231F] transition-colors disabled:opacity-40"
           >
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-              </svg>
-              <span>Reset</span>
-            </div>
+            RESET ↺
           </button>
-        </div>
-
-        {/* Speed Control */}
-        <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-          <label className={`text-sm font-medium ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-700'
-          }`}>
-            Speed:
-          </label>
-          <div className="flex items-center space-x-2">
-            <span className={`text-xs ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              Slow
-            </span>
-            <input
-              type="range"
-              min="0.1"
-              max="3"
-              step="0.1"
-              value={speed}
-              onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-              disabled={disabled}
-              className={`w-24 h-2 rounded-lg appearance-none cursor-pointer transition-colors ${
-                isDarkMode 
-                  ? 'bg-gray-600 slider-thumb-dark' 
-                  : 'bg-gray-200 slider-thumb-light'
-              } disabled:opacity-50`}
-            />
-            <span className={`text-xs ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              Fast
-            </span>
-          </div>
-          <span className={`text-sm font-mono ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>
-            {speed}x
-          </span>
-        </div>
-
-        {/* Status Indicator */}
-        <div className={`flex items-center justify-center sm:justify-start ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>
-          <div className={`flex items-center space-x-2 ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>
-            <div className={`w-3 h-3 rounded-full ${
-              isRunning 
-                ? 'bg-green-500 animate-pulse' 
-                : 'bg-gray-400'
-            }`}></div>
-            <span className="text-sm">
-              {isRunning ? 'Running...' : 'Ready'}
-            </span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Custom CSS for slider thumb */}
-      <style jsx>{`
-        .slider-thumb-light::-webkit-slider-thumb {
-          appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .slider-thumb-dark::-webkit-slider-thumb {
-          appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #60a5fa;
-          cursor: pointer;
-          border: 2px solid #374151;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .slider-thumb-light::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .slider-thumb-dark::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #60a5fa;
-          cursor: pointer;
-          border: 2px solid #374151;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-      `}</style>
+      {/* Center Timeline Scrubber (if totalSteps > 0) */}
+      {totalSteps > 0 && (
+        <div className="flex items-center space-x-2 w-full sm:w-64">
+          <span className="text-[11px] text-[#69665F] shrink-0 font-bold">
+            {currentStep}/{totalSteps}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={totalSteps}
+            value={currentStep}
+            disabled={disabled || isRunning}
+            onChange={(e) => onScrub && onScrub(Number(e.target.value))}
+            className="w-full accent-[#EF592A] cursor-pointer disabled:cursor-not-allowed"
+          />
+        </div>
+      )}
+
+      {/* Speed Controls */}
+      <div className="flex items-center space-x-1.5 self-end sm:self-auto">
+        <span className="text-[#69665F] dark:text-[#A09D95] font-bold text-[11px] mr-1">
+          SPEED:
+        </span>
+        {speedOptions.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onSpeedChange && onSpeedChange(opt.value)}
+            disabled={disabled}
+            className={`px-2 py-1 rounded text-[11px] font-bold transition-all ${
+              speed === opt.value
+                ? 'bg-[#24231F] dark:bg-[#FFFDF8] text-[#FFFDF8] dark:text-[#24231F]'
+                : 'bg-[#FFFDF8] dark:bg-[#24231F] text-[#69665F] dark:text-[#A09D95] border border-[#DED9CE] dark:border-[#383630] hover:text-[#24231F]'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
-};
-
-export default Controls;
+}

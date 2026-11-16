@@ -3,7 +3,8 @@ import VisualizerCanvas from '../components/VisualizerCanvas';
 import PseudocodePanel from '../components/PseudocodePanel';
 import ComplexityBox from '../components/ComplexityBox';
 import VisualizerLayout from '../components/VisualizerLayout';
-import { DarkModeContext } from '../App';
+import SaveProgressButton from '../components/SaveProgressButton';
+import { DarkModeContext } from '../../context/ThemeContext';
 import { BinarySearchTree, bstPseudocode, bstComplexity } from '../algorithms/trees/bst';
 import { 
   inorderTraversal, 
@@ -13,44 +14,35 @@ import {
   traversalComplexity
 } from '../algorithms/trees/traversals';
 
+const INITIAL_TREE_VALUES = [50, 25, 75, 15, 35, 60, 85];
+
 const TreeVisualizer = () => {
   const { isDarkMode } = useContext(DarkModeContext);
-  const [bst, setBst] = useState(new BinarySearchTree());
+  const [bst, setBst] = useState(() => {
+    const tree = new BinarySearchTree();
+    INITIAL_TREE_VALUES.forEach(v => tree.insert(v));
+    return tree;
+  });
   const [inputValue, setInputValue] = useState('');
   const [traversalResult, setTraversalResult] = useState([]);
   const [selectedTraversal, setSelectedTraversal] = useState('inorder');
-  const [pseudocode, setPseudocode] = useState(bstPseudocode);
-  const [complexity, setComplexity] = useState(bstComplexity);
   const [showTraversal, setShowTraversal] = useState(false);
   const [isTraversing, setIsTraversing] = useState(false);
   const [currentTraversalNode, setCurrentTraversalNode] = useState(null);
   const [visitedNodes, setVisitedNodes] = useState(new Set());
   const [insertingNode, setInsertingNode] = useState(null);
 
-  useEffect(() => {
-    if (showTraversal) {
-      setPseudocode(treeTraversalPseudocode);
-      setComplexity(traversalComplexity);
-    } else {
-      setPseudocode(bstPseudocode);
-      setComplexity(bstComplexity);
-    }
-  }, [showTraversal]);
+  const pseudocode = showTraversal ? treeTraversalPseudocode : bstPseudocode;
+  const complexity = showTraversal ? traversalComplexity : bstComplexity;
 
   const handleAdd = () => {
     if (!inputValue.trim()) return;
-    
-    const value = parseInt(inputValue);
+    const value = parseInt(inputValue, 10);
     if (isNaN(value)) return;
-    
-    // Animate insertion
+
     setInsertingNode(value);
-    
     setTimeout(() => {
-      // Create a new BST instance with the inserted value
       const newBst = new BinarySearchTree();
-      
-      // Copy existing nodes
       if (bst.root) {
         const copyTree = (node) => {
           if (node) {
@@ -61,594 +53,292 @@ const TreeVisualizer = () => {
         };
         copyTree(bst.root);
       }
-      
-      // Insert the new value
       newBst.insert(value);
-      
-      setInputValue('');
-      setInsertingNode(null);
       setBst(newBst);
-    }, 500);
-  };
-
-  const handleRemove = () => {
-    if (!inputValue.trim()) return;
-    
-    const value = parseInt(inputValue);
-    if (isNaN(value)) return;
-    
-    // Create a new BST instance without the removed value
-    const newBst = new BinarySearchTree();
-    
-    // Copy existing nodes except the one to remove
-    if (bst.root) {
-      const copyTree = (node) => {
-        if (node && node.data !== value) {
-          newBst.insert(node.data);
-          copyTree(node.left);
-          copyTree(node.right);
-        }
-      };
-      copyTree(bst.root);
-    }
-    
-    setInputValue('');
-    setBst(newBst);
-  };
-
-  const handleSearch = () => {
-    if (!inputValue.trim()) return;
-    
-    const value = parseInt(inputValue);
-    if (isNaN(value)) return;
-    
-    const found = bst.search(value);
-    alert(found ? `Value ${value} found in the tree!` : `Value ${value} not found in the tree.`);
-  };
-
-  const animateTraversal = async (traversalFunction, root) => {
-    if (!root) return [];
-    
-    setIsTraversing(true);
-    setVisitedNodes(new Set());
-    setCurrentTraversalNode(null);
-    setTraversalResult([]);
-    
-    const result = [];
-    const visited = new Set();
-    
-    // Create a copy of the tree for traversal
-    const traverse = async (node) => {
-      if (!node) return;
-      
-      // Highlight current node
-      setCurrentTraversalNode(node.data);
-      visited.add(node.data);
-      setVisitedNodes(new Set(visited));
-      
-      // Wait for animation
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Add to result based on traversal type
-      if (selectedTraversal === 'preorder') {
-        result.push(node.data);
-      }
-      
-      // Traverse left subtree
-      if (node.left) {
-        await traverse(node.left);
-      }
-      
-      // Add to result for inorder
-      if (selectedTraversal === 'inorder') {
-        result.push(node.data);
-      }
-      
-      // Traverse right subtree
-      if (node.right) {
-        await traverse(node.right);
-      }
-      
-      // Add to result for postorder
-      if (selectedTraversal === 'postorder') {
-        result.push(node.data);
-      }
-    };
-    
-    await traverse(root);
-    
-    // Update result and stop traversal
-    setTraversalResult(result);
-    setCurrentTraversalNode(null);
-    setIsTraversing(false);
-    setShowTraversal(true);
-  };
-
-  const handleTraversal = () => {
-    if (isTraversing) return;
-    
-    switch (selectedTraversal) {
-      case 'inorder':
-        animateTraversal(inorderTraversal, bst.root);
-        break;
-      case 'preorder':
-        animateTraversal(preorderTraversal, bst.root);
-        break;
-      case 'postorder':
-        animateTraversal(postorderTraversal, bst.root);
-        break;
-      case 'levelorder':
-        // Level order needs special handling
-        handleLevelOrderTraversal();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleLevelOrderTraversal = async () => {
-    if (!bst.root) return;
-    
-    setIsTraversing(true);
-    setVisitedNodes(new Set());
-    setCurrentTraversalNode(null);
-    setTraversalResult([]);
-    
-    const result = [];
-    const visited = new Set();
-    const queue = [bst.root];
-    
-    while (queue.length > 0) {
-      const levelSize = queue.length;
-      const levelResult = [];
-      
-      for (let i = 0; i < levelSize; i++) {
-        const node = queue.shift();
-        
-        // Highlight current node
-        setCurrentTraversalNode(node.data);
-        visited.add(node.data);
-        setVisitedNodes(new Set(visited));
-        
-        // Add to level result
-        levelResult.push(node.data);
-        
-        // Add children to queue
-        if (node.left) queue.push(node.left);
-        if (node.right) queue.push(node.right);
-        
-        // Wait for animation
-        await new Promise(resolve => setTimeout(resolve, 600));
-      }
-      
-      result.push(...levelResult);
-    }
-    
-    setTraversalResult(result);
-    setCurrentTraversalNode(null);
-    setIsTraversing(false);
-    setShowTraversal(true);
+      setInsertingNode(null);
+      setInputValue('');
+    }, 400);
   };
 
   const handleClear = () => {
-    const newBst = new BinarySearchTree();
-    setBst(newBst);
+    setBst(new BinarySearchTree());
     setTraversalResult([]);
-    setShowTraversal(false);
     setVisitedNodes(new Set());
     setCurrentTraversalNode(null);
-    setInsertingNode(null);
+  };
+
+  const handleResetDefault = () => {
+    const tree = new BinarySearchTree();
+    INITIAL_TREE_VALUES.forEach(v => tree.insert(v));
+    setBst(tree);
+    setTraversalResult([]);
+    setVisitedNodes(new Set());
+    setCurrentTraversalNode(null);
+  };
+
+  const handleTraversal = async () => {
+    if (isTraversing || !bst.root) return;
+
+    setIsTraversing(true);
+    setShowTraversal(true);
+    setVisitedNodes(new Set());
+    setCurrentTraversalNode(null);
+    setTraversalResult([]);
+
+    let order = [];
+    switch (selectedTraversal) {
+      case 'inorder':
+        order = bst.inorder();
+        break;
+      case 'preorder':
+        order = bst.preorder();
+        break;
+      case 'postorder':
+        order = bst.postorder();
+        break;
+      case 'levelorder':
+        order = bst.levelOrder();
+        break;
+      default:
+        order = bst.inorder();
+    }
+
+    const currentVisited = new Set();
+    const resultAcc = [];
+
+    for (let i = 0; i < order.length; i++) {
+      const val = order[i];
+      setCurrentTraversalNode(val);
+      await new Promise(r => setTimeout(r, 450));
+      currentVisited.add(val);
+      setVisitedNodes(new Set(currentVisited));
+      resultAcc.push(val);
+      setTraversalResult([...resultAcc]);
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    setCurrentTraversalNode(null);
+    setIsTraversing(false);
   };
 
   const calculateNodePosition = (node, level, position, totalWidth) => {
-    if (!node) return { x: 0, y: 0 };
-    
-    const levelHeight = 80;
-    const y = 50 + level * levelHeight;
-    
-    // Calculate x position based on inorder position
-    const inorderArray = bst.inorder();
-    const nodeIndex = inorderArray.indexOf(node.data);
-    const levelWidth = totalWidth / Math.max(1, inorderArray.length);
-    const x = 50 + nodeIndex * levelWidth + levelWidth / 2;
-    
+    const y = 50 + level * 70;
+    const levelWidth = totalWidth / Math.pow(2, level);
+    const x = levelWidth * position + levelWidth / 2;
     return { x, y };
   };
 
-  const renderNode = (node, level, position, totalWidth, parentPos = null) => {
+  const renderNode = (node, level = 0, position = 0, totalWidth = 800, parentPos = null) => {
     if (!node) return null;
-    
     const { x, y } = calculateNodePosition(node, level, position, totalWidth);
-    
-    // Determine node styling based on state
-    let nodeFill = isDarkMode ? "#3B82F6" : "#2563EB"; // Default blue
-    let nodeStroke = isDarkMode ? "#1E40AF" : "#1D4ED8";
-    
-    if (currentTraversalNode === node.data) {
-      nodeFill = "#EF4444"; // Red for current traversal node
-      nodeStroke = "#DC2626";
-    } else if (visitedNodes.has(node.data)) {
-      nodeFill = "#10B981"; // Green for visited nodes
-      nodeStroke = "#059669";
-    } else if (insertingNode === node.data) {
-      nodeFill = "#F59E0B"; // Orange for inserting node
-      nodeStroke = "#D97706";
+
+    const isCurrent = currentTraversalNode === node.data;
+    const isVisited = visitedNodes.has(node.data);
+    const isInserting = insertingNode === node.data;
+
+    let nodeFill = isDarkMode ? '#24231F' : '#FFFDF8';
+    let nodeStroke = isDarkMode ? '#5E5B54' : '#24231F';
+    let textFill = isDarkMode ? '#FFFDF8' : '#24231F';
+
+    if (isCurrent) {
+      nodeFill = '#EF592A';
+      nodeStroke = '#EF592A';
+      textFill = '#FFFDF8';
+    } else if (isVisited) {
+      nodeFill = '#28533D';
+      nodeStroke = '#28533D';
+      textFill = '#FFFDF8';
+    } else if (isInserting) {
+      nodeFill = '#D97706';
+      nodeStroke = '#D97706';
+      textFill = '#FFFDF8';
     }
-    
+
     return (
       <g key={`${node.data}-${x}-${y}`}>
-        {/* Draw connection to parent */}
         {parentPos && (
           <line
             x1={parentPos.x}
             y1={parentPos.y}
             x2={x}
             y2={y}
-            stroke={isDarkMode ? "#6B7280" : "#9CA3AF"}
+            stroke={isDarkMode ? '#4B4842' : '#DED9CE'}
             strokeWidth="2"
-            className="transition-all duration-300"
           />
         )}
-        
-        {/* Draw node with animation */}
         <circle
           cx={x}
           cy={y}
-          r="20"
+          r="19"
           fill={nodeFill}
           stroke={nodeStroke}
-          strokeWidth="2"
+          strokeWidth="2.5"
           className="transition-all duration-300"
         />
-        
-        {/* Draw node value */}
         <text
           x={x}
-          y={y + 5}
+          y={y + 4.5}
           textAnchor="middle"
-          fill="white"
-          fontSize="12"
+          fill={textFill}
+          fontSize="11"
+          fontFamily="monospace"
           fontWeight="bold"
-          className="transition-all duration-300"
         >
           {node.data}
         </text>
-        
-        {/* Draw left child */}
-        {node.left && (
-          <g>
-            {renderNode(
-              node.left,
-              level + 1,
-              position * 2,
-              totalWidth,
-              { x, y }
-            )}
-          </g>
-        )}
-        
-        {/* Draw right child */}
-        {node.right && (
-          <g>
-            {renderNode(
-              node.right,
-              level + 1,
-              position * 2 + 1,
-              totalWidth,
-              { x, y }
-            )}
-          </g>
-        )}
+        {node.left && renderNode(node.left, level + 1, position * 2, totalWidth, { x, y })}
+        {node.right && renderNode(node.right, level + 1, position * 2 + 1, totalWidth, { x, y })}
       </g>
     );
   };
 
-  const renderTree = () => {
-    if (!bst.root) {
-      return (
-        <div className={`flex items-center justify-center h-full ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-        }`}>
-          <div className="text-center">
-            <div className="text-4xl mb-2">🌳</div>
-            <div>Tree is empty. Add some nodes to get started!</div>
-          </div>
-        </div>
-      );
-    }
-    
-    const totalWidth = 700;
-    return (
-      <svg width="800" height="400" className="w-full h-full">
-        {renderNode(bst.root, 0, 0, totalWidth)}
-      </svg>
-    );
-  };
-
-  // Left Sidebar Content
   const renderLeftSidebar = () => (
-    <div className="space-y-6">
-      {/* Tree Controls */}
-      <div className={`rounded-lg p-4 transition-all duration-300 ${
-        isDarkMode 
-          ? 'bg-gray-700 border border-gray-600' 
-          : 'bg-gray-50 border border-gray-200'
+    <div className="space-y-5">
+      {/* Insert & Tree Controls */}
+      <div className={`p-4 rounded-2xl border transition-all ${
+        isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
       }`}>
-        <h3 className={`text-lg font-semibold mb-3 ${
-          isDarkMode ? 'text-white' : 'text-gray-800'
-        }`}>
-          Tree Controls
-        </h3>
-        <div className="space-y-3">
+        <span className="block text-[10px] font-mono tracking-widest text-[#EF592A] uppercase font-bold mb-2">
+          TREE OPERATIONS
+        </span>
+        <div className="space-y-2.5">
           <input
             type="number"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter a number"
-            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-              isDarkMode 
-                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-            }`}
+            placeholder="Enter node number"
+            className="w-full p-2.5 rounded-xl border text-xs font-mono font-bold bg-[#FAF8F3] dark:bg-[#1D1C19] border-[#DED9CE] dark:border-[#383630] outline-none focus:border-[#EF592A]"
           />
           <div className="grid grid-cols-2 gap-2">
             <button
+              type="button"
               onClick={handleAdd}
-              disabled={isTraversing}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              disabled={isTraversing || !inputValue.trim()}
+              className="py-2 rounded-xl font-mono text-xs font-bold bg-[#28533D] hover:bg-[#1E3E2E] text-[#FFFDF8] disabled:opacity-40"
             >
-              Insert
+              + Insert Node
             </button>
             <button
-              onClick={handleRemove}
+              type="button"
+              onClick={handleResetDefault}
               disabled={isTraversing}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="py-2 rounded-xl font-mono text-xs font-bold bg-[#FAF8F3] dark:bg-[#1D1C19] border border-[#DED9CE] dark:border-[#383630] hover:border-[#EF592A]"
             >
-              Remove
+              Reset Default
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={handleSearch}
-              disabled={isTraversing}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            >
-              Search
-            </button>
-            <button
-              onClick={handleClear}
-              disabled={isTraversing}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            >
-              Clear
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={isTraversing}
+            className="w-full py-1.5 rounded-xl font-mono text-[11px] text-[#A09D95] hover:text-[#EF592A] transition-colors"
+          >
+            Clear Entire Tree
+          </button>
         </div>
       </div>
 
-      {/* Tree Info */}
-      <div className={`rounded-lg p-4 transition-all duration-300 ${
-        isDarkMode 
-          ? 'bg-gray-700 border border-gray-600' 
-          : 'bg-gray-50 border border-gray-200'
+      {/* Traversal Selector */}
+      <div className={`p-4 rounded-2xl border transition-all ${
+        isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
       }`}>
-        <h3 className={`text-lg font-semibold mb-3 ${
-          isDarkMode ? 'text-white' : 'text-gray-800'
-        }`}>
-          Binary Search Tree
-        </h3>
-        <p className={`text-sm ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>
-          A hierarchical data structure where each node has at most two children, with values organized for efficient searching.
-        </p>
-      </div>
-
-      {/* Tree Statistics */}
-      <div className={`rounded-lg p-4 transition-all duration-300 ${
-        isDarkMode 
-          ? 'bg-gray-700 border border-gray-600' 
-          : 'bg-gray-50 border border-gray-200'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-3 ${
-          isDarkMode ? 'text-white' : 'text-gray-800'
-        }`}>
-          Tree Statistics
-        </h3>
-        <div className={`space-y-2 text-sm ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>
-          <div className="flex justify-between">
-            <span>Height:</span>
-            <span className="font-mono">{bst.getHeight()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Size:</span>
-            <span className="font-mono">{bst.inorder().length}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Root:</span>
-            <span className="font-mono">{bst.root ? bst.root.data : 'None'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Traversal Selection */}
-      <div className={`rounded-lg p-4 transition-all duration-300 ${
-        isDarkMode 
-          ? 'bg-gray-700 border border-gray-600' 
-          : 'bg-gray-50 border border-gray-200'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-3 ${
-          isDarkMode ? 'text-white' : 'text-gray-800'
-        }`}>
-          Traversal Type
-        </h3>
+        <span className="block text-[10px] font-mono tracking-widest text-[#69665F] dark:text-[#A09D95] uppercase font-bold mb-2">
+          TRAVERSAL ROUTINE
+        </span>
         <select
           value={selectedTraversal}
           onChange={(e) => setSelectedTraversal(e.target.value)}
           disabled={isTraversing}
-          className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all duration-200 ${
-            isDarkMode 
-              ? 'bg-gray-600 border-gray-500 text-white' 
-              : 'bg-white border-gray-300 text-gray-900'
-          }`}
+          aria-label="Select traversal routine"
+          className="w-full p-2.5 rounded-xl border text-xs font-mono font-bold bg-[#FAF8F3] dark:bg-[#1D1C19] border-[#DED9CE] dark:border-[#383630] outline-none"
         >
-          <option value="inorder">Inorder</option>
-          <option value="preorder">Preorder</option>
-          <option value="postorder">Postorder</option>
-          <option value="levelorder">Level Order</option>
+          <option value="inorder">Inorder (Left, Root, Right)</option>
+          <option value="preorder">Preorder (Root, Left, Right)</option>
+          <option value="postorder">Postorder (Left, Right, Root)</option>
+          <option value="levelorder">Level Order (BFS)</option>
         </select>
-      </div>
-    </div>
-  );
-
-  // Right Sidebar Content
-  const renderRightSidebar = () => (
-    <div className="space-y-6">
-      {/* Complexity Box */}
-      <ComplexityBox
-        timeComplexity={complexity.insert || complexity.inorder || 'O(h)'}
-        spaceComplexity={complexity.space}
-        bestCase={complexity.bestCase}
-        averageCase={complexity.averageCase}
-        worstCase={complexity.worstCase}
-      />
-
-      {/* Pseudocode Panel */}
-      <PseudocodePanel
-        title={showTraversal ? "Tree Traversal Algorithms" : "Binary Search Tree Implementation"}
-        code={pseudocode}
-      />
-
-      {/* Traversal Result */}
-      {showTraversal && traversalResult.length > 0 && (
-        <div className={`rounded-lg p-4 transition-all duration-300 ${
-          isDarkMode 
-            ? 'bg-gray-700 border border-gray-600' 
-            : 'bg-gray-50 border border-gray-200'
-        }`}>
-          <h3 className={`text-lg font-semibold mb-3 ${
-            isDarkMode ? 'text-white' : 'text-gray-800'
-          }`}>
-            {selectedTraversal.charAt(0).toUpperCase() + selectedTraversal.slice(1)} Traversal Result
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {traversalResult.map((value, index) => (
-              <div
-                key={index}
-                className="w-12 h-12 bg-green-500 text-white rounded-md flex items-center justify-center font-bold text-lg transition-all duration-300"
-              >
-                {value}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  // Bottom Controls
-  const renderBottomControls = () => (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
         <button
+          type="button"
           onClick={handleTraversal}
           disabled={isTraversing || !bst.root}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          className="w-full mt-3 py-2.5 rounded-xl font-mono text-xs font-bold bg-[#EF592A] hover:bg-[#D9481B] text-[#FFFDF8] shadow-xs disabled:opacity-40"
         >
-          {isTraversing ? 'Traversing...' : 'Run Traversal'}
+          {isTraversing ? 'Traversing Tree...' : 'Execute Traversal'}
         </button>
-        
-        <div className={`flex items-center space-x-4 text-sm ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-            <span>Normal Node</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-            <span>Current Node</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-            <span>Visited Node</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-            <span>Inserting Node</span>
-          </div>
-        </div>
       </div>
-      
-      <div className={`text-sm ${
-        isDarkMode ? 'text-gray-300' : 'text-gray-600'
-      }`}>
-        <strong>Status:</strong> {isTraversing ? 'Traversing...' : 'Ready'}
-      </div>
+
+      <SaveProgressButton
+        algorithmType="trees"
+        algorithmName={`BST ${selectedTraversal}`}
+        currentState={{ values: bst.inorder() }}
+        stepsCompleted={traversalResult.length}
+        totalSteps={bst.inorder().length || 7}
+      />
+    </div>
+  );
+
+  const renderRightSidebar = () => (
+    <div className="space-y-5">
+      <ComplexityBox
+        complexity={complexity}
+        title="Tree & Traversal Specs"
+      />
+      <PseudocodePanel
+        title="Traversal Logic"
+        code={pseudocode}
+        currentLine={1}
+      />
     </div>
   );
 
   return (
     <VisualizerLayout
-      title="Tree Algorithms - AlgoMania"
-      subtitle="Visualize binary search trees and tree traversal algorithms"
+      title="Binary Search Tree & Traversals"
+      subtitle="Interactive hierarchical binary tree operations with step-by-step depth and breadth traversals"
+      category="Tree Structures"
+      complexityBadge="O(h) = O(log n)"
       leftSidebar={renderLeftSidebar()}
       rightSidebar={renderRightSidebar()}
-      bottomControls={renderBottomControls()}
     >
-      {/* Center Visualization Area */}
-      <div className="h-full flex flex-col">
-        {/* Tree Visualization */}
-        <div className="flex-1 mb-6">
-          <VisualizerCanvas 
-            width="100%" 
-            height="100%"
-            title="Binary Search Tree Visualization"
+      <div className="h-full flex flex-col space-y-4">
+        <div className="flex-1">
+          <VisualizerCanvas
+            width={900}
+            height={400}
+            title="Binary Search Tree Canvas"
           >
-            {renderTree()}
+            {bst.root ? (
+              <svg width="100%" height="380" viewBox="0 0 800 380" className="w-full h-full">
+                {renderNode(bst.root, 0, 0, 800)}
+              </svg>
+            ) : (
+              <div className="flex items-center justify-center h-full text-center p-8 text-xs font-mono text-[#69665F]">
+                Tree is currently empty. Click "Reset Default" or "+ Insert Node" to begin.
+              </div>
+            )}
           </VisualizerCanvas>
         </div>
 
-        {/* Tree Status */}
-        <div className={`rounded-lg p-4 transition-all duration-300 ${
-          isDarkMode 
-            ? 'bg-gray-700 border border-gray-600' 
-            : 'bg-gray-50 border border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className={`text-sm ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                <strong>Tree Height:</strong> {bst.getHeight()}
-              </span>
-              <span className={`text-sm ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                <strong>Node Count:</strong> {bst.inorder().length}
-              </span>
-              <span className={`text-sm ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                <strong>Current Traversal:</strong> {selectedTraversal.charAt(0).toUpperCase() + selectedTraversal.slice(1)}
-              </span>
-            </div>
-            <div className={`flex items-center space-x-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}>
-              <div className={`w-3 h-3 rounded-full ${
-                isTraversing 
-                  ? 'bg-blue-500 animate-pulse' 
-                  : 'bg-green-500'
-              }`}></div>
-              <span className="text-sm">
-                {isTraversing ? 'Traversing...' : 'Ready'}
-              </span>
+        {/* Traversal Result Tape */}
+        {traversalResult.length > 0 && (
+          <div className={`p-4 rounded-2xl border transition-all ${
+            isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+          }`}>
+            <span className="block text-[10px] font-mono tracking-widest text-[#28533D] dark:text-[#E4E9DD] uppercase font-bold mb-2">
+              {selectedTraversal.toUpperCase()} TRAVERSAL ORDER
+            </span>
+            <div className="flex flex-wrap gap-1.5 font-mono text-xs">
+              {traversalResult.map((val, idx) => (
+                <div
+                  key={idx}
+                  className="px-3 py-1 rounded-lg bg-[#E4E9DD] dark:bg-[#28382F] text-[#28533D] dark:text-[#E4E9DD] font-bold"
+                >
+                  {val}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </VisualizerLayout>
   );

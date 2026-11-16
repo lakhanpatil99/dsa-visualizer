@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { DarkModeContext } from '../App';
+import { DarkModeContext } from '../../context/ThemeContext';
 
 const VisualizerCanvas = ({ 
   children, 
@@ -11,29 +11,37 @@ const VisualizerCanvas = ({
   const { isDarkMode } = useContext(DarkModeContext);
 
   return (
-    <div className={`rounded-lg shadow-md transition-colors duration-200 ${
+    <div className={`rounded-2xl shadow-xs border transition-colors duration-200 overflow-hidden ${
       isDarkMode 
-        ? 'bg-gray-800 border border-gray-700' 
-        : 'bg-white border border-gray-200'
+        ? 'bg-[#24231F] border-[#383630]' 
+        : 'bg-[#FFFDF8] border-[#DED9CE]'
     } ${className}`}>
       {/* Canvas Header */}
-      <div className={`px-4 py-3 border-b ${
-        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+      <div className={`px-5 py-3.5 border-b flex items-center justify-between transition-colors ${
+        isDarkMode ? 'border-[#383630] bg-[#1F1E1B]' : 'border-[#DED9CE] bg-[#FAF8F3]'
       }`}>
-        <h3 className={`text-lg font-semibold ${
-          isDarkMode ? 'text-white' : 'text-gray-800'
-        }`}>
-          {title}
-        </h3>
+        <div className="flex items-center space-x-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#EF592A]"></span>
+          <h3 className={`text-sm font-mono font-bold tracking-tight uppercase ${
+            isDarkMode ? 'text-[#FFFDF8]' : 'text-[#24231F]'
+          }`}>
+            {title}
+          </h3>
+        </div>
+        <span className="text-[11px] font-mono text-[#69665F] dark:text-[#A09D95]">
+          LIVE CANVAS
+        </span>
       </div>
       
       {/* Canvas Content */}
-      <div className={`p-4 ${
-        isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+      <div className={`p-4 sm:p-6 transition-colors ${
+        isDarkMode ? 'bg-[#1A1916]' : 'bg-[#FAF8F3]'
       }`}>
         <div 
-          className={`w-full h-full rounded-md overflow-hidden ${
-            isDarkMode ? 'bg-gray-900' : 'bg-white'
+          className={`w-full h-full rounded-xl overflow-hidden transition-colors border ${
+            isDarkMode 
+              ? 'bg-[#24231F] border-[#383630]' 
+              : 'bg-[#FFFDF8] border-[#E8E4DA]'
           }`}
           style={{ 
             minHeight: `${height}px`,
