@@ -6,6 +6,7 @@ import ComplexityBox from '../components/ComplexityBox';
 import VisualizerLayout from '../components/VisualizerLayout';
 import SaveProgressButton from '../components/SaveProgressButton';
 import { DarkModeContext } from '../../context/ThemeContext';
+import { dispatchAudio, AudioEventTypes } from '../audio';
 
 import { bubbleSort, bubbleSortPseudocode, bubbleSortComplexity } from '../algorithms/sorting/bubbleSort';
 import { selectionSort, selectionSortPseudocode, selectionSortComplexity } from '../algorithms/sorting/selectionSort';
@@ -166,9 +167,15 @@ const SortingVisualizer = () => {
       if (isSwap) {
         localSwaps++;
         setSwaps(localSwaps);
+        const val = arrSnapshot[currIdx] || 50;
+        dispatchAudio(AudioEventTypes.SORT_SWAP, { valueRatio: val / 100 });
+      } else if (pivIdx !== -1 && (pivIdx === currIdx || pivIdx === compIdx)) {
+        dispatchAudio(AudioEventTypes.SORT_PIVOT);
       } else if (currIdx !== -1 && compIdx !== -1) {
         localComparisons++;
         setComparisons(localComparisons);
+        const val = arrSnapshot[currIdx] || 50;
+        dispatchAudio(AudioEventTypes.SORT_COMPARE, { valueRatio: val / 100 });
       }
     };
 
@@ -181,6 +188,7 @@ const SortingVisualizer = () => {
         setComparingIndex(-1);
         setPivotIndex(-1);
         setSortedIndices(new Set(Array.from({ length: sortedResult.length }, (_, i) => i)));
+        dispatchAudio(AudioEventTypes.SORT_COMPLETE, { priority: true, force: true });
       }
     } catch (e) {
       console.error('Sorting execution error:', e);

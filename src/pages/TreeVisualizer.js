@@ -5,6 +5,7 @@ import ComplexityBox from '../components/ComplexityBox';
 import VisualizerLayout from '../components/VisualizerLayout';
 import SaveProgressButton from '../components/SaveProgressButton';
 import { DarkModeContext } from '../../context/ThemeContext';
+import { dispatchAudio, AudioEventTypes } from '../audio';
 import { BinarySearchTree, bstPseudocode, bstComplexity } from '../algorithms/trees/bst';
 import {
   inorderTraversal,
@@ -40,6 +41,7 @@ const TreeVisualizer = () => {
     if (isNaN(value)) return;
 
     setInsertingNode(value);
+    dispatchAudio(AudioEventTypes.TREE_INSERT, { pitch: 0.8 + ((value % 50) / 100) });
     setTimeout(() => {
       const newBst = new BinarySearchTree();
       if (bst.root) {
@@ -108,6 +110,7 @@ const TreeVisualizer = () => {
     for (let i = 0; i < order.length; i++) {
       const val = order[i];
       setCurrentTraversalNode(val);
+      dispatchAudio(AudioEventTypes.TREE_TRAVERSE, { pitch: 0.7 + (i / Math.max(1, order.length)) * 0.6 });
       await new Promise(r => setTimeout(r, 450));
       currentVisited.add(val);
       setVisitedNodes(new Set(currentVisited));
@@ -118,6 +121,7 @@ const TreeVisualizer = () => {
 
     setCurrentTraversalNode(null);
     setIsTraversing(false);
+    dispatchAudio(AudioEventTypes.ALGO_COMPLETE, { priority: true, force: true });
   };
 
   const calculateNodePosition = (node, level, position, totalWidth) => {

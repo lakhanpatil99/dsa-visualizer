@@ -10,6 +10,7 @@ import VisualizerLayout from '../src/components/VisualizerLayout';
 import { DarkModeContext } from '../context/ThemeContext';
 
 import { kmpSearch, computePiTable, kmpComplexity } from '../src/algorithms/strings/kmp';
+import { dispatchAudio, AudioEventTypes } from '../src/audio';
 
 export default function StringsPage() {
   const { isDarkMode } = useContext(DarkModeContext);
@@ -23,6 +24,28 @@ export default function StringsPage() {
     const res = kmpSearch(text, pattern);
     setKmpResult(res);
     setCurrentStepIdx(0);
+    if (res.matches && res.matches.length > 0) {
+      dispatchAudio(AudioEventTypes.STRING_PATTERN_FOUND, { priority: true, force: true });
+    } else {
+      dispatchAudio(AudioEventTypes.UI_SUCCESS);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (currentStepIdx < kmpResult.trace.length - 1) {
+      const nextIdx = currentStepIdx + 1;
+      setCurrentStepIdx(nextIdx);
+      const st = kmpResult.trace[nextIdx];
+      if (st) {
+        if (st.type === 'match') {
+          dispatchAudio(AudioEventTypes.STRING_MATCH);
+        } else if (st.type === 'pattern_found') {
+          dispatchAudio(AudioEventTypes.STRING_PATTERN_FOUND, { priority: true, force: true });
+        } else {
+          dispatchAudio(AudioEventTypes.STRING_MISMATCH);
+        }
+      }
+    }
   };
 
   const currentStep = kmpResult.trace[currentStepIdx] || null;
@@ -86,7 +109,7 @@ export default function StringsPage() {
           <button
             type="button"
             disabled={currentStepIdx >= kmpResult.trace.length - 1}
-            onClick={() => setCurrentStepIdx(p => Math.min(kmpResult.trace.length - 1, p + 1))}
+            onClick={handleNextStep}
             className="py-2 rounded-xl bg-[#28533D] text-[#FFFDF8] font-mono text-xs font-bold disabled:opacity-40"
           >
             Next →

@@ -10,6 +10,7 @@ import VisualizerLayout from '../src/components/VisualizerLayout';
 import { DarkModeContext } from '../context/ThemeContext';
 
 import { solveNQueens, nQueensComplexity } from '../src/algorithms/backtracking/nQueens';
+import { dispatchAudio, AudioEventTypes } from '../src/audio';
 
 export default function BacktrackingPage() {
   const { isDarkMode } = useContext(DarkModeContext);
@@ -23,6 +24,24 @@ export default function BacktrackingPage() {
     const sim = solveNQueens(size);
     setSimulation(sim);
     setStepIdx(0);
+    dispatchAudio(AudioEventTypes.UI_CLICK);
+  };
+
+  const handleNextStep = () => {
+    if (stepIdx < simulation.trace.length - 1) {
+      const nextIdx = stepIdx + 1;
+      setStepIdx(nextIdx);
+      const st = simulation.trace[nextIdx];
+      if (st) {
+        if (st.action === 'solution') {
+          dispatchAudio(AudioEventTypes.BACKTRACK_SOLUTION, { priority: true, force: true });
+        } else if (st.action === 'backtrack' || st.action === 'dead_end') {
+          dispatchAudio(AudioEventTypes.BACKTRACK_DEAD_END);
+        } else {
+          dispatchAudio(AudioEventTypes.BACKTRACK_BRANCH);
+        }
+      }
+    }
   };
 
   const currentStep = simulation.trace[stepIdx] || null;
@@ -75,7 +94,7 @@ export default function BacktrackingPage() {
           <button
             type="button"
             disabled={stepIdx >= simulation.trace.length - 1}
-            onClick={() => setStepIdx(p => Math.min(simulation.trace.length - 1, p + 1))}
+            onClick={handleNextStep}
             className="py-2 rounded-xl bg-[#28533D] text-[#FFFDF8] font-mono text-xs font-bold disabled:opacity-40"
           >
             Step →

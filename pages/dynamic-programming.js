@@ -12,6 +12,7 @@ import { DarkModeContext } from '../context/ThemeContext';
 import { solve01Knapsack, knapsackComplexity } from '../src/algorithms/dynamicProgramming/knapsack';
 import { solveCoinChange, coinChangeComplexity } from '../src/algorithms/dynamicProgramming/coinChange';
 import { solveLCS, lcsComplexity } from '../src/algorithms/dynamicProgramming/lcs';
+import { dispatchAudio, AudioEventTypes } from '../src/audio';
 
 export default function DynamicProgrammingPage() {
   const { isDarkMode } = useContext(DarkModeContext);
@@ -39,14 +40,17 @@ export default function DynamicProgrammingPage() {
 
   const handleComputeKnapsack = () => {
     setKnapResult(solve01Knapsack(items, capacity));
+    dispatchAudio(AudioEventTypes.DP_OPTIMUM_FOUND, { priority: true, force: true });
   };
 
   const handleComputeCoinChange = () => {
     setCoinResult(solveCoinChange(coins, amount));
+    dispatchAudio(AudioEventTypes.DP_OPTIMUM_FOUND, { priority: true, force: true });
   };
 
   const handleComputeLCS = () => {
     setLcsResult(solveLCS(s1, s2));
+    dispatchAudio(AudioEventTypes.DP_OPTIMUM_FOUND, { priority: true, force: true });
   };
 
   const renderLeftSidebar = () => (

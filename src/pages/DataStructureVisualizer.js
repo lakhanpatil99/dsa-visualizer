@@ -20,6 +20,7 @@ import {
 import { MaxHeap, heapPseudocode, heapComplexity } from '../algorithms/dataStructures/heap';
 import { HashTable, hashTablePseudocode, hashTableComplexity } from '../algorithms/dataStructures/hashTable';
 import { SearchingAlgorithms, linearSearchPseudocode, binarySearchPseudocode, searchingComplexity } from '../algorithms/searching/searching';
+import { dispatchAudio, AudioEventTypes } from '../audio';
 
 const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
   const { isDarkMode } = useContext(DarkModeContext);
@@ -155,12 +156,14 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     switch (selectedStructure) {
       case 'stack':
         stack.push(value);
+        dispatchAudio(AudioEventTypes.STACK_PUSH);
         if (isStepMode) {
           generateAlgorithmSteps('push', value);
         }
         break;
       case 'queue':
         queue.enqueue(value);
+        dispatchAudio(AudioEventTypes.QUEUE_ENQUEUE);
         if (isStepMode) {
           generateAlgorithmSteps('enqueue', value);
         }
@@ -172,6 +175,7 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
         } else {
           currentLL.insertAtTail(value);
         }
+        dispatchAudio(AudioEventTypes.LINKED_LIST_INSERT);
         if (isStepMode) {
           generateAlgorithmSteps('insertAtTail', value);
         }
@@ -197,6 +201,7 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
       } else {
         currentLL.insertAtHead(value);
       }
+      dispatchAudio(AudioEventTypes.LINKED_LIST_INSERT);
       if (isStepMode) {
         generateAlgorithmSteps('insertAtHead', value);
       }
@@ -208,13 +213,23 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
   const handleRemove = () => {
     switch (selectedStructure) {
       case 'stack':
-        stack.pop();
+        if (stack.isEmpty()) {
+          dispatchAudio(AudioEventTypes.STACK_UNDERFLOW);
+        } else {
+          stack.pop();
+          dispatchAudio(AudioEventTypes.STACK_POP);
+        }
         if (isStepMode) {
           generateAlgorithmSteps('pop', null);
         }
         break;
       case 'queue':
-        queue.dequeue();
+        if (queue.isEmpty()) {
+          dispatchAudio(AudioEventTypes.QUEUE_EMPTY);
+        } else {
+          queue.dequeue();
+          dispatchAudio(AudioEventTypes.QUEUE_DEQUEUE);
+        }
         if (isStepMode) {
           generateAlgorithmSteps('dequeue', null);
         }
@@ -224,6 +239,7 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
         const currentItems = getCurrentLinkedListItems();
         if (currentItems.length > 0) {
           currentLL.deleteNode(currentItems[0]);
+          dispatchAudio(AudioEventTypes.LINKED_LIST_DELETE);
           if (isStepMode) {
             generateAlgorithmSteps('delete', null);
           }
@@ -242,13 +258,16 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     switch (selectedStructure) {
       case 'stack':
         result = stack.peek();
+        dispatchAudio(AudioEventTypes.STACK_PEEK);
         break;
       case 'queue':
         result = queue.front();
+        dispatchAudio(AudioEventTypes.QUEUE_FRONT);
         break;
       case 'linkedList':
         const currentItems = getCurrentLinkedListItems();
         result = currentItems.length > 0 ? currentItems[0] : 'List is empty';
+        dispatchAudio(AudioEventTypes.LINKED_LIST_TRAVERSE);
         break;
       default:
         break;
@@ -296,6 +315,7 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     if (isNaN(value)) return;
     
     heap.insert(value);
+    dispatchAudio(AudioEventTypes.HEAP_INSERT);
     if (isStepMode) {
       generateAlgorithmSteps('insert', value);
     }
@@ -306,11 +326,13 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
   const handleHeapExtractMax = () => {
     const max = heap.extractMax();
     if (max !== null) {
+      dispatchAudio(AudioEventTypes.HEAP_EXTRACT);
       alert(`Extracted max value: ${max}`);
       if (isStepMode) {
         generateAlgorithmSteps('extractMax', max);
       }
     } else {
+      dispatchAudio(AudioEventTypes.STACK_UNDERFLOW);
       alert('Heap is empty');
     }
     updateDisplay();
@@ -420,15 +442,25 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
   const handleNextStep = () => {
     if (selectedStructure === 'searching') {
       if (currentSearchStep < searchSteps.length - 1) {
-        setCurrentSearchStep(currentSearchStep + 1);
+        const nextStep = currentSearchStep + 1;
+        setCurrentSearchStep(nextStep);
+        const s = searchSteps[nextStep];
+        if (s && (s.found || s.isMatch || s.action === 'found')) {
+          dispatchAudio(AudioEventTypes.SEARCH_FOUND, { priority: true, force: true });
+        } else {
+          dispatchAudio(AudioEventTypes.SEARCH_COMPARE);
+        }
       } else {
         completeAlgorithm();
+        dispatchAudio(AudioEventTypes.ALGO_COMPLETE, { priority: true, force: true });
       }
     } else {
       if (currentAlgorithmStep < algorithmSteps.length - 1) {
         setCurrentAlgorithmStep(currentAlgorithmStep + 1);
+        dispatchAudio(AudioEventTypes.LINKED_LIST_TRAVERSE);
       } else {
         completeAlgorithm();
+        dispatchAudio(AudioEventTypes.ALGO_COMPLETE, { priority: true, force: true });
       }
     }
   };
