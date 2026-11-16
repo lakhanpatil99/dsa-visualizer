@@ -89,10 +89,44 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* Career & Achievement Links */}
+            <Link
+              href="/internships"
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                isActive('/internships') || router.pathname.startsWith('/internships')
+                  ? 'bg-[#28533D] text-[#FFFDF8]'
+                  : 'text-[#24231F] dark:text-[#EAE7DF] hover:bg-[#EAE5D8] dark:hover:bg-[#272622]'
+              }`}
+            >
+              Internships
+            </Link>
+
+            <Link
+              href="/competitions"
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                isActive('/competitions')
+                  ? 'bg-[#EF592A] text-[#FFFDF8]'
+                  : 'text-[#24231F] dark:text-[#EAE7DF] hover:bg-[#EAE5D8] dark:hover:bg-[#272622]'
+              }`}
+            >
+              Competitions
+            </Link>
+
+            <Link
+              href="/certificates"
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                isActive('/certificates') || router.pathname.startsWith('/certificates')
+                  ? 'bg-[#28533D] text-[#FFFDF8]'
+                  : 'text-[#24231F] dark:text-[#EAE7DF] hover:bg-[#EAE5D8] dark:hover:bg-[#272622]'
+              }`}
+            >
+              Certificates
+            </Link>
+
             {/* Direct Links */}
             <Link
               href="/algorithms"
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                 isActive('/algorithms')
                   ? 'bg-[#EF592A] text-[#FFFDF8]'
                   : 'text-[#24231F] dark:text-[#EAE7DF] hover:bg-[#EAE5D8] dark:hover:bg-[#272622]'
@@ -103,7 +137,7 @@ export default function Navbar() {
 
             <Link
               href="/compare"
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                 isActive('/compare')
                   ? 'bg-[#EF592A] text-[#FFFDF8]'
                   : 'text-[#24231F] dark:text-[#EAE7DF] hover:bg-[#EAE5D8] dark:hover:bg-[#272622]'
@@ -209,6 +243,35 @@ export default function Navbar() {
                   {c.label}
                 </Link>
               ))}
+            </div>
+
+            <div className="pt-2 border-t border-[#DED9CE] dark:border-[#2E2C27]">
+              <div className="px-3 py-1 text-[11px] font-mono font-bold uppercase text-[#69665F] dark:text-[#8E8B83]">
+                Career & Achievements
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 px-2 mt-1">
+                <Link
+                  href="/internships"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-center rounded-lg text-xs font-semibold text-[#28533D] dark:text-[#E4E9DD] bg-[#E4E9DD]/40 dark:bg-[#28382F]/40 border border-[#DED9CE] dark:border-[#383630]"
+                >
+                  Internships
+                </Link>
+                <Link
+                  href="/competitions"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-center rounded-lg text-xs font-semibold text-[#EF592A] bg-[#EF592A]/10 border border-[#EF592A]/30"
+                >
+                  Competitions
+                </Link>
+                <Link
+                  href="/certificates"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-center rounded-lg text-xs font-semibold text-[#24231F] dark:text-[#FFFDF8] bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630]"
+                >
+                  Certificates
+                </Link>
+              </div>
             </div>
 
             <div className="pt-3 border-t border-[#DED9CE] dark:border-[#2E2C27] flex items-center justify-between px-3">
