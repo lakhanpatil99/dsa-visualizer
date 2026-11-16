@@ -1,27 +1,46 @@
 import React, { useContext } from 'react';
 import { DarkModeContext } from '../../context/ThemeContext';
 
+function normalizeDimension(val, fallback = 'auto') {
+  if (val == null) return fallback;
+  if (typeof val === 'number') return `${val}px`;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (/^\d+(\.\d+)?$/.test(trimmed)) return `${trimmed}px`;
+    return trimmed;
+  }
+  return String(val);
+}
+
 const VisualizerCanvas = ({
   children,
   width = 800,
   height = 400,
+  minHeight = null,
+  maxHeight = null,
   className = "",
   title = "Visualization Canvas"
 }) => {
   const { isDarkMode } = useContext(DarkModeContext);
 
+  const formattedHeight = normalizeDimension(height, '400px');
+  const formattedMinHeight = minHeight ? normalizeDimension(minHeight) : formattedHeight;
+  const formattedMaxWidth = normalizeDimension(width, '800px');
+  const formattedMaxHeight = maxHeight ? normalizeDimension(maxHeight) : undefined;
+
   return (
-    <div className={`rounded-2xl shadow-xs border transition-colors duration-200 overflow-hidden ${isDarkMode
-        ? 'bg-[#24231F] border-[#383630]'
-        : 'bg-[#FFFDF8] border-[#DED9CE]'
-      } ${className}`}>
+    <div className={`rounded-2xl shadow-xs border transition-colors duration-200 overflow-hidden ${
+      isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+    } ${className}`}>
       {/* Canvas Header */}
-      <div className={`px-5 py-3.5 border-b flex items-center justify-between transition-colors ${isDarkMode ? 'border-[#383630] bg-[#1F1E1B]' : 'border-[#DED9CE] bg-[#FAF8F3]'
-        }`}>
+      <div className={`px-5 py-3.5 border-b flex items-center justify-between transition-colors ${
+        isDarkMode ? 'border-[#383630] bg-[#1F1E1B]' : 'border-[#DED9CE] bg-[#FAF8F3]'
+      }`}>
         <div className="flex items-center space-x-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#EF592A]"></span>
-          <h3 className={`text-sm font-mono font-bold tracking-tight uppercase ${isDarkMode ? 'text-[#FFFDF8]' : 'text-[#24231F]'
-            }`}>
+          <h3 className={`text-sm font-mono font-bold tracking-tight uppercase ${
+            isDarkMode ? 'text-[#FFFDF8]' : 'text-[#24231F]'
+          }`}>
             {title}
           </h3>
         </div>
@@ -31,17 +50,18 @@ const VisualizerCanvas = ({
       </div>
 
       {/* Canvas Content */}
-      <div className={`p-4 sm:p-6 transition-colors ${isDarkMode ? 'bg-[#1A1916]' : 'bg-[#FAF8F3]'
-        }`}>
+      <div className={`p-4 sm:p-6 transition-colors ${
+        isDarkMode ? 'bg-[#1A1916]' : 'bg-[#FAF8F3]'
+      }`}>
         <div
-          className={`w-full h-full rounded-xl overflow-hidden transition-colors border ${isDarkMode
-              ? 'bg-[#24231F] border-[#383630]'
-              : 'bg-[#FFFDF8] border-[#E8E4DA]'
-            }`}
+          className={`w-full rounded-xl overflow-hidden transition-colors border ${
+            isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#E8E4DA]'
+          }`}
           style={{
-            minHeight: `${height}px`,
-            height: `${height}px`,
-            maxWidth: `${width}px`,
+            minHeight: formattedMinHeight,
+            height: formattedHeight,
+            maxWidth: formattedMaxWidth,
+            maxHeight: formattedMaxHeight,
             margin: '0 auto',
             display: 'flex',
             flexDirection: 'column'
