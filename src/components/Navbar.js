@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { DarkModeContext } from '../../context/ThemeContext';
 import Logo from './Logo';
+import AudioControls from './AudioControls';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -125,6 +126,9 @@ export default function Navbar() {
 
           {/* Right Action Area */}
           <div className="flex items-center space-x-3">
+            {/* Audio Experience Controls */}
+            <AudioControls />
+
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}

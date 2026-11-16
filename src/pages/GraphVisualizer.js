@@ -5,6 +5,7 @@ import ComplexityBox from '../components/ComplexityBox';
 import VisualizerLayout from '../components/VisualizerLayout';
 import SaveProgressButton from '../components/SaveProgressButton';
 import { DarkModeContext } from '../../context/ThemeContext';
+import { dispatchAudio, AudioEventTypes } from '../audio';
 
 import { Graph as BFSGraph, bfsPseudocode, bfsComplexity } from '../algorithms/graphs/bfs';
 import { Graph as DFSGraph, dfsPseudocode, dfsComplexity } from '../algorithms/graphs/dfs';
@@ -395,6 +396,27 @@ const GraphVisualizer = () => {
     setStatusMessage(frame.message || '');
     if (frame.distances) setCurrentDistances({ ...frame.distances });
     if (frame.inDegree) setCurrentInDegrees({ ...frame.inDegree });
+
+    // Audio sound dispatches based on frame semantics
+    if (frame.type === 'visit') {
+      dispatchAudio(AudioEventTypes.GRAPH_VISIT);
+    } else if (frame.type === 'enqueue' || frame.type === 'discover') {
+      dispatchAudio(AudioEventTypes.GRAPH_DISCOVER);
+    } else if (frame.type === 'relax') {
+      dispatchAudio(AudioEventTypes.GRAPH_RELAX);
+    } else if (frame.type === 'path_found') {
+      dispatchAudio(AudioEventTypes.GRAPH_PATH_FOUND, { priority: true, force: true });
+    } else if (frame.type === 'cycle_detected' || frame.type === 'negative_cycle') {
+      dispatchAudio(AudioEventTypes.GRAPH_CYCLE);
+    } else if (frame.type === 'backtrack') {
+      dispatchAudio(AudioEventTypes.GRAPH_BACKTRACK);
+    } else if (frame.type === 'accept_edge') {
+      dispatchAudio(AudioEventTypes.GRAPH_MST_EDGE);
+    } else if (frame.type === 'reject_edge') {
+      dispatchAudio(AudioEventTypes.GRAPH_MST_REJECT);
+    } else if (frame.type === 'complete') {
+      dispatchAudio(AudioEventTypes.ALGO_COMPLETE, { priority: true, force: true });
+    }
   }, []);
 
   // Frame stepper for Playback Engine
