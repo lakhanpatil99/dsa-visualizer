@@ -88,24 +88,27 @@ export default function Login() {
         <meta name="description" content="Sign in to your AlgoMania account to continue your interactive DSA learning journey." />
       </Head>
 
-      <div className="min-h-screen bg-[#080D1B] text-[#F8FAFC] flex flex-col justify-between selection:bg-blue-500/30 selection:text-cyan-300">
+      <div className="min-h-screen bg-[#F8F5ED] text-[#24231F] flex flex-col justify-between selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
         {/* Top Header Bar */}
-        <header className="w-full px-6 py-5 flex items-center justify-between border-b border-white/[0.06]">
+        <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-[1.5px] shadow-lg shadow-blue-500/20">
-              <div className="w-full h-full bg-[#080D1B] rounded-[10px] flex items-center justify-center font-black text-white text-base">
-                A
-              </div>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
+              A
             </div>
-            <span className="text-xl font-black tracking-tight text-white group-hover:text-cyan-300 transition-colors">
-              Algo<span className="text-cyan-400">Mania</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F]">
+                Algo<span className="text-[#EF592A]">Mania</span>
+              </span>
+              <span className="hidden sm:block text-[10px] font-mono tracking-widest text-[#69665F] uppercase -mt-1">
+                Visual Lab
+              </span>
+            </div>
           </Link>
 
-          {/* Prominent Back to Home navigation */}
+          {/* Back to Home Link */}
           <Link
             href="/"
-            className="flex items-center space-x-1.5 text-xs sm:text-sm font-medium text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all"
+            className="flex items-center space-x-1.5 text-xs sm:text-sm font-semibold text-[#69665F] hover:text-[#24231F] px-3.5 py-1.5 rounded-lg border border-[#DED9CE] hover:border-[#24231F] bg-[#FFFDF8] transition-all"
           >
             <span>←</span>
             <span>Back to Home</span>
@@ -113,33 +116,33 @@ export default function Login() {
         </header>
 
         {/* Main 2-Column Content Area */}
-        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* LEFT COLUMN: Visual Artwork & Feature Highlights */}
-            <div className="hidden lg:flex lg:col-span-5 flex-col space-y-8 pr-4">
-              <div className="space-y-4">
-                <span className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                  Master Algorithm Intuition
+            <div className="hidden lg:flex lg:col-span-5 flex-col space-y-6 pr-2">
+              <div className="space-y-3">
+                <span className="inline-block text-[11px] font-mono font-bold tracking-widest text-[#EF592A] uppercase">
+                  01 // ALGORITHM WORKSPACE
                 </span>
-                <h2 className="text-4xl font-black text-white tracking-tight leading-tight">
-                  Welcome back to your{' '}
-                  <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-300 bg-clip-text text-transparent">
-                    algorithm workspace.
-                  </span>
+                <h2 className="text-4xl font-extrabold text-[#24231F] tracking-tight leading-[1.1]">
+                  Welcome back to your <br />
+                  <span className="text-[#EF592A]">visual lab.</span>
                 </h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-[#69665F] leading-relaxed">
                   Continue exploring step-by-step visualizations, analyze asymptotic complexities, and maintain your coding progress.
                 </p>
               </div>
 
-              {/* Decorative Interactive Preview Card */}
-              <div className="p-5 rounded-2xl bg-[#10182B]/80 border border-white/[0.08] backdrop-blur-md space-y-4 shadow-xl shadow-blue-900/10">
-                <div className="flex items-center justify-between text-xs text-slate-400 border-b border-white/[0.06] pb-3">
-                  <span className="font-semibold text-cyan-400 flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                    <span>Active Visualizer</span>
+              {/* Custom Editorial DSA Visual Artwork Card */}
+              <div className="p-6 rounded-2xl bg-[#EF592A] text-[#FFFDF8] border border-[#d64b20] shadow-md space-y-4">
+                <div className="flex items-center justify-between text-xs border-b border-[#FFFDF8]/20 pb-3">
+                  <span className="font-mono font-bold text-[#FFFDF8] flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-[#FFFDF8] animate-pulse"></span>
+                    <span>ACTIVE WORKSPACE</span>
                   </span>
-                  <span className="font-mono text-[11px] text-slate-500">O(n log n)</span>
+                  <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#24231F] text-[#FFFDF8] font-bold">
+                    O(n log n)
+                  </span>
                 </div>
 
                 {/* Simulated Sorting Bar Animation Preview */}
@@ -150,30 +153,30 @@ export default function Login() {
                       style={{ height: `${h}%` }}
                       className={`flex-1 rounded-t-sm transition-all duration-300 ${
                         idx === 5 || idx === 6
-                          ? 'bg-gradient-to-t from-cyan-500 to-cyan-300 shadow-md shadow-cyan-500/30'
+                          ? 'bg-[#FFFDF8] shadow-sm'
                           : idx === 1 || idx === 9
-                          ? 'bg-gradient-to-t from-indigo-500 to-indigo-300'
-                          : 'bg-gradient-to-t from-blue-700/60 to-blue-500/70'
+                          ? 'bg-[#28533D]'
+                          : 'bg-[#24231F]'
                       }`}
                     />
                   ))}
                 </div>
 
-                <div className="text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-white/[0.04]">
-                  <span>Merge Sort Divide & Conquer</span>
-                  <span className="text-cyan-400 font-mono text-[11px]">Partition [L, R]</span>
+                <div className="text-xs text-[#FFFDF8]/90 flex items-center justify-between pt-2 border-t border-[#FFFDF8]/20 font-mono">
+                  <span>Merge Sort Divide &amp; Conquer</span>
+                  <span className="font-bold text-[#FFFDF8]">Partition [L, R]</span>
                 </div>
               </div>
             </div>
 
-            {/* RIGHT COLUMN: Modern Authentication Card */}
+            {/* RIGHT COLUMN: Modern High-Contrast Authentication Card */}
             <div className="lg:col-span-7 flex justify-center">
-              <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl bg-[#10182B]/90 border border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40 space-y-6">
-                <div className="space-y-2">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl bg-[#FFFDF8] border border-[#DED9CE] shadow-sm hover:shadow-md transition-shadow space-y-6">
+                <div className="space-y-1.5">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#24231F] tracking-tight">
                     Sign In
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-400">
+                  <p className="text-xs sm:text-sm text-[#69665F]">
                     Enter your account details to access your dashboard.
                   </p>
                 </div>
@@ -182,9 +185,9 @@ export default function Login() {
                 {errorMessage && (
                   <div
                     role="alert"
-                    className="p-3.5 rounded-xl text-xs sm:text-sm bg-red-500/10 border border-red-500/30 text-red-300 flex items-start space-x-2 animate-fadeIn"
+                    className="p-3.5 rounded-xl text-xs sm:text-sm bg-red-50 border border-red-200 text-red-700 flex items-start space-x-2 animate-fadeIn"
                   >
-                    <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <span>{errorMessage}</span>
@@ -196,7 +199,7 @@ export default function Login() {
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={isSubmitting}
-                  className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center justify-center space-x-3 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-[#24231F] bg-[#FFFDF8] hover:bg-[#F8F5ED] border border-[#DED9CE] hover:border-[#24231F] transition-all flex items-center justify-center space-x-3 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] shadow-2xs"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -209,8 +212,8 @@ export default function Login() {
 
                 {/* Divider */}
                 <div className="relative flex items-center justify-center">
-                  <div className="w-full border-t border-white/[0.08]"></div>
-                  <span className="absolute bg-[#10182B] px-3 text-xs uppercase tracking-wider text-slate-500 font-medium">
+                  <div className="w-full border-t border-[#DED9CE]"></div>
+                  <span className="absolute bg-[#FFFDF8] px-3 text-[11px] uppercase tracking-wider text-[#69665F] font-mono">
                     Or continue with email
                   </span>
                 </div>
@@ -218,7 +221,7 @@ export default function Login() {
                 {/* Email & Password Form */}
                 <form onSubmit={handleEmailLogin} className="space-y-4">
                   <div>
-                    <label htmlFor={emailId} className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                    <label htmlFor={emailId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] mb-1.5">
                       Email address
                     </label>
                     <input
@@ -230,18 +233,18 @@ export default function Login() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.1] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border border-[#DED9CE] text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20 transition-all"
                     />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label htmlFor={passwordId} className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      <label htmlFor={passwordId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F]">
                         Password
                       </label>
                       <Link
                         href="/forgot-password"
-                        className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                        className="text-xs font-medium text-[#EF592A] hover:text-[#d64b20] transition-colors"
                       >
                         Forgot password?
                       </Link>
@@ -256,12 +259,12 @@ export default function Login() {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.1] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors pr-12"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border border-[#DED9CE] text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20 transition-all pr-12"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors text-xs font-medium"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#69665F] hover:text-[#24231F] transition-colors text-xs font-mono font-bold"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? 'Hide' : 'Show'}
@@ -272,11 +275,11 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white shadow-xl shadow-blue-600/25 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2"
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2"
                   >
                     {isSubmitting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#FFFDF8]" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -289,11 +292,11 @@ export default function Login() {
                 </form>
 
                 {/* Explicit Navigation to Registration */}
-                <div className="pt-2 text-center text-sm text-slate-400 border-t border-white/[0.06]">
+                <div className="pt-2 text-center text-sm text-[#69665F] border-t border-[#DED9CE]">
                   Don&apos;t have an account?{' '}
                   <Link
                     href="/register"
-                    className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors ml-1"
+                    className="font-bold text-[#EF592A] hover:text-[#d64b20] transition-colors ml-1"
                   >
                     Create account
                   </Link>
@@ -304,8 +307,8 @@ export default function Login() {
         </main>
 
         {/* Footer info */}
-        <footer className="w-full py-5 text-center text-xs text-slate-500 border-t border-white/[0.04]">
-          AlgoMania • Master Data Structures & Algorithms
+        <footer className="w-full py-5 text-center text-xs text-[#69665F] border-t border-[#DED9CE] bg-[#F8F5ED]">
+          AlgoMania • A Visual Lab for Computer Science
         </footer>
       </div>
     </PublicOnlyRoute>

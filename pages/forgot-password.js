@@ -45,87 +45,114 @@ export default function ForgotPassword() {
   return (
     <PublicOnlyRoute>
       <Head>
-        <title>Reset Password - AlgoMania</title>
+        <title>Reset Password — AlgoMania</title>
         <meta name="description" content="Reset your AlgoMania account password." />
       </Head>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <Link href="/" className="flex items-center justify-center space-x-2">
-            <span className="text-3xl font-extrabold text-blue-600">AlgoMania</span>
-            <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-200">
-              DSA 10X
-            </span>
+      <div className="min-h-screen bg-[#F8F5ED] text-[#24231F] flex flex-col justify-between selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
+        {/* Header Bar */}
+        <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
+              A
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F]">
+                Algo<span className="text-[#EF592A]">Mania</span>
+              </span>
+              <span className="hidden sm:block text-[10px] font-mono tracking-widest text-[#69665F] uppercase -mt-1">
+                Visual Lab
+              </span>
+            </div>
           </Link>
-          <h2 className="mt-4 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Enter your email and we&apos;ll send you instructions to reset your password.
-          </p>
-        </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 border border-gray-100 dark:border-gray-700">
+          <Link
+            href="/login"
+            className="flex items-center space-x-1.5 text-xs sm:text-sm font-semibold text-[#69665F] hover:text-[#24231F] px-3.5 py-1.5 rounded-lg border border-[#DED9CE] hover:border-[#24231F] bg-[#FFFDF8] transition-all"
+          >
+            <span>←</span>
+            <span>Back to Sign In</span>
+          </Link>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+          <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl bg-[#FFFDF8] border border-[#DED9CE] shadow-sm hover:shadow-md transition-shadow space-y-6">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-mono font-bold tracking-widest text-[#EF592A] uppercase">
+                Account Recovery
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#24231F] tracking-tight">
+                Reset password
+              </h1>
+              <p className="text-xs sm:text-sm text-[#69665F]">
+                Enter your email address and we&apos;ll send you instructions to reset your password.
+              </p>
+            </div>
+
             {feedback.message && (
               <div
                 role="alert"
-                className={`mb-6 p-4 rounded-md text-sm flex items-start space-x-2 ${
+                className={`p-3.5 rounded-xl text-xs sm:text-sm flex items-start space-x-2 ${
                   feedback.type === 'success'
-                    ? 'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800'
-                    : 'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
+                    ? 'bg-[#E4E9DD] text-[#28533D] border border-[#28533D]/20'
+                    : 'bg-red-50 text-red-700 border border-red-200'
                 }`}
               >
                 <span>{feedback.message}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor={emailId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor={emailId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] mb-1.5">
                   Email Address
                 </label>
-                <div className="mt-1">
-                  <input
-                    id={emailId}
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-gray-700 dark:text-white"
-                    placeholder="learner@algomania.dev"
-                  />
-                </div>
+                <input
+                  id={emailId}
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border border-[#DED9CE] text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20 transition-all"
+                  placeholder="you@example.com"
+                />
               </div>
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                      <span>Sending reset email...</span>
-                    </div>
-                  ) : (
-                    'Send Password Reset Email'
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center space-x-2">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#FFFDF8]" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Sending reset email...</span>
+                  </div>
+                ) : (
+                  <span>Send Password Reset Email</span>
+                )}
+              </button>
 
-              <div className="flex justify-center text-sm">
+              <div className="pt-2 text-center text-sm text-[#69665F] border-t border-[#DED9CE]">
+                Remember your password?{' '}
                 <Link
                   href="/login"
-                  className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                  className="font-bold text-[#EF592A] hover:text-[#d64b20] transition-colors ml-1"
                 >
                   Return to sign in
                 </Link>
               </div>
             </form>
           </div>
-        </div>
+        </main>
+
+        <footer className="w-full py-5 text-center text-xs text-[#69665F] border-t border-[#DED9CE] bg-[#F8F5ED]">
+          AlgoMania • A Visual Lab for Computer Science
+        </footer>
       </div>
     </PublicOnlyRoute>
   );

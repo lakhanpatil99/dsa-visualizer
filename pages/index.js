@@ -1,385 +1,393 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useAuth } from '../src/contexts/AuthContext';
-import { DarkModeContext } from '../context/ThemeContext';
-import Navbar from '../src/components/Navbar';
-import Footer from '../src/components/Footer';
-
-// Dynamically load Three.js component on the client only to prevent SSR/hydration issues
-const ThreeHeroUniverse = dynamic(
-  () => import('../src/components/ThreeHeroUniverse'),
-  { ssr: false }
-);
+import HomeHeader from '../src/components/home/HomeHeader';
+import HeroEditorialGraphic from '../src/components/home/HeroEditorialGraphic';
+import FeaturedInteractivePreview from '../src/components/home/FeaturedInteractivePreview';
+import HomeFooter from '../src/components/home/HomeFooter';
+import styles from '../styles/home.module.css';
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
-  const { isDarkMode } = useContext(DarkModeContext);
+  const { isAuthenticated } = useAuth();
 
-  const visualizerCards = [
+  const curriculumIndex = [
     {
+      index: '01',
+      category: 'Sorting',
       title: 'Sorting Algorithms',
-      description: 'Observe Bubble Sort, Quick Sort, Merge Sort, and more with step-by-step element comparisons and real-time color state transitions.',
-      href: '/sorting',
-      icon: '📊',
-      badge: 'Interactive',
-      tags: ['Bubble', 'Quick', 'Merge', 'O(n log n)']
+      description: 'Observe Bubble Sort, Quick Sort, Merge Sort, and Insertion Sort with step-by-step element comparisons, pointer indexing, and in-place swaps.',
+      primaryHref: '/sorting',
+      tag: 'O(n log n)',
+      items: [
+        { label: 'Bubble Sort', href: '/sorting' },
+        { label: 'Quick Sort', href: '/sorting' },
+        { label: 'Merge Sort', href: '/sorting' }
+      ]
     },
     {
-      title: 'Graph Algorithms',
-      description: 'Explore Breadth-First Search (BFS), Depth-First Search (DFS), and shortest path discovery across dynamic procedural graph networks.',
-      href: '/graphs',
-      icon: '🕸️',
-      badge: 'Visual Traversal',
-      tags: ['BFS', 'DFS', 'Dijkstra', 'Pathfinding']
+      index: '02',
+      category: 'Graphs & Trees',
+      title: 'Graph Traversals & Hierarchical Trees',
+      description: 'Explore Breadth-First Search (BFS), Depth-First Search (DFS), shortest path algorithms, and animated Binary Search Tree insertions.',
+      primaryHref: '/graphs',
+      tag: 'Hierarchical',
+      items: [
+        { label: 'BFS & DFS', href: '/graphs' },
+        { label: 'Binary Search Trees', href: '/trees' },
+        { label: 'Tree Traversals', href: '/trees' }
+      ]
     },
     {
-      title: 'Tree Structures',
-      description: 'Animate Binary Search Trees (BST), AVL self-balancing trees, and tree traversals (inorder, preorder, postorder) with animated node insertions.',
-      href: '/trees',
-      icon: '🌳',
-      badge: 'Hierarchical',
-      tags: ['BST', 'Inorder', 'Preorder', 'Balancing']
+      index: '03',
+      category: 'Data Structures',
+      title: 'Core Memory & Structures Hub',
+      description: 'Inspect pointer manipulation across dynamic Linked Lists, Stacks (LIFO), Queues (FIFO), Binary Heaps, and Hash Tables.',
+      primaryHref: '/data-structures',
+      tag: 'Pointers & Memory',
+      items: [
+        { label: 'Linked Lists', href: '/data-structures/linked-list' },
+        { label: 'Stacks & Queues', href: '/data-structures' },
+        { label: 'Binary Heaps', href: '/data-structures/heap' },
+        { label: 'Hash Tables', href: '/data-structures/hash-table' }
+      ]
     },
     {
-      title: 'Data Structures Hub',
-      description: 'Explore fundamental building blocks: Stacks (LIFO), Queues (FIFO), Linked Lists, Hash Tables, and Heaps with memory pointer visualization.',
-      href: '/data-structures',
-      icon: '🧱',
-      badge: 'Core CS',
-      tags: ['Linked List', 'Stack', 'Queue', 'Heap']
-    },
-    {
-      title: 'Searching Algorithms',
-      description: 'Understand Linear Search vs. Binary Search divides with interactive interval highlighting and logarithmic search comparisons.',
-      href: '/data-structures/searching',
-      icon: '🔍',
-      badge: 'Divide & Conquer',
-      tags: ['Binary Search', 'Linear Search', 'O(log n)']
-    },
-    {
-      title: 'Complexity Analysis',
-      description: 'Analyze time and space complexity with Big-O notations, best-case, worst-case, and average-case performance comparisons.',
-      href: '/dashboard',
-      icon: '📈',
-      badge: 'Interview Ready',
-      tags: ['Time Complexity', 'Space Complexity', 'Big-O']
+      index: '04',
+      category: 'Searching & Complexity',
+      title: 'Searching Algorithms & Asymptotic Bounds',
+      description: 'Understand Linear Search vs. Binary Search interval dividing, Big-O worst-case boundaries, and space-time trade-offs.',
+      primaryHref: '/data-structures/searching',
+      tag: 'O(log n) Divide',
+      items: [
+        { label: 'Binary Search', href: '/data-structures/searching' },
+        { label: 'Linear Search', href: '/data-structures/searching' },
+        { label: 'Complexity Dashboard', href: '/dashboard' }
+      ]
     }
   ];
 
-  const steps = [
+  const capabilities = [
     {
-      step: '01',
-      title: 'Select an Algorithm or Data Structure',
-      description: 'Choose from sorting, graph traversals, trees, linked lists, stacks, queues, and heaps organized by category and difficulty.'
+      num: '01',
+      title: 'Granular Step-by-Step Execution',
+      desc: 'Pause at critical swap points, step forward one operation at a time, or run at variable speeds to observe asymptotic behavior.'
     },
     {
-      step: '02',
-      title: 'Control Step-by-Step Execution',
-      description: 'Use the interactive controls to play, pause, step forward, reverse, and adjust playback speed while inspecting variables and pointers in real time.'
+      num: '02',
+      title: 'Real-Time State & Pointer Highlighting',
+      desc: 'Color-coded indicators isolate comparing pointers, swap targets, and sorted boundaries directly on the data structure.'
     },
     {
-      step: '03',
-      title: 'Master Complexity and Intuition',
-      description: 'Build mental models of algorithmic patterns and complexity trade-offs that prepare you for real-world software engineering and coding interviews.'
-    }
-  ];
-
-  const benefits = [
-    {
-      title: 'Visual Memory Encoding',
-      description: 'Visualizing algorithm pointer movements and state transitions transforms abstract code into persistent intuition.',
-      icon: '💡'
+      num: '03',
+      title: 'Synchronized Code Highlighting',
+      desc: 'Follow clean algorithm logic line-by-line as the active instruction lights up in tandem with the visual canvas.'
     },
     {
-      title: 'Zero Setup & In-Browser Execution',
-      description: 'No environment configuration or compilation steps required. Run algorithms directly in your browser with zero latency.',
-      icon: '⚡'
+      num: '04',
+      title: 'Asymptotic Complexity Analysis',
+      desc: 'Inspect best-case, average-case, and worst-case Big-O bounds alongside real-time comparison and memory usage counts.'
     },
     {
-      title: 'Granular Execution Control',
-      description: 'Pause at critical swap points, step forward one operation at a time, or run at high speed to observe asymptotic behavior.',
-      icon: '⏱️'
-    },
-    {
-      title: 'Personal Progress Tracking',
-      description: 'Save your completed algorithms, track mastery stats across categories, and resume seamlessly from any device.',
-      icon: '🎯'
+      num: '05',
+      title: 'Persistent Cloud Learning Progress',
+      desc: 'Sign in to record completed algorithms, track mastery stats across categories, and resume your learning from any browser.'
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#080D1B] text-[#F8FAFC] selection:bg-blue-500/30 selection:text-cyan-300 font-sans antialiased overflow-x-hidden">
+    <div className={styles.homeRoot}>
       <Head>
-        <title>AlgoMania — Interactive Algorithm & Data Structure Visualizer</title>
+        <title>AlgoMania — A Visual Lab for Computer Science</title>
         <meta
           name="description"
-          content="Master Data Structures & Algorithms through interactive visual learning. Step-by-step animations for sorting, graphs, trees, and core data structures."
+          content="Make complex logic visible. Understand algorithms by watching every comparison, traversal and state transition happen, one step at a time."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* Sticky Top Navbar */}
-      <Navbar />
+      {/* Homepage-Specific Minimal Header */}
+      <HomeHeader />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Three.js Interactive 3D Background */}
-        <ThreeHeroUniverse />
-
-        {/* Ambient Radial Gradient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-cyan-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
-        <div className="absolute top-1/2 right-10 w-[400px] h-[400px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-        {/* Hero Content Container */}
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
-          {/* Release Badge */}
-          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] backdrop-blur-md shadow-inner text-xs sm:text-sm font-medium text-slate-300">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-            </span>
-            <span>Next-Generation Visual Learning Platform</span>
-            <span className="text-white/30">•</span>
-            <span className="text-cyan-400 font-semibold">Interactive 3D Engine</span>
-          </div>
-
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] max-w-4xl mx-auto">
-            Master Algorithms Through{' '}
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-300 bg-clip-text text-transparent">
-              Interactive Visual Learning.
-            </span>
-          </h1>
-
-          {/* Supporting Text */}
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-            Explore algorithms, visualize every state transition, understand asymptotic complexity, and turn difficult data structure concepts into intuitive interactive experiences.
-          </p>
-
-          {/* Call to Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            {isAuthenticated ? (
-              <Link
-                href="/app"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-xl shadow-blue-500/25 hover:shadow-cyan-500/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Launch Visualizer Workspace →
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/register"
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white shadow-xl shadow-blue-600/30 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Start Learning Free
-                </Link>
-                <Link
-                  href="/sorting"
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/[0.1] backdrop-blur-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Explore Visualizers
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Value Proof Indicator Pills */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 max-w-4xl mx-auto text-left">
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
-              <div className="text-cyan-400 text-sm font-semibold mb-0.5">Interactive Engine</div>
-              <div className="text-xs text-slate-400">Step-by-step playback & speed</div>
+      <main className="w-full">
+        {/* ====================================================================
+            HERO SECTION: Asymmetric Two-Panel Editorial Hero
+            Left: Burnt-orange editorial DSA artwork
+            Right: Warm ivory editorial typography & actions
+            ==================================================================== */}
+        <section className="w-full py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
+            {/* LEFT PANEL: Dominant Burnt Orange Custom DSA Illustration */}
+            <div className="lg:col-span-6 flex">
+              <HeroEditorialGraphic />
             </div>
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
-              <div className="text-blue-400 text-sm font-semibold mb-0.5">Real-Time State</div>
-              <div className="text-xs text-slate-400">Pointer & array highlighting</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
-              <div className="text-indigo-400 text-sm font-semibold mb-0.5">Complexity Analysis</div>
-              <div className="text-xs text-slate-400">Big-O time & space breakdown</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
-              <div className="text-cyan-300 text-sm font-semibold mb-0.5">Cloud Progress</div>
-              <div className="text-xs text-slate-400">Saved milestones across devices</div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Platform Features Grid Section */}
-      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#0A1022] relative">
-        <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-xs sm:text-sm uppercase tracking-widest font-semibold text-cyan-400">
-              Platform Modules
-            </h2>
-            <h3 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-              Explore Our Visualizers
-            </h3>
-            <p className="text-base sm:text-lg text-slate-400">
-              Comprehensive interactive suites covering the entire computer science algorithm curriculum.
-            </p>
-          </div>
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visualizerCards.map((card) => (
-              <Link
-                key={card.title}
-                href={card.href}
-                className="group relative p-7 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.08] hover:border-blue-500/40 backdrop-blur-md transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-500/10 via-indigo-500/10 to-cyan-500/10 border border-white/[0.08] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      {card.icon}
-                    </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-cyan-300">
-                      {card.badge}
-                    </span>
-                  </div>
-                  <h4 className="text-xl font-bold text-white mb-2.5 group-hover:text-cyan-300 transition-colors">
-                    {card.title}
-                  </h4>
-                  <p className="text-sm text-slate-400 leading-relaxed mb-6">
-                    {card.description}
-                  </p>
+            {/* RIGHT PANEL: Warm Ivory Editorial Copy & Primary Entry */}
+            <div className="lg:col-span-6 flex flex-col justify-between py-2 sm:py-6 lg:pl-4">
+              <div className="space-y-6">
+                {/* Eyebrow Label */}
+                <div className="inline-flex items-center space-x-2 text-[11px] sm:text-xs font-mono tracking-widest text-[#69665F] uppercase border-b border-[#DED9CE] pb-2">
+                  <span className="w-2 h-2 rounded-full bg-[#EF592A]"></span>
+                  <span>A Visual Lab for Computer Science</span>
                 </div>
 
-                <div>
-                  <div className="flex flex-wrap gap-1.5 pt-4 border-t border-white/[0.06]">
-                    {card.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[11px] font-medium text-slate-400 bg-white/[0.03] px-2 py-0.5 rounded-md"
+                {/* Primary Editorial Headline */}
+                <h1 className="text-4xl sm:text-6xl xl:text-7xl font-extrabold tracking-tight text-[#24231F] leading-[1.05]">
+                  Make complex <br />
+                  <span className="text-[#EF592A]">logic visible.</span>
+                </h1>
+
+                {/* Supporting Description */}
+                <p className="text-base sm:text-lg text-[#69665F] leading-relaxed max-w-xl font-normal">
+                  Understand algorithms by watching every comparison, traversal and state transition happen, one step at a time.
+                </p>
+
+                {/* Call to Action Actions */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-4">
+                  {isAuthenticated ? (
+                    <>
+                      <Link
+                        href="/app"
+                        className="px-7 py-3.5 rounded-lg text-sm font-semibold bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] text-center"
                       >
-                        {tag}
+                        Continue Learning →
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        className="px-6 py-3.5 rounded-lg text-sm font-semibold bg-[#FFFDF8] hover:bg-[#F8F5ED] text-[#24231F] border border-[#DED9CE] hover:border-[#24231F] transition-all text-center"
+                      >
+                        View Dashboard
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <a
+                        href="#algorithm-index"
+                        className="px-7 py-3.5 rounded-lg text-sm font-semibold bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] text-center"
+                      >
+                        Explore the Visual Lab
+                      </a>
+                      <Link
+                        href="/register"
+                        className="px-6 py-3.5 rounded-lg text-sm font-semibold bg-[#FFFDF8] hover:bg-[#F8F5ED] text-[#24231F] border border-[#DED9CE] hover:border-[#24231F] transition-all text-center"
+                      >
+                        Create Your Account
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Technical Value Metadata Indicators */}
+              <div className="pt-10 mt-8 border-t border-[#DED9CE] grid grid-cols-3 gap-4">
+                <div>
+                  <div className="text-xs font-mono font-bold text-[#24231F]">01 // STEP ENGINE</div>
+                  <div className="text-[11px] text-[#69665F] mt-0.5">Pause & step through logic</div>
+                </div>
+                <div>
+                  <div className="text-xs font-mono font-bold text-[#28533D]">02 // POINTER TRACE</div>
+                  <div className="text-[11px] text-[#69665F] mt-0.5">In-memory variable state</div>
+                </div>
+                <div>
+                  <div className="text-xs font-mono font-bold text-[#EF592A]">03 // ASYMPTOTICS</div>
+                  <div className="text-[11px] text-[#69665F] mt-0.5">Big-O trade-off curves</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ====================================================================
+            SECTION A: The Algorithm Index
+            Curriculum grouped into 4 editorial rows with clear destination routes
+            ==================================================================== */}
+        <section id="algorithm-index" className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#DED9CE]">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 gap-4">
+            <div>
+              <span className="text-[11px] font-mono font-bold tracking-widest text-[#EF592A] uppercase block mb-2">
+                Curriculum Structure
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#24231F]">
+                Find your next concept.
+              </h2>
+            </div>
+            <p className="text-sm sm:text-base text-[#69665F] max-w-md">
+              Organized into four distinct algorithmic domains with step-by-step interactive animations and code synchronization.
+            </p>
+          </div>
+
+          {/* 4 Editorial Curriculum Rows */}
+          <div className="space-y-4">
+            {curriculumIndex.map((item) => (
+              <div
+                key={item.index}
+                className="w-full bg-[#FFFDF8] border border-[#DED9CE] hover:border-[#24231F] rounded-xl sm:rounded-2xl p-6 sm:p-8 transition-all hover:shadow-sm"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                  {/* Category Index & Identifier */}
+                  <div className="md:col-span-3 flex items-baseline space-x-3">
+                    <span className="text-2xl sm:text-3xl font-mono font-black text-[#EF592A]">
+                      {item.index}
+                    </span>
+                    <div>
+                      <div className="text-xs font-mono tracking-wider uppercase text-[#69665F]">
+                        {item.category}
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E4E9DD] text-[#28533D] font-bold">
+                        {item.tag}
                       </span>
-                    ))}
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center text-xs font-semibold text-blue-400 group-hover:text-cyan-300 transition-colors">
-                    <span>Open Visualizer</span>
-                    <span className="ml-1.5 group-hover:translate-x-1 transition-transform">→</span>
+
+                  {/* Title & Description */}
+                  <div className="md:col-span-6 space-y-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#24231F]">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#69665F] leading-relaxed">
+                      {item.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {item.items.map((sub) => (
+                        <Link
+                          key={sub.label}
+                          href={sub.href}
+                          className="text-[11px] font-mono bg-[#F8F5ED] hover:bg-[#F6DDD0] text-[#24231F] px-2.5 py-1 rounded border border-[#DED9CE] transition-colors"
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Primary Link Action */}
+                  <div className="md:col-span-3 flex md:justify-end">
+                    <Link
+                      href={item.primaryHref}
+                      className="inline-flex items-center text-xs sm:text-sm font-bold text-[#24231F] hover:text-[#EF592A] group"
+                    >
+                      <span>Open Visualizer</span>
+                      <span className="ml-1.5 group-hover:translate-x-1 transition-transform">→</span>
+                    </Link>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#080D1B]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-xs sm:text-sm uppercase tracking-widest font-semibold text-blue-400">
-              Interactive Workflow
+        {/* ====================================================================
+            SECTION B: Featured Interactive Demonstration
+            Interactive Bubble Sort live demo with playback controls & telemetry
+            ==================================================================== */}
+        <section id="interactive-preview" className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#DED9CE]">
+          <div className="max-w-3xl mb-10 space-y-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-[#28533D] uppercase block">
+              Live Product Demonstration
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#24231F]">
+              See the work between the lines of code.
             </h2>
-            <h3 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-              How AlgoMania Works
-            </h3>
-            <p className="text-base sm:text-lg text-slate-400">
-              Master complex algorithmic concepts in three intuitive steps.
+            <p className="text-sm sm:text-base text-[#69665F]">
+              Interact with live comparison pointers, step through memory swaps, and inspect asymptotic execution behavior.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((item) => (
+          <FeaturedInteractivePreview />
+        </section>
+
+        {/* ====================================================================
+            SECTION C: Product Capabilities
+            Restrained editorial list detailing actual platform engineering strengths
+            ==================================================================== */}
+        <section className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#DED9CE]">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 gap-4">
+            <div>
+              <span className="text-[11px] font-mono font-bold tracking-widest text-[#EF592A] uppercase block mb-2">
+                Educational Architecture
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#24231F]">
+                Engineered for deep comprehension.
+              </h2>
+            </div>
+            <p className="text-sm sm:text-base text-[#69665F] max-w-md">
+              Replacing static textbook drawings with live, controllable algorithmic simulations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {capabilities.map((cap) => (
               <div
-                key={item.step}
-                className="relative p-8 rounded-2xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md space-y-4"
+                key={cap.num}
+                className="bg-[#FFFDF8] border border-[#DED9CE] rounded-xl p-6 sm:p-7 space-y-3 shadow-none hover:border-[#24231F] transition-colors"
               >
-                <div className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                  {item.step}
+                <div className="text-xs font-mono font-bold text-[#EF592A]">
+                  {cap.num} // CAPABILITY
                 </div>
-                <h4 className="text-xl font-bold text-white">
-                  {item.title}
-                </h4>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  {item.description}
+                <h3 className="text-base sm:text-lg font-bold text-[#24231F]">
+                  {cap.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#69665F] leading-relaxed">
+                  {cap.desc}
                 </p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Why AlgoMania Benefits Section */}
-      <section id="why-algomania" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#0A1022]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-xs sm:text-sm uppercase tracking-widest font-semibold text-indigo-400">
-              Why AlgoMania
+        {/* ====================================================================
+            SECTION D: Final Call to Action
+            Confident, high-contrast editorial banner in Burnt Orange
+            ==================================================================== */}
+        <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-16">
+          <div className="w-full bg-[#EF592A] text-[#FFFDF8] rounded-2xl lg:rounded-3xl p-8 sm:p-14 lg:p-16 text-center space-y-6 shadow-md relative overflow-hidden">
+            {/* Subtle background coordinate line */}
+            <div className="absolute inset-x-0 top-0 h-1 bg-[#FFFDF8]/20"></div>
+
+            <span className="text-[11px] font-mono tracking-widest uppercase text-[#FFFDF8]/80 font-bold block">
+              Start Visualizing Algorithms
+            </span>
+
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-[#FFFDF8] max-w-2xl mx-auto">
+              Understand it. Then master it.
             </h2>
-            <h3 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-              Designed for Intuitive Mastery
-            </h3>
-            <p className="text-base sm:text-lg text-slate-400">
-              Engineered to replace dry textbook diagrams with live, controllable algorithmic simulations.
+
+            <p className="text-sm sm:text-base text-[#FFFDF8]/90 max-w-xl mx-auto leading-relaxed">
+              Your next algorithm starts with one visual step. Run, inspect, and master fundamental computer science logic today.
             </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit) => (
-              <div
-                key={benefit.title}
-                className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-3"
-              >
-                <div className="text-3xl mb-2">{benefit.icon}</div>
-                <h4 className="text-lg font-bold text-white">{benefit.title}</h4>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  {benefit.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final Call to Action */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-gradient-to-b from-[#080D1B] to-[#0A1022] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 via-cyan-500/5 to-indigo-600/10 pointer-events-none" />
-        <div className="max-w-4xl mx-auto text-center space-y-8 relative z-10">
-          <h3 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-            Ready to Master Data Structures & Algorithms?
-          </h3>
-          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto">
-            Join AlgoMania today. Experiment with live code animations, monitor algorithmic state, and level up your software engineering skills.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {isAuthenticated ? (
-              <Link
-                href="/app"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-xl shadow-blue-500/25 transition-all duration-300 hover:scale-[1.02]"
-              >
-                Launch Visualizer
-              </Link>
-            ) : (
-              <>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
+              {isAuthenticated ? (
                 <Link
-                  href="/register"
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-xl shadow-blue-600/30 transition-all duration-300 hover:scale-[1.02]"
+                  href="/app"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-sm font-bold bg-[#FFFDF8] hover:bg-[#F8F5ED] text-[#24231F] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Create Free Account
+                  Continue Learning →
                 </Link>
-                <Link
-                  href="/login"
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/[0.1] backdrop-blur-md transition-all duration-300 hover:scale-[1.02]"
-                >
-                  Sign In
-                </Link>
-              </>
-            )}
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-sm font-bold bg-[#FFFDF8] hover:bg-[#F8F5ED] text-[#24231F] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Create Free Account
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-sm font-bold bg-transparent hover:bg-[#FFFDF8]/10 text-[#FFFDF8] border border-[#FFFDF8]/40 transition-all"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Coherent Footer */}
-      <Footer />
+      {/* Homepage-Specific Minimal Warm Footer */}
+      <HomeFooter />
     </div>
   );
 }

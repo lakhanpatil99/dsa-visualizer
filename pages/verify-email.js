@@ -4,49 +4,15 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../src/contexts/AuthContext';
 import EmailVerificationGuard from '../src/components/EmailVerificationGuard';
-import { confirmEmailVerification, getFriendlyAuthErrorMessage } from '../lib/authService';
 
 export default function VerifyEmail() {
-  const { user, refreshUser, resendVerification, logout } = useAuth();
   const [cooldown, setCooldown] = useState(0);
-  const [isChecking, setIsChecking] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   const [notification, setNotification] = useState({ type: '', text: '' });
+
   const router = useRouter();
-
-  // Handle direct verification link with action code (oobCode)
-  useEffect(() => {
-    if (!router.isReady) return;
-    const { oobCode, mode } = router.query;
-    if (oobCode && (mode === 'verifyEmail' || mode === 'action' || !mode)) {
-      setIsChecking(true);
-      setNotification({
-        type: 'info',
-        text: 'Verifying your email code...'
-      });
-
-      confirmEmailVerification(oobCode)
-        .then(async () => {
-          setNotification({
-            type: 'success',
-            text: 'Your email address has been successfully verified! Loading your AlgoMania workspace...'
-          });
-          await refreshUser();
-          setTimeout(() => {
-            router.replace('/app');
-          }, 1500);
-        })
-        .catch((err) => {
-          setNotification({
-            type: 'error',
-            text: getFriendlyAuthErrorMessage(err)
-          });
-        })
-        .finally(() => {
-          setIsChecking(false);
-        });
-    }
-  }, [router.isReady, router.query, refreshUser, router]);
+  const { user, refreshUser, resendVerification, logout } = useAuth();
 
   // Cooldown countdown timer
   useEffect(() => {
@@ -141,90 +107,112 @@ export default function VerifyEmail() {
   return (
     <EmailVerificationGuard>
       <Head>
-        <title>Verify Your Email - AlgoMania</title>
+        <title>Verify Your Email — AlgoMania</title>
         <meta name="description" content="Please verify your email address to access AlgoMania learning features." />
       </Head>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <Link href="/" className="flex items-center justify-center space-x-2">
-            <span className="text-3xl font-extrabold text-blue-600">AlgoMania</span>
-            <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-200">
-              DSA 10X
-            </span>
-          </Link>
-          <div className="mt-6 flex justify-center">
-            <div className="rounded-full bg-blue-100 dark:bg-blue-900/50 p-4 text-blue-600 dark:text-blue-400">
-              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+      <div className="min-h-screen bg-[#F8F5ED] text-[#24231F] flex flex-col justify-between selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
+        {/* Header Bar */}
+        <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
+              A
             </div>
-          </div>
-          <h2 className="mt-4 text-center text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
-            Verify your email address
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
-            We sent a verification link to{' '}
-            <span className="font-semibold text-gray-900 dark:text-white break-all">
-              {user?.email || 'your email'}
-            </span>
-          </p>
-        </div>
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F]">
+                Algo<span className="text-[#EF592A]">Mania</span>
+              </span>
+              <span className="hidden sm:block text-[10px] font-mono tracking-widest text-[#69665F] uppercase -mt-1">
+                Visual Lab
+              </span>
+            </div>
+          </Link>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 border border-gray-100 dark:border-gray-700 space-y-6">
+          <Link
+            href="/"
+            className="flex items-center space-x-1.5 text-xs sm:text-sm font-semibold text-[#69665F] hover:text-[#24231F] px-3.5 py-1.5 rounded-lg border border-[#DED9CE] hover:border-[#24231F] bg-[#FFFDF8] transition-all"
+          >
+            <span>←</span>
+            <span>Back to Home</span>
+          </Link>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+          <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl bg-[#FFFDF8] border border-[#DED9CE] shadow-sm hover:shadow-md transition-shadow space-y-6">
+            <div className="text-center space-y-3">
+              <div className="w-14 h-14 rounded-2xl bg-[#F6DDD0] border border-[#EF592A]/30 flex items-center justify-center mx-auto text-[#EF592A]">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="text-[11px] font-mono font-bold tracking-widest text-[#EF592A] uppercase block">
+                Verification Required
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#24231F] tracking-tight">
+                Verify your email address
+              </h1>
+              <p className="text-xs sm:text-sm text-[#69665F] max-w-sm mx-auto leading-relaxed">
+                We sent a verification link to{' '}
+                <strong className="text-[#24231F] break-all">
+                  {user?.email || 'your email'}
+                </strong>.
+              </p>
+            </div>
+
             {notification.text && (
               <div
                 role="alert"
-                className={`p-4 rounded-md text-sm flex items-start space-x-2 ${
+                className={`p-3.5 rounded-xl text-xs sm:text-sm flex items-start space-x-2 ${
                   notification.type === 'success'
-                    ? 'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800'
+                    ? 'bg-[#E4E9DD] text-[#28533D] border border-[#28533D]/20'
                     : notification.type === 'error'
-                    ? 'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
-                    : 'bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-[#F8F5ED] text-[#24231F] border border-[#DED9CE]'
                 }`}
               >
                 <span className="flex-1">{notification.text}</span>
               </div>
             )}
 
-            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-3">
-              <p>
-                To protect your progress and ensure account security, email verification is required before accessing our interactive algorithm visualizers and dashboards.
+            <div className="text-xs sm:text-sm text-[#69665F] space-y-2 bg-[#F8F5ED] p-4 rounded-xl border border-[#DED9CE]">
+              <p className="font-medium text-[#24231F]">
+                Email verification is required before accessing interactive visualizers:
               </p>
-              <ul className="list-disc list-inside space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                <li>Check your spam or junk folder if you don&apos;t see the email.</li>
-                <li>You can verify from any device or browser.</li>
-                <li>Once verified, click the button below to proceed.</li>
+              <ul className="list-disc list-inside space-y-1 text-xs text-[#69665F]">
+                <li>Check your spam folder if you don&apos;t see the message.</li>
+                <li>You can verify from any device or browser tab.</li>
+                <li>Once verified, click the button below to load your workspace.</li>
               </ul>
             </div>
 
             {/* Verification Check Button */}
-            <div>
+            <div className="space-y-3">
               <button
                 type="button"
                 onClick={handleCheckVerification}
                 disabled={isChecking}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+                className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2"
               >
                 {isChecking ? (
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#FFFDF8]" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                     <span>Checking Verification...</span>
                   </div>
                 ) : (
-                  'I\'ve verified my email'
+                  <span>I&apos;ve verified my email →</span>
                 )}
               </button>
-            </div>
 
-            {/* Resend Verification Button */}
-            <div>
+              {/* Resend Verification Button */}
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={cooldown > 0 || isResending}
-                className="w-full flex justify-center py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold text-[#24231F] bg-[#FFFDF8] hover:bg-[#F8F5ED] border border-[#DED9CE] hover:border-[#24231F] transition-all disabled:opacity-50"
               >
                 {isResending ? (
                   'Sending...'
@@ -237,23 +225,27 @@ export default function VerifyEmail() {
             </div>
 
             {/* Options */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs">
+            <div className="pt-4 border-t border-[#DED9CE] flex justify-between items-center text-xs text-[#69665F]">
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                className="hover:text-[#EF592A] transition-colors"
               >
                 Sign in with another account
               </button>
               <Link
                 href="/"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="font-medium text-[#24231F] hover:text-[#EF592A] transition-colors"
               >
                 Back to Home
               </Link>
             </div>
           </div>
-        </div>
+        </main>
+
+        <footer className="w-full py-5 text-center text-xs text-[#69665F] border-t border-[#DED9CE] bg-[#F8F5ED]">
+          AlgoMania • A Visual Lab for Computer Science
+        </footer>
       </div>
     </EmailVerificationGuard>
   );

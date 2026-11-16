@@ -136,24 +136,27 @@ export default function Register() {
         <meta name="description" content="Create your free AlgoMania account to save progress and master Data Structures & Algorithms." />
       </Head>
 
-      <div className="min-h-screen bg-[#080D1B] text-[#F8FAFC] flex flex-col justify-between selection:bg-blue-500/30 selection:text-cyan-300">
+      <div className="min-h-screen bg-[#F8F5ED] text-[#24231F] flex flex-col justify-between selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
         {/* Header Bar */}
-        <header className="w-full px-6 py-5 flex items-center justify-between border-b border-white/[0.06]">
+        <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-[1.5px] shadow-lg shadow-blue-500/20">
-              <div className="w-full h-full bg-[#080D1B] rounded-[10px] flex items-center justify-center font-black text-white text-base">
-                A
-              </div>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
+              A
             </div>
-            <span className="text-xl font-black tracking-tight text-white group-hover:text-cyan-300 transition-colors">
-              Algo<span className="text-cyan-400">Mania</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F]">
+                Algo<span className="text-[#EF592A]">Mania</span>
+              </span>
+              <span className="hidden sm:block text-[10px] font-mono tracking-widest text-[#69665F] uppercase -mt-1">
+                Visual Lab
+              </span>
+            </div>
           </Link>
 
-          {/* Prominent Back to Home navigation */}
+          {/* Back to Home Link */}
           <Link
             href="/"
-            className="flex items-center space-x-1.5 text-xs sm:text-sm font-medium text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all"
+            className="flex items-center space-x-1.5 text-xs sm:text-sm font-semibold text-[#69665F] hover:text-[#24231F] px-3.5 py-1.5 rounded-lg border border-[#DED9CE] hover:border-[#24231F] bg-[#FFFDF8] transition-all"
           >
             <span>←</span>
             <span>Back to Home</span>
@@ -161,57 +164,56 @@ export default function Register() {
         </header>
 
         {/* Main 2-Column Area */}
-        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* LEFT COLUMN: Visual Brand & Features */}
-            <div className="hidden lg:flex lg:col-span-5 flex-col space-y-8 pr-4">
-              <div className="space-y-4">
-                <span className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                  Interactive Learning
+            <div className="hidden lg:flex lg:col-span-5 flex-col space-y-6 pr-2">
+              <div className="space-y-3">
+                <span className="inline-block text-[11px] font-mono font-bold tracking-widest text-[#EF592A] uppercase">
+                  01 // JOIN THE VISUAL LAB
                 </span>
-                <h2 className="text-4xl font-black text-white tracking-tight leading-tight">
-                  Start your journey into{' '}
-                  <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-300 bg-clip-text text-transparent">
-                    visual algorithms.
-                  </span>
+                <h2 className="text-4xl font-extrabold text-[#24231F] tracking-tight leading-[1.1]">
+                  Start your journey into <br />
+                  <span className="text-[#EF592A]">visual algorithms.</span>
                 </h2>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-[#69665F] leading-relaxed">
                   Join thousands mastering algorithms with animated execution, complexity breakdowns, and cloud progress tracking.
                 </p>
               </div>
 
               {/* Feature Checklist */}
-              <div className="space-y-3.5">
+              <div className="space-y-3.5 p-6 rounded-2xl bg-[#FFFDF8] border border-[#DED9CE] shadow-2xs">
                 {[
                   'Unlimited access to interactive sorting and graph visualizers',
                   'Step-by-step state debugger with pointer inspections',
                   'Cloud synchronization of completed algorithms and stats',
                   'Designed for technical coding interview preparation'
                 ].map((item, idx) => (
-                  <div key={idx} className="flex items-start space-x-3 text-xs sm:text-sm text-slate-300">
-                    <div className="w-5 h-5 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div key={idx} className="flex items-start space-x-3 text-xs sm:text-sm text-[#24231F]">
+                    <div className="w-5 h-5 rounded-full bg-[#E4E9DD] border border-[#28533D]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-3 h-3 text-[#28533D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span>{item}</span>
+                    <span className="font-medium text-[#24231F]">{item}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-slate-400">
-                🔒 We enforce verified email authentication to protect your progress and learning history.
+              <div className="p-4 rounded-xl bg-[#F6DDD0]/50 border border-[#EF592A]/20 text-xs text-[#24231F] font-medium flex items-center space-x-2">
+                <span>🔒</span>
+                <span>We enforce verified email authentication to protect your progress and learning history.</span>
               </div>
             </div>
 
             {/* RIGHT COLUMN: Modern Registration Form Card */}
             <div className="lg:col-span-7 flex justify-center">
-              <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl bg-[#10182B]/90 border border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40 space-y-6">
-                <div className="space-y-2">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl bg-[#FFFDF8] border border-[#DED9CE] shadow-sm hover:shadow-md transition-shadow space-y-6">
+                <div className="space-y-1.5">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#24231F] tracking-tight">
                     Create Account
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-400">
+                  <p className="text-xs sm:text-sm text-[#69665F]">
                     Get started with your free AlgoMania account today.
                   </p>
                 </div>
@@ -220,9 +222,9 @@ export default function Register() {
                 {serverError && (
                   <div
                     role="alert"
-                    className="p-3.5 rounded-xl text-xs sm:text-sm bg-red-500/10 border border-red-500/30 text-red-300 flex items-start space-x-2 animate-fadeIn"
+                    className="p-3.5 rounded-xl text-xs sm:text-sm bg-red-50 border border-red-200 text-red-700 flex items-start space-x-2 animate-fadeIn"
                   >
-                    <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <span>{serverError}</span>
@@ -234,7 +236,7 @@ export default function Register() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isSubmitting}
-                  className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center justify-center space-x-3 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-[#24231F] bg-[#FFFDF8] hover:bg-[#F8F5ED] border border-[#DED9CE] hover:border-[#24231F] transition-all flex items-center justify-center space-x-3 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] shadow-2xs"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -246,8 +248,8 @@ export default function Register() {
                 </button>
 
                 <div className="relative flex items-center justify-center">
-                  <div className="w-full border-t border-white/[0.08]"></div>
-                  <span className="absolute bg-[#10182B] px-3 text-xs uppercase tracking-wider text-slate-500 font-medium">
+                  <div className="w-full border-t border-[#DED9CE]"></div>
+                  <span className="absolute bg-[#FFFDF8] px-3 text-[11px] uppercase tracking-wider text-[#69665F] font-mono">
                     Or register with email
                   </span>
                 </div>
@@ -256,7 +258,7 @@ export default function Register() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Full Name */}
                   <div>
-                    <label htmlFor={nameId} className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                    <label htmlFor={nameId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] mb-1.5">
                       Full Name
                     </label>
                     <input
@@ -268,18 +270,18 @@ export default function Register() {
                       value={formData.fullName}
                       onChange={handleChange}
                       placeholder="Jane Doe"
-                      className={`w-full px-4 py-3 rounded-xl bg-white/[0.03] border text-white placeholder-slate-500 text-sm focus:outline-none transition-colors ${
-                        fieldErrors.fullName ? 'border-red-500/60 focus:border-red-500' : 'border-white/[0.1] focus:border-blue-500'
+                      className={`w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none transition-all ${
+                        fieldErrors.fullName ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[#DED9CE] focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20'
                       }`}
                     />
                     {fieldErrors.fullName && (
-                      <p className="mt-1 text-xs text-red-400">{fieldErrors.fullName}</p>
+                      <p className="mt-1 text-xs text-red-600 font-medium">{fieldErrors.fullName}</p>
                     )}
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label htmlFor={emailId} className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                    <label htmlFor={emailId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] mb-1.5">
                       Email address
                     </label>
                     <input
@@ -291,18 +293,18 @@ export default function Register() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="jane@example.com"
-                      className={`w-full px-4 py-3 rounded-xl bg-white/[0.03] border text-white placeholder-slate-500 text-sm focus:outline-none transition-colors ${
-                        fieldErrors.email ? 'border-red-500/60 focus:border-red-500' : 'border-white/[0.1] focus:border-blue-500'
+                      className={`w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none transition-all ${
+                        fieldErrors.email ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[#DED9CE] focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20'
                       }`}
                     />
                     {fieldErrors.email && (
-                      <p className="mt-1 text-xs text-red-400">{fieldErrors.email}</p>
+                      <p className="mt-1 text-xs text-red-600 font-medium">{fieldErrors.email}</p>
                     )}
                   </div>
 
                   {/* Password */}
                   <div>
-                    <label htmlFor={passwordId} className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                    <label htmlFor={passwordId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] mb-1.5">
                       Password
                     </label>
                     <div className="relative">
@@ -315,14 +317,14 @@ export default function Register() {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className={`w-full px-4 py-3 rounded-xl bg-white/[0.03] border text-white placeholder-slate-500 text-sm focus:outline-none transition-colors pr-12 ${
-                          fieldErrors.password ? 'border-red-500/60 focus:border-red-500' : 'border-white/[0.1] focus:border-blue-500'
+                        className={`w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none transition-all pr-12 ${
+                          fieldErrors.password ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[#DED9CE] focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20'
                         }`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors text-xs font-medium"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#69665F] hover:text-[#24231F] transition-colors text-xs font-mono font-bold"
                       >
                         {showPassword ? 'Hide' : 'Show'}
                       </button>
@@ -331,12 +333,12 @@ export default function Register() {
                     {/* Password Strength Meter */}
                     {formData.password && (
                       <div className="mt-2 space-y-1.5">
-                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <div className="flex items-center justify-between text-[11px] text-[#69665F] font-mono">
                           <span>Password Strength</span>
                           <span className={
-                            strengthScore <= 1 ? 'text-red-400 font-semibold' :
-                            strengthScore <= 3 ? 'text-amber-400 font-semibold' :
-                            'text-green-400 font-semibold'
+                            strengthScore <= 1 ? 'text-red-600 font-bold' :
+                            strengthScore <= 3 ? 'text-[#EF592A] font-bold' :
+                            'text-[#28533D] font-bold'
                           }>
                             {strengthScore <= 1 ? 'Weak' : strengthScore <= 3 ? 'Medium' : 'Strong'}
                           </span>
@@ -347,8 +349,8 @@ export default function Register() {
                               key={level}
                               className={`rounded-full transition-all duration-300 ${
                                 level <= strengthScore
-                                  ? strengthScore <= 1 ? 'bg-red-500' : strengthScore <= 3 ? 'bg-amber-400' : 'bg-green-500'
-                                  : 'bg-white/[0.1]'
+                                  ? strengthScore <= 1 ? 'bg-red-500' : strengthScore <= 3 ? 'bg-[#EF592A]' : 'bg-[#28533D]'
+                                  : 'bg-[#DED9CE]'
                               }`}
                             />
                           ))}
@@ -356,13 +358,13 @@ export default function Register() {
                       </div>
                     )}
                     {fieldErrors.password && (
-                      <p className="mt-1 text-xs text-red-400">{fieldErrors.password}</p>
+                      <p className="mt-1 text-xs text-red-600 font-medium">{fieldErrors.password}</p>
                     )}
                   </div>
 
                   {/* Confirm Password */}
                   <div>
-                    <label htmlFor={confirmPasswordId} className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                    <label htmlFor={confirmPasswordId} className="block text-xs font-mono font-bold uppercase tracking-wider text-[#24231F] mb-1.5">
                       Confirm Password
                     </label>
                     <div className="relative">
@@ -375,20 +377,20 @@ export default function Register() {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className={`w-full px-4 py-3 rounded-xl bg-white/[0.03] border text-white placeholder-slate-500 text-sm focus:outline-none transition-colors pr-12 ${
-                          fieldErrors.confirmPassword ? 'border-red-500/60 focus:border-red-500' : 'border-white/[0.1] focus:border-blue-500'
+                        className={`w-full px-4 py-3 rounded-xl bg-[#FFFDF8] border text-[#24231F] placeholder-[#69665F]/50 text-sm focus:outline-none transition-all pr-12 ${
+                          fieldErrors.confirmPassword ? 'border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[#DED9CE] focus:border-[#EF592A] focus:ring-2 focus:ring-[#EF592A]/20'
                         }`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors text-xs font-medium"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#69665F] hover:text-[#24231F] transition-colors text-xs font-mono font-bold"
                       >
                         {showConfirmPassword ? 'Hide' : 'Show'}
                       </button>
                     </div>
                     {fieldErrors.confirmPassword && (
-                      <p className="mt-1 text-xs text-red-400">{fieldErrors.confirmPassword}</p>
+                      <p className="mt-1 text-xs text-red-600 font-medium">{fieldErrors.confirmPassword}</p>
                     )}
                   </div>
 
@@ -396,11 +398,11 @@ export default function Register() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white shadow-xl shadow-blue-600/25 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2"
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2"
                   >
                     {isSubmitting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#FFFDF8]" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -413,11 +415,11 @@ export default function Register() {
                 </form>
 
                 {/* Explicit Navigation to Login */}
-                <div className="pt-2 text-center text-sm text-slate-400 border-t border-white/[0.06]">
+                <div className="pt-2 text-center text-sm text-[#69665F] border-t border-[#DED9CE]">
                   Already have an account?{' '}
                   <Link
                     href="/login"
-                    className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors ml-1"
+                    className="font-bold text-[#EF592A] hover:text-[#d64b20] transition-colors ml-1"
                   >
                     Sign in
                   </Link>
@@ -428,8 +430,8 @@ export default function Register() {
         </main>
 
         {/* Footer info */}
-        <footer className="w-full py-5 text-center text-xs text-slate-500 border-t border-white/[0.04]">
-          AlgoMania • Master Data Structures & Algorithms
+        <footer className="w-full py-5 text-center text-xs text-[#69665F] border-t border-[#DED9CE] bg-[#F8F5ED]">
+          AlgoMania • A Visual Lab for Computer Science
         </footer>
       </div>
     </PublicOnlyRoute>

@@ -1,0 +1,113 @@
+/* ==============================================================================
+   ALGOMANIA — HOMEPAGE EDITORIAL DESIGN TOKENS & UTILITIES
+   Editorial layout, warm ivory/burnt orange palette, high-contrast typography.
+   ============================================================================== */
+
+.homeRoot {
+  --burnt-orange: #EF592A;
+  --warm-ivory: #F8F5ED;
+  --paper-white: #FFFDF8;
+  --deep-ink: #24231F;
+  --forest-green: #28533D;
+  --soft-sage: #E4E9DD;
+  --muted-text: #69665F;
+  --border-color: #DED9CE;
+  --pale-orange: #F6DDD0;
+
+  background-color: var(--warm-ivory);
+  color: var(--deep-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Editorial Typography */
+.editorialTitle {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.monoLabel {
+  font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Subtle editorial paper borders */
+.fineBorder {
+  border-color: var(--border-color);
+}
+
+.paperCard {
+  background-color: var(--paper-white);
+  border: 1px solid var(--border-color);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.paperCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--deep-ink);
+  box-shadow: 0 12px 28px -10px rgba(36, 35, 31, 0.08);
+}
+
+/* Orange Editorial Button */
+.primaryBtn {
+  background-color: var(--burnt-orange);
+  color: var(--paper-white);
+  border: 1px solid var(--burnt-orange);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.primaryBtn:hover {
+  background-color: #d64b20;
+  border-color: #d64b20;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -4px rgba(239, 89, 42, 0.35);
+}
+
+.primaryBtn:active {
+  transform: translateY(0);
+}
+
+/* Deep Ink / Outline Button */
+.secondaryBtn {
+  background-color: transparent;
+  color: var(--deep-ink);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.secondaryBtn:hover {
+  background-color: var(--paper-white);
+  border-color: var(--deep-ink);
+  color: var(--deep-ink);
+  transform: translateY(-1px);
+}
+
+.secondaryBtn:active {
+  transform: translateY(0);
+}
+
+/* Vertical text layout for editorial panel margins */
+.verticalTextLeft {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.verticalTextRight {
+  writing-mode: vertical-rl;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .paperCard,
+  .primaryBtn,
+  .secondaryBtn {
+    transition: none !important;
+    transform: none !important;
+  }
+}
