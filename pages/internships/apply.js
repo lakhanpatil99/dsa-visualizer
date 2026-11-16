@@ -105,7 +105,7 @@ export default function InternshipApplicationWizard() {
     if (router.query.resume && isAuthenticated) {
       resumeApplication(router.query.resume.toString());
     }
-  }, [router.query.resume, isAuthenticated, user]);
+  }, [router.query.resume, isAuthenticated, user, getFreshAuthToken]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
