@@ -88,19 +88,19 @@ const TreeVisualizer = () => {
     let order = [];
     switch (selectedTraversal) {
       case 'inorder':
-        order = bst.inorder();
+        order = typeof bst.inorder === 'function' ? bst.inorder() : inorderTraversal(bst.root);
         break;
       case 'preorder':
-        order = bst.preorder();
+        order = typeof bst.preorder === 'function' ? bst.preorder() : preorderTraversal(bst.root);
         break;
       case 'postorder':
-        order = bst.postorder();
+        order = typeof bst.postorder === 'function' ? bst.postorder() : postorderTraversal(bst.root);
         break;
       case 'levelorder':
-        order = bst.levelOrder();
+        order = typeof bst.levelOrder === 'function' ? bst.levelOrder() : (bst.root ? [bst.root.data] : []);
         break;
       default:
-        order = bst.inorder();
+        order = typeof bst.inorder === 'function' ? bst.inorder() : inorderTraversal(bst.root);
     }
 
     const currentVisited = new Set();

@@ -101,12 +101,60 @@ export class BinarySearchTree {
     return result;
   }
 
-  inorderTraversal(node, result) {
+  inorderTraversal(node, result = []) {
     if (node !== null) {
       this.inorderTraversal(node.left, result);
       result.push(node.data);
       this.inorderTraversal(node.right, result);
     }
+    return result;
+  }
+
+  preorder() {
+    const result = [];
+    this.preorderTraversal(this.root, result);
+    return result;
+  }
+
+  preorderTraversal(node, result = []) {
+    if (node !== null) {
+      result.push(node.data);
+      this.preorderTraversal(node.left, result);
+      this.preorderTraversal(node.right, result);
+    }
+    return result;
+  }
+
+  postorder() {
+    const result = [];
+    this.postorderTraversal(this.root, result);
+    return result;
+  }
+
+  postorderTraversal(node, result = []) {
+    if (node !== null) {
+      this.postorderTraversal(node.left, result);
+      this.postorderTraversal(node.right, result);
+      result.push(node.data);
+    }
+    return result;
+  }
+
+  levelOrder() {
+    if (!this.root) return [];
+    const result = [];
+    const queue = [this.root];
+    while (queue.length > 0) {
+      const node = queue.shift();
+      result.push(node.data);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    return result;
+  }
+
+  levelOrderTraversal() {
+    return this.levelOrder();
   }
 
   getHeight() {
