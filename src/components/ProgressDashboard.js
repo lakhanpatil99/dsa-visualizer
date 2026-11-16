@@ -8,7 +8,7 @@ const ProgressDashboard = () => {
   const [allProgress, setAllProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const { progressService, isAuthenticated } = useAuth();
   const { isDarkMode } = useContext(DarkModeContext);
 
@@ -25,7 +25,7 @@ const ProgressDashboard = () => {
         progressService.getProgressSummary(),
         progressService.fetchProgress()
       ]);
-      
+
       setProgressSummary(summary);
       setAllProgress(progress.progress || []);
     } catch (err) {
@@ -72,7 +72,7 @@ const ProgressDashboard = () => {
     return (
       <div className="p-4 rounded-xl border font-mono text-xs bg-[#FDEDEA] text-[#C93B14] border-[#EF592A]/30">
         {error}
-        <button 
+        <button
           onClick={loadProgressData}
           className="ml-3 underline font-bold"
         >
@@ -88,9 +88,8 @@ const ProgressDashboard = () => {
         {/* Progress Summary Cards */}
         {progressSummary && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`p-5 rounded-2xl border transition-all ${
-              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-            }`}>
+            <div className={`p-5 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+              }`}>
               <span className="block text-[10px] font-mono tracking-widest text-[#69665F] dark:text-[#A09D95] uppercase font-bold">
                 TOTAL TRACKED
               </span>
@@ -98,10 +97,9 @@ const ProgressDashboard = () => {
                 {progressSummary.totalAlgorithms || 0}
               </div>
             </div>
-            
-            <div className={`p-5 rounded-2xl border transition-all ${
-              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-            }`}>
+
+            <div className={`p-5 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+              }`}>
               <span className="block text-[10px] font-mono tracking-widest text-[#28533D] dark:text-[#E4E9DD] uppercase font-bold">
                 COMPLETED
               </span>
@@ -109,10 +107,9 @@ const ProgressDashboard = () => {
                 {progressSummary.completed || 0}
               </div>
             </div>
-            
-            <div className={`p-5 rounded-2xl border transition-all ${
-              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-            }`}>
+
+            <div className={`p-5 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+              }`}>
               <span className="block text-[10px] font-mono tracking-widest text-[#EF592A] uppercase font-bold">
                 IN PROGRESS
               </span>
@@ -120,10 +117,9 @@ const ProgressDashboard = () => {
                 {progressSummary.inProgress || 0}
               </div>
             </div>
-            
-            <div className={`p-5 rounded-2xl border transition-all ${
-              isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-            }`}>
+
+            <div className={`p-5 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+              }`}>
               <span className="block text-[10px] font-mono tracking-widest text-[#24231F] dark:text-[#FFFDF8] uppercase font-bold">
                 MASTERED
               </span>
@@ -135,9 +131,8 @@ const ProgressDashboard = () => {
         )}
 
         {/* Detailed Progress List */}
-        <div className={`p-6 rounded-2xl border transition-all ${
-          isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-        }`}>
+        <div className={`p-6 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+          }`}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-black tracking-tight text-[#24231F] dark:text-[#FFFDF8]">
               Algorithm Mastery Records
@@ -146,7 +141,7 @@ const ProgressDashboard = () => {
               {allProgress.length} recorded sessions
             </span>
           </div>
-          
+
           {allProgress.length === 0 ? (
             <div className="text-center py-12 text-[#69665F] dark:text-[#A09D95] space-y-2">
               <div className="text-3xl">🧭</div>
@@ -158,7 +153,7 @@ const ProgressDashboard = () => {
           ) : (
             <div className="divide-y divide-[#DED9CE]/40 dark:divide-[#383630]/40">
               {allProgress.map((prog) => (
-                <div 
+                <div
                   key={prog._id}
                   className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >

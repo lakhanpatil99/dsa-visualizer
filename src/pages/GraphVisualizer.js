@@ -437,9 +437,8 @@ const GraphVisualizer = () => {
   const renderLeftSidebar = () => (
     <div className="space-y-5">
       {/* Algorithm selector */}
-      <div className={`p-4 rounded-2xl border transition-all ${
-        isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-      }`}>
+      <div className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+        }`}>
         <span className="block text-[10px] font-mono tracking-widest text-[#EF592A] uppercase font-bold mb-1.5">
           ALGORITHM
         </span>
@@ -448,9 +447,8 @@ const GraphVisualizer = () => {
           onChange={(e) => setSelectedAlgorithm(e.target.value)}
           disabled={isRunning}
           aria-label="Select graph algorithm"
-          className={`w-full p-2.5 rounded-xl border text-sm font-semibold transition-all outline-none focus:border-[#EF592A] ${
-            isDarkMode ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
-          }`}
+          className={`w-full p-2.5 rounded-xl border text-sm font-semibold transition-all outline-none focus:border-[#EF592A] ${isDarkMode ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
+            }`}
         >
           <option value="dijkstra">Dijkstra's Shortest Path</option>
           <option value="astar">A* Pathfinding Search</option>
@@ -470,9 +468,8 @@ const GraphVisualizer = () => {
                 onChange={(e) => setStartNode(e.target.value)}
                 disabled={isRunning}
                 aria-label="Start node"
-                className={`w-full p-2 rounded-lg border text-xs font-mono font-bold mt-0.5 ${
-                  isDarkMode ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
-                }`}
+                className={`w-full p-2 rounded-lg border text-xs font-mono font-bold mt-0.5 ${isDarkMode ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
+                  }`}
               >
                 {nodes.map(n => <option key={n.id} value={n.id}>{n.id}</option>)}
               </select>
@@ -486,9 +483,8 @@ const GraphVisualizer = () => {
                   onChange={(e) => setEndNode(e.target.value)}
                   disabled={isRunning}
                   aria-label="Goal node"
-                  className={`w-full p-2 rounded-lg border text-xs font-mono font-bold mt-0.5 ${
-                    isDarkMode ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
-                  }`}
+                  className={`w-full p-2 rounded-lg border text-xs font-mono font-bold mt-0.5 ${isDarkMode ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
+                    }`}
                 >
                   {nodes.map(n => <option key={n.id} value={n.id}>{n.id}</option>)}
                 </select>
@@ -499,9 +495,8 @@ const GraphVisualizer = () => {
       </div>
 
       {/* Graph Presets & Canvas Tools */}
-      <div className={`p-4 rounded-2xl border transition-all ${
-        isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-      }`}>
+      <div className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+        }`}>
         <span className="block text-[10px] font-mono tracking-widest text-[#69665F] dark:text-[#A09D95] uppercase font-bold mb-2">
           GRAPH PRESETS
         </span>
@@ -540,11 +535,10 @@ const GraphVisualizer = () => {
             type="button"
             onClick={() => { setMode(mode === 'addNode' ? 'idle' : 'addNode'); setEdgeSource(null); }}
             disabled={isRunning}
-            className={`px-3 py-2 rounded-xl text-xs font-mono font-bold border transition-all ${
-              mode === 'addNode'
+            className={`px-3 py-2 rounded-xl text-xs font-mono font-bold border transition-all ${mode === 'addNode'
                 ? 'bg-[#EF592A] text-[#FFFDF8] border-[#EF592A]'
                 : 'bg-[#FAF8F3] dark:bg-[#1D1C19] border-[#DED9CE] dark:border-[#383630]'
-            }`}
+              }`}
           >
             {mode === 'addNode' ? 'Click Canvas' : '+ Add Node'}
           </button>
@@ -552,11 +546,10 @@ const GraphVisualizer = () => {
             type="button"
             onClick={() => { setMode(mode === 'addEdge' ? 'idle' : 'addEdge'); setEdgeSource(null); }}
             disabled={isRunning}
-            className={`px-3 py-2 rounded-xl text-xs font-mono font-bold border transition-all ${
-              mode === 'addEdge'
+            className={`px-3 py-2 rounded-xl text-xs font-mono font-bold border transition-all ${mode === 'addEdge'
                 ? 'bg-[#28533D] text-[#FFFDF8] border-[#28533D]'
                 : 'bg-[#FAF8F3] dark:bg-[#1D1C19] border-[#DED9CE] dark:border-[#383630]'
-            }`}
+              }`}
           >
             {mode === 'addEdge' ? (edgeSource ? `Target?` : 'Source?') : '+ Connect'}
           </button>
@@ -629,9 +622,8 @@ const GraphVisualizer = () => {
         </div>
 
         {/* Live Controller & Status Strip */}
-        <div className={`p-4 rounded-2xl border transition-all ${
-          isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-        }`}>
+        <div className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+          }`}>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center space-x-2 w-full sm:w-auto">
               <button

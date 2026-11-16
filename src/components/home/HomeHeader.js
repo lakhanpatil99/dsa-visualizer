@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../contexts/AuthContext';
+import Logo from '../Logo';
 
 export default function HomeHeader() {
   const { user, isAuthenticated } = useAuth();
@@ -9,19 +10,7 @@ export default function HomeHeader() {
     <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between">
         {/* Brand Mark & Identity */}
-        <Link href="/" className="flex items-center space-x-3 group">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
-            A
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F]">
-              Algo<span className="text-[#EF592A]">Mania</span>
-            </span>
-            <span className="hidden sm:block text-[10px] font-mono tracking-widest text-[#69665F] uppercase -mt-1">
-              Visual Lab
-            </span>
-          </div>
-        </Link>
+        <Logo variant="header" href="/" />
 
         {/* Minimal Actions Bar */}
         <nav className="flex items-center space-x-3 sm:space-x-6">

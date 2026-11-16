@@ -6,9 +6,9 @@ import VisualizerLayout from '../components/VisualizerLayout';
 import SaveProgressButton from '../components/SaveProgressButton';
 import { DarkModeContext } from '../../context/ThemeContext';
 import { BinarySearchTree, bstPseudocode, bstComplexity } from '../algorithms/trees/bst';
-import { 
-  inorderTraversal, 
-  preorderTraversal, 
+import {
+  inorderTraversal,
+  preorderTraversal,
   postorderTraversal,
   treeTraversalPseudocode,
   traversalComplexity
@@ -195,9 +195,8 @@ const TreeVisualizer = () => {
   const renderLeftSidebar = () => (
     <div className="space-y-5">
       {/* Insert & Tree Controls */}
-      <div className={`p-4 rounded-2xl border transition-all ${
-        isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-      }`}>
+      <div className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+        }`}>
         <span className="block text-[10px] font-mono tracking-widest text-[#EF592A] uppercase font-bold mb-2">
           TREE OPERATIONS
         </span>
@@ -239,9 +238,8 @@ const TreeVisualizer = () => {
       </div>
 
       {/* Traversal Selector */}
-      <div className={`p-4 rounded-2xl border transition-all ${
-        isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-      }`}>
+      <div className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+        }`}>
         <span className="block text-[10px] font-mono tracking-widest text-[#69665F] dark:text-[#A09D95] uppercase font-bold mb-2">
           TRAVERSAL ROUTINE
         </span>
@@ -321,9 +319,8 @@ const TreeVisualizer = () => {
 
         {/* Traversal Result Tape */}
         {traversalResult.length > 0 && (
-          <div className={`p-4 rounded-2xl border transition-all ${
-            isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
-          }`}>
+          <div className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+            }`}>
             <span className="block text-[10px] font-mono tracking-widest text-[#28533D] dark:text-[#E4E9DD] uppercase font-bold mb-2">
               {selectedTraversal.toUpperCase()} TRAVERSAL ORDER
             </span>

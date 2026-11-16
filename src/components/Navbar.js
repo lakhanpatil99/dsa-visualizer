@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { DarkModeContext } from '../../context/ThemeContext';
+import Logo from './Logo';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -41,20 +42,8 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full bg-[#F8F5ED] dark:bg-[#1C1B18] border-b border-[#DED9CE] dark:border-[#2E2C27] transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Brand Logo & Wordmark */}
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
-              A
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F] dark:text-[#FFFDF8]">
-                Algo<span className="text-[#EF592A]">Mania</span>
-              </span>
-              <span className="text-[10px] font-mono tracking-widest text-[#69665F] dark:text-[#A09D95] uppercase -mt-1 hidden sm:block">
-                Visual Lab
-              </span>
-            </div>
-          </Link>
+          {/* Brand Logo */}
+          <Logo variant="header" href="/" />
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center space-x-1 sm:space-x-2">

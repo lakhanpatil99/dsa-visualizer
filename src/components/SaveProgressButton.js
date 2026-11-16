@@ -3,12 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { DarkModeContext } from '../../context/ThemeContext';
 import ProtectedFeature from './ProtectedFeature';
 
-const SaveProgressButton = ({ 
-  algorithmType, 
-  algorithmName, 
-  currentState, 
-  stepsCompleted = 0, 
-  totalSteps = 0, 
+const SaveProgressButton = ({
+  algorithmType,
+  algorithmName,
+  currentState,
+  stepsCompleted = 0,
+  totalSteps = 0,
   timeSpent = 0,
   lastStep = '',
   notes = ''
@@ -38,10 +38,10 @@ const SaveProgressButton = ({
 
   const handleSaveProgress = async () => {
     if (!progressService) return;
-    
+
     setIsSaving(true);
     setMessage('');
-    
+
     try {
       const progressData = {
         algorithmType,
@@ -71,11 +71,10 @@ const SaveProgressButton = ({
     <button
       onClick={handleSaveProgress}
       disabled={isSaving}
-      className={`w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl font-mono text-xs font-bold transition-all shadow-xs ${
-        isSaving
+      className={`w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl font-mono text-xs font-bold transition-all shadow-xs ${isSaving
           ? 'bg-[#E8E4DA] text-[#A09D95] cursor-not-allowed'
           : 'bg-[#28533D] hover:bg-[#1E3E2E] text-[#FFFDF8] hover:shadow'
-      }`}
+        }`}
     >
       {isSaving ? (
         <>
@@ -101,21 +100,19 @@ const SaveProgressButton = ({
       <ProtectedFeature>
         {saveButton}
       </ProtectedFeature>
-      
+
       {message && (
-        <div className={`text-xs p-2.5 rounded-lg border font-mono ${
-          message.includes('successfully') 
-            ? 'bg-[#E4E9DD] text-[#28533D] border-[#28533D]/30' 
+        <div className={`text-xs p-2.5 rounded-lg border font-mono ${message.includes('successfully')
+            ? 'bg-[#E4E9DD] text-[#28533D] border-[#28533D]/30'
             : 'bg-[#FDEDEA] text-[#C93B14] border-[#EF592A]/30'
-        }`}>
+          }`}>
           {message}
         </div>
       )}
-      
+
       {savedProgress && (
-        <div className={`text-[11px] font-mono p-3 rounded-xl border space-y-1 ${
-          isDarkMode ? 'bg-[#1F1E1B] border-[#383630] text-[#DED9CE]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
-        }`}>
+        <div className={`text-[11px] font-mono p-3 rounded-xl border space-y-1 ${isDarkMode ? 'bg-[#1F1E1B] border-[#383630] text-[#DED9CE]' : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
+          }`}>
           <div className="font-bold text-[#EF592A]">
             Last saved: {new Date(savedProgress.updatedAt).toLocaleDateString()}
           </div>
@@ -128,7 +125,7 @@ const SaveProgressButton = ({
           )}
         </div>
       )}
-      
+
       <div className="text-[11px] font-mono text-[#69665F] dark:text-[#A09D95]">
         Cloud sync keeps your completed algorithms across devices
       </div>

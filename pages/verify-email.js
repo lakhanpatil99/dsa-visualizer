@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../src/contexts/AuthContext';
 import EmailVerificationGuard from '../src/components/EmailVerificationGuard';
+import Logo from '../src/components/Logo';
 
 export default function VerifyEmail() {
   const [cooldown, setCooldown] = useState(0);
@@ -113,20 +114,8 @@ export default function VerifyEmail() {
 
       <div className="min-h-screen bg-[#F8F5ED] text-[#24231F] flex flex-col justify-between selection:bg-[#EF592A]/20 selection:text-[#EF592A]">
         {/* Header Bar */}
-        <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg tracking-tight shadow-sm group-hover:scale-105 transition-transform">
-              A
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#24231F]">
-                Algo<span className="text-[#EF592A]">Mania</span>
-              </span>
-              <span className="hidden sm:block text-[10px] font-mono tracking-widest text-[#69665F] uppercase -mt-1">
-                Visual Lab
-              </span>
-            </div>
-          </Link>
+        <header className="w-full bg-[#F8F5ED] border-b border-[#DED9CE] px-4 sm:px-8 py-3.5 sm:py-4 flex items-center justify-between">
+          <Logo variant="auth" href="/" />
 
           <Link
             href="/"

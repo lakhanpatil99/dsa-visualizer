@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Logo from './Logo';
 
 export default function Footer() {
   return (
@@ -8,14 +9,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-[#DED9CE] dark:border-[#2E2C27]">
           {/* Brand Info */}
           <div className="md:col-span-5 space-y-4">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-lg bg-[#EF592A] flex items-center justify-center text-[#FFFDF8] font-black text-lg shadow-sm">
-                A
-              </div>
-              <span className="text-xl font-black tracking-tight text-[#24231F] dark:text-[#FFFDF8]">
-                Algo<span className="text-[#EF592A]">Mania</span>
-              </span>
-            </Link>
+            <Logo variant="footer" href="/" />
             <p className="text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95] max-w-sm leading-relaxed">
               An interactive visual laboratory for exploring data structures and algorithms through step-by-step state simulation and execution modeling.
             </p>
