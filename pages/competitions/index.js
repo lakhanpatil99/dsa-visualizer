@@ -5,6 +5,26 @@ import Navbar from '../../src/components/Navbar';
 import Footer from '../../src/components/Footer';
 import { useAuth } from '../../src/contexts/AuthContext';
 import AchievementBadge from '../../src/components/competitions/AchievementBadge';
+import CertificatePreviewModal from '../../src/components/certificates/CertificatePreviewModal';
+
+const ALL_CATEGORIES = [
+  { id: 'all', label: 'All Challenges' },
+  { id: 'arrays', label: 'Arrays' },
+  { id: 'strings', label: 'Strings' },
+  { id: 'sorting', label: 'Sorting' },
+  { id: 'searching', label: 'Searching' },
+  { id: 'hashing', label: 'Hashing' },
+  { id: 'stacks', label: 'Stacks' },
+  { id: 'queues', label: 'Queues' },
+  { id: 'linked-lists', label: 'Linked Lists' },
+  { id: 'trees', label: 'Trees' },
+  { id: 'heaps', label: 'Heaps' },
+  { id: 'graphs', label: 'Graphs' },
+  { id: 'dynamic-programming', label: 'DP' },
+  { id: 'greedy', label: 'Greedy' },
+  { id: 'backtracking', label: 'Backtracking' },
+  { id: 'recursion', label: 'Recursion' }
+];
 
 export default function CompetitionPortal() {
   const { user, isAuthenticated } = useAuth();
@@ -18,11 +38,21 @@ export default function CompetitionPortal() {
   });
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeChallenge, setActiveChallenge] = useState(null);
   const [userCode, setUserCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Certificate Modal State
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    certificate: null,
+    mode: 'LOCKED',
+    userSolvedCount: 0,
+    requiredCount: 20
+  });
 
   // Fetch challenges & user stats
   useEffect(() => {
@@ -123,24 +153,52 @@ export default function CompetitionPortal() {
     }
   };
 
-  const categories = [
-    { id: 'all', label: 'All Challenges' },
-    { id: 'sorting', label: 'Sorting' },
-    { id: 'searching', label: 'Searching' },
-    { id: 'graphs', label: 'Graphs' },
-    { id: 'trees', label: 'Trees' },
-    { id: 'data-structures', label: 'Data Structures' },
-    { id: 'general-dsa', label: 'General DSA' }
-  ];
+  const handleBadgeClick = (tier) => {
+    const isUnlocked = stats.unlockedTiers?.includes(tier);
+    const thresholdMap = { bronze: 20, silver: 100, gold: 200 };
+    const targetThreshold = thresholdMap[tier] || 20;
 
-  const filteredChallenges = selectedCategory === 'all'
-    ? challenges
-    : challenges.filter(c => c.category === selectedCategory);
+    const sampleCert = {
+      certificateId: isUnlocked
+        ? `ALG-COMP-${tier.toUpperCase()}-${user?.uid?.slice(-6) || 'OFFICIAL'}`
+        : `SAMPLE-${tier.toUpperCase()}-PREVIEW`,
+      recipientName: user?.displayName || (user?.email ? user.email.split('@')[0] : 'Prospective Algorist'),
+      title: tier === 'gold'
+        ? 'Executive Gold Algorithmic Master'
+        : tier === 'silver'
+        ? 'Distinguished Silver Grandmaster'
+        : 'Certified Bronze Algorist',
+      type: `competition_${tier}`,
+      milestoneCount: targetThreshold,
+      issueDate: Date.now(),
+      verificationUrl: isUnlocked
+        ? `https://www.algomania.in/certificates/verify/ALG-COMP-${tier.toUpperCase()}`
+        : 'https://www.algomania.in/certificates/sample'
+    };
+
+    setModalState({
+      isOpen: true,
+      certificate: sampleCert,
+      mode: isUnlocked ? 'ISSUED' : 'LOCKED',
+      userSolvedCount: stats.uniqueSolvedCount || 0,
+      requiredCount: targetThreshold
+    });
+  };
+
+  const filteredChallenges = challenges.filter(c => {
+    const matchCat = selectedCategory === 'all' || c.category === selectedCategory;
+    const matchSearch = !searchQuery.trim() ||
+      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.challengeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F5ED] dark:bg-[#1C1B18] text-[#24231F] dark:text-[#EAE7DF] transition-colors duration-200">
       <Head>
         <title>Algorithmic Competitions & Tier Milestones — AlgoMania</title>
+        <meta name="description" content="Solve 220+ verified computational challenges, track your algorithmic mastery, and unlock Bronze, Silver, and Gold verifiable achievement certificates." />
       </Head>
 
       <Navbar />
@@ -157,7 +215,7 @@ export default function CompetitionPortal() {
               Computational Problem-Solving Competitions
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95] max-w-2xl leading-relaxed">
-              Solve verified challenges across sorting, searching, graphs, trees, and dynamic structures. Unlock Bronze (20), Silver (100), and Gold (200) mastery milestones and earn official verifiable achievement certificates.
+              Solve {challenges.length || '220+'}+ verified challenges across 15 algorithmic domains. Click any achievement badge to inspect credential criteria and sample previews. Unlock Bronze (20), Silver (100), and Gold (200) mastery milestones and earn official verifiable certificates.
             </p>
           </div>
 
@@ -170,12 +228,12 @@ export default function CompetitionPortal() {
               <span className="text-3xl font-mono font-bold text-[#28533D] dark:text-[#88C49F]">
                 {stats.uniqueSolvedCount}
               </span>
-              <span className="text-xs text-[#69665F]">Unique Problems Solved</span>
+              <span className="text-xs text-[#69665F] dark:text-[#A09D95]">Unique Problems Solved</span>
             </div>
 
             {/* Milestone Progress Bar */}
             <div className="mt-3">
-              <div className="flex justify-between text-[10px] font-mono text-[#69665F] mb-1">
+              <div className="flex justify-between text-[10px] font-mono text-[#69665F] dark:text-[#A09D95] mb-1">
                 <span>Next: {stats.nextMilestone?.tier?.toUpperCase()}</span>
                 <span>{stats.nextMilestone?.remaining} needed</span>
               </div>
@@ -194,9 +252,14 @@ export default function CompetitionPortal() {
         {/* Metallic Badges Showcase */}
         <div className="mb-10">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#24231F] dark:text-[#FFFDF8]">
-              Achievement Badges & Certification Tiers
-            </h2>
+            <div>
+              <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#24231F] dark:text-[#FFFDF8]">
+                Achievement Badges & Certification Tiers
+              </h2>
+              <p className="text-[11px] text-[#69665F] dark:text-[#A09D95]">
+                Click any tier badge to preview the milestone certificate and unlock requirements.
+              </p>
+            </div>
             <Link
               href="/certificates"
               className="text-xs font-semibold text-[#28533D] dark:text-[#88C49F] hover:underline"
@@ -210,44 +273,64 @@ export default function CompetitionPortal() {
               tier="bronze"
               unlocked={stats.unlockedTiers?.includes('bronze')}
               currentCount={stats.uniqueSolvedCount}
+              onClick={() => handleBadgeClick('bronze')}
               size="lg"
             />
             <AchievementBadge
               tier="silver"
               unlocked={stats.unlockedTiers?.includes('silver')}
               currentCount={stats.uniqueSolvedCount}
+              onClick={() => handleBadgeClick('silver')}
               size="lg"
             />
             <AchievementBadge
               tier="gold"
               unlocked={stats.unlockedTiers?.includes('gold')}
               currentCount={stats.uniqueSolvedCount}
+              onClick={() => handleBadgeClick('gold')}
               size="lg"
             />
           </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center space-x-2 mb-6 overflow-x-auto pb-2">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedCategory(c.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-colors whitespace-nowrap ${
-                selectedCategory === c.id
-                  ? 'bg-[#28533D] text-[#FFFDF8]'
-                  : 'bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] text-[#69665F] hover:text-[#24231F]'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
+          {/* Category Filter Pills */}
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none flex-1">
+            {ALL_CATEGORIES.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedCategory(c.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-colors whitespace-nowrap ${
+                  selectedCategory === c.id
+                    ? 'bg-[#28533D] text-[#FFFDF8]'
+                    : 'bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] text-[#69665F] hover:text-[#24231F] dark:hover:text-[#FFFDF8]'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input */}
+          <div className="w-full sm:w-64">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search challenges..."
+              className="w-full px-3.5 py-1.5 rounded-xl text-xs bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] text-[#24231F] dark:text-[#FFFDF8] focus:outline-hidden focus:border-[#EF592A]"
+            />
+          </div>
         </div>
 
         {/* Main Arena: Split Challenge List & Code Editor */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Challenge List Column (4 cols) */}
-          <div className="lg:col-span-4 space-y-3 max-h-[700px] overflow-y-auto pr-1">
+          <div className="lg:col-span-4 space-y-3 max-h-[720px] overflow-y-auto pr-1">
+            <div className="text-[11px] font-mono text-[#69665F] dark:text-[#8E8B83] px-1">
+              Showing {filteredChallenges.length} of {challenges.length} Challenges
+            </div>
             {filteredChallenges.map((ch) => {
               const isSelected = activeChallenge?.challengeId === ch.challengeId;
               return (
@@ -261,7 +344,7 @@ export default function CompetitionPortal() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#FAF8F3] dark:bg-[#1A1916] text-[#69665F]">
+                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#FAF8F3] dark:bg-[#1A1916] text-[#69665F] dark:text-[#A09D95]">
                       {ch.category}
                     </span>
                     <div className="flex items-center space-x-2">
@@ -325,10 +408,10 @@ export default function CompetitionPortal() {
                 </div>
 
                 {/* Code Editor Area */}
-                <div className="p-4 bg-[#1E1E1E] flex-1 flex flex-col min-h-[300px]">
+                <div className="p-4 bg-[#1E1E1E] flex-1 flex flex-col min-h-[320px]">
                   <div className="flex items-center justify-between text-[11px] font-mono text-[#8E8B83] mb-2 px-2">
-                    <span>JavaScript (Node.js Sandbox Engine)</span>
-                    <span>Deterministic Execution</span>
+                    <span>JavaScript (Node.js Isolated VM Context)</span>
+                    <span>Deterministic Test Evaluator</span>
                   </div>
                   <textarea
                     rows={12}
@@ -393,6 +476,16 @@ export default function CompetitionPortal() {
           </div>
         </div>
       </main>
+
+      {/* Interactive Certificate Preview Modal */}
+      <CertificatePreviewModal
+        isOpen={modalState.isOpen}
+        certificate={modalState.certificate}
+        mode={modalState.mode}
+        userSolvedCount={modalState.userSolvedCount}
+        requiredCount={modalState.requiredCount}
+        onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+      />
 
       <Footer />
     </div>
