@@ -1,0 +1,117 @@
+import mongoose from 'mongoose';
+
+const PaymentOrderSchema = new mongoose.Schema(
+  {
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    applicationId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    firebaseUid: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    userEmail: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+    razorpayOrderId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    razorpayPaymentId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    amountPaise: {
+      type: Number,
+      required: true,
+    },
+    currency: {
+      type: String,
+      default: 'INR',
+    },
+    paymentMode: {
+      type: String,
+      enum: ['test', 'live'],
+      required: true,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: [
+        'CREATED',
+        'CHECKOUT_OPENED',
+        'PENDING',
+        'AUTHORIZED',
+        'CAPTURED',
+        'FAILED',
+        'CANCELLED',
+        'REFUNDED',
+        'DISPUTED',
+        'EXPIRED',
+      ],
+      default: 'CREATED',
+      index: true,
+    },
+    verificationStatus: {
+      type: String,
+      enum: [
+        'UNVERIFIED',
+        'SIGNATURE_VALID',
+        'AMOUNT_VERIFIED',
+        'FULLY_VERIFIED',
+        'VERIFICATION_FAILED',
+      ],
+      default: 'UNVERIFIED',
+    },
+    webhookEventIds: {
+      type: [String],
+      default: [],
+    },
+    razorpaySignature: {
+      type: String,
+      default: null,
+    },
+    capturedAt: {
+      type: Date,
+      default: null,
+    },
+    failedAt: {
+      type: Date,
+      default: null,
+    },
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
+    errorMessage: {
+      type: String,
+      default: null,
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Compound indexes for efficient queries
+PaymentOrderSchema.index({ applicationId: 1, status: 1 });
+PaymentOrderSchema.index({ firebaseUid: 1, applicationId: 1 });
+
+export default mongoose.models.PaymentOrder ||
+  mongoose.model('PaymentOrder', PaymentOrderSchema);

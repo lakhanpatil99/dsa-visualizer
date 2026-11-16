@@ -102,13 +102,14 @@ const InternshipApplicationSchema = new mongoose.Schema({
     enum: [
       'NOT_CONFIGURED',
       'NOT_STARTED',
+      'PENDING_PAYMENT',
       'PENDING',
       'VERIFICATION_REQUIRED',
       'PAID_VERIFIED',
       'FAILED',
       'REFUNDED'
     ],
-    default: 'NOT_CONFIGURED',
+    default: 'PENDING_PAYMENT',
     index: true
   },
   paymentRecordId: {

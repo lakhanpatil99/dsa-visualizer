@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -8,14 +8,23 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { DEFAULT_INTERNSHIP_PROGRAMS } from '../../lib/internships/internshipData';
 
 export default function InternshipApplicationWizard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Wizard Steps: 1: Domain, 2: Details, 3: Review, 4: Confirmed
+  // Wizard Steps:
+  // 1: Domain Selection
+  // 2: Candidate Details
+  // 3: Review Application
+  // 4: Order Review & Secure Payment (₹99)
+  // 5: Confirmation & Timeline
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [submittedApplication, setSubmittedApplication] = useState(null);
+  const [paymentOrderData, setPaymentOrderData] = useState(null);
+  const [paymentVerificationResult, setPaymentVerificationResult] = useState(null);
+  const [dismissNotice, setDismissNotice] = useState('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -28,7 +37,7 @@ export default function InternshipApplicationWizard() {
     duration: '2_months',
     preferredStartDate: '',
     learningObjectives: '',
-    priorExperience: ''
+    priorExperience: '',
   });
 
   // Query parameter pre-selection and User profile autofill
@@ -36,23 +45,59 @@ export default function InternshipApplicationWizard() {
     if (router.query.domain) {
       const qDomain = router.query.domain.toString().toLowerCase();
       if (['java', 'python', 'cpp', 'c++'].includes(qDomain)) {
-        setFormData(prev => ({ ...prev, domain: qDomain === 'c++' ? 'cpp' : qDomain }));
+        setFormData((prev) => ({ ...prev, domain: qDomain === 'c++' ? 'cpp' : qDomain }));
       }
     }
   }, [router.query.domain]);
 
   useEffect(() => {
     if (user) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         fullName: prev.fullName || user.displayName || user.name || '',
       }));
     }
   }, [user]);
 
+  // Support for resuming an application from dashboard (?resume=APP_ID)
+  useEffect(() => {
+    async function resumeApplication(appId) {
+      if (!user || !appId) return;
+      try {
+        setLoading(true);
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/payments/status?applicationId=${encodeURIComponent(appId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (data.paymentStatus === 'CAPTURED' || data.applicationPaymentStatus === 'PAID_VERIFIED') {
+            setSubmittedApplication({ applicationId: appId, domainTitle: 'Engineering Internship' });
+            setStep(5);
+          } else {
+            setSubmittedApplication({
+              applicationId: appId,
+              domainTitle: 'Engineering Internship',
+              fullName: user.name || user.displayName || 'Candidate',
+            });
+            setStep(4);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to resume application:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (router.query.resume && isAuthenticated) {
+      resumeApplication(router.query.resume.toString());
+    }
+  }, [router.query.resume, isAuthenticated, user]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setErrorMessage('');
   };
 
@@ -86,7 +131,8 @@ export default function InternshipApplicationWizard() {
     setStep(3);
   };
 
-  const handleSubmit = async () => {
+  // Step 3 -> 4: Submit Application Record & Transition to Payment
+  const handleSubmitApplication = async () => {
     if (!isAuthenticated) {
       router.push('/login?redirect=/internships/apply');
       return;
@@ -101,9 +147,9 @@ export default function InternshipApplicationWizard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
@@ -120,9 +166,197 @@ export default function InternshipApplicationWizard() {
     }
   };
 
-  const currentProgram = DEFAULT_INTERNSHIP_PROGRAMS.find(
-    p => p.domain.toLowerCase() === formData.domain.replace('cpp', 'c++').toLowerCase()
-  ) || DEFAULT_INTERNSHIP_PROGRAMS[0];
+  // ── Dynamically load Razorpay SDK ──────────────────────────────────
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (typeof window !== 'undefined' && window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // ── Step 4: Initiate Razorpay Order & Open Checkout ────────────────
+  const handleInitiatePayment = async () => {
+    if (paymentLoading || !submittedApplication) return;
+    setPaymentLoading(true);
+    setErrorMessage('');
+    setDismissNotice('');
+
+    try {
+      const token = await user.getIdToken();
+
+      // Step A: Load SDK script
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded) {
+        throw new Error('Unable to connect to Razorpay payment network. Please check your internet connection.');
+      }
+
+      // Step B: Call backend to create Razorpay Order
+      const orderRes = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ applicationId: submittedApplication.applicationId }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.success) {
+        throw new Error(orderData.message || 'Failed to initialize payment order.');
+      }
+
+      setPaymentOrderData(orderData);
+
+      // Step C: Configure Razorpay Standard Checkout
+      const options = {
+        key: orderData.razorpayKeyId,
+        amount: orderData.amount, // in paise: 9900 = ₹99.00
+        currency: orderData.currency || 'INR',
+        name: 'AlgoMania',
+        description: `Internship Registration Fee — ${submittedApplication.domainTitle || 'Fellowship'}`,
+        image: '/apple-touch-icon.png',
+        order_id: orderData.razorpayOrderId,
+        prefill: {
+          name: orderData.userName || formData.fullName,
+          email: orderData.userEmail || user.email,
+          contact: formData.contactNumber || '',
+        },
+        notes: {
+          applicationId: submittedApplication.applicationId,
+          domain: formData.domain,
+        },
+        theme: {
+          color: '#28533D', // AlgoMania Forest Green
+        },
+        modal: {
+          backdropclose: false,
+          escape: true,
+          handleback: true,
+          ondismiss: async function () {
+            setPaymentLoading(false);
+            setDismissNotice(
+              'Checkout window closed. If your payment was completed, click "Check Payment Status" below to verify.'
+            );
+            // Verify if payment succeeded just as user closed modal
+            await checkPaymentStatusSilent(submittedApplication.applicationId);
+          },
+        },
+        handler: async function (response) {
+          // Authoritative Server-Side Verification
+          await handleVerifyPayment(response);
+        },
+      };
+
+      const rzpInstance = new window.Razorpay(options);
+
+      rzpInstance.on('payment.failed', function (failedResponse) {
+        console.warn('Razorpay payment failed:', failedResponse.error);
+        setPaymentLoading(false);
+        setErrorMessage(
+          failedResponse.error?.description ||
+            'Payment was declined or failed. Please retry with another payment method.'
+        );
+      });
+
+      rzpInstance.open();
+    } catch (err) {
+      console.error('Payment initiation error:', err);
+      setErrorMessage(err.message);
+      setPaymentLoading(false);
+    }
+  };
+
+  // ── Server-Side Payment Verification ────────────────────────────────
+  const handleVerifyPayment = async (razorpayResponse) => {
+    setPaymentLoading(true);
+    setErrorMessage('');
+    try {
+      const token = await user.getIdToken();
+      const verifyRes = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          razorpay_order_id: razorpayResponse.razorpay_order_id,
+          razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+          razorpay_signature: razorpayResponse.razorpay_signature,
+          applicationId: submittedApplication.applicationId,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        throw new Error(verifyData.message || 'Server payment verification failed.');
+      }
+
+      setPaymentVerificationResult(verifyData.paymentOrder);
+      setStep(5);
+    } catch (err) {
+      console.error('Verification error:', err);
+      setErrorMessage(err.message || 'Payment verification failed. Your transaction details have been saved.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // ── Check Payment Status ──────────────────────────────────────────
+  const checkPaymentStatus = async () => {
+    if (!submittedApplication || !user) return;
+    setPaymentLoading(true);
+    setErrorMessage('');
+    setDismissNotice('');
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(
+        `/api/payments/status?applicationId=${encodeURIComponent(submittedApplication.applicationId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        if (data.paymentStatus === 'CAPTURED' || data.verificationStatus === 'FULLY_VERIFIED') {
+          setPaymentVerificationResult(data.order);
+          setStep(5);
+        } else if (data.paymentStatus === 'FAILED') {
+          setErrorMessage('Your last payment attempt failed. You can safely try again.');
+        } else {
+          setDismissNotice('Payment status: ' + data.paymentStatus + '. If you recently paid, please allow a moment.');
+        }
+      }
+    } catch (err) {
+      setErrorMessage('Could not retrieve payment status. Please try again.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const checkPaymentStatusSilent = async (appId) => {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/payments/status?applicationId=${encodeURIComponent(appId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && (data.paymentStatus === 'CAPTURED' || data.verificationStatus === 'FULLY_VERIFIED')) {
+        setPaymentVerificationResult(data.order);
+        setStep(5);
+      }
+    } catch {}
+  };
+
+  const currentProgram =
+    DEFAULT_INTERNSHIP_PROGRAMS.find(
+      (p) => p.domain.toLowerCase() === formData.domain.replace('cpp', 'c++').toLowerCase()
+    ) || DEFAULT_INTERNSHIP_PROGRAMS[0];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F5ED] dark:bg-[#1C1B18] text-[#24231F] dark:text-[#EAE7DF] transition-colors duration-200">
@@ -136,21 +370,29 @@ export default function InternshipApplicationWizard() {
         {/* Breadcrumb & Step Progress */}
         <div className="mb-8">
           <div className="flex items-center space-x-2 text-xs font-mono text-[#69665F] dark:text-[#8E8B83] mb-3">
-            <Link href="/internships" className="hover:text-[#EF592A]">Internships</Link>
+            <Link href="/internships" className="hover:text-[#EF592A]">
+              Internships
+            </Link>
             <span>/</span>
-            <span className="text-[#24231F] dark:text-[#FFFDF8] font-bold">Fellowship Application</span>
+            <span className="text-[#24231F] dark:text-[#FFFDF8] font-bold">Fellowship Registration</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#24231F] dark:text-[#FFFDF8]">
-            Engineering Internship Application
+            Engineering Internship Application & Registration
           </h1>
 
           {/* Stepper Pills */}
-          <div className="flex items-center space-x-2 mt-4 text-xs font-mono">
-            {['1. Select Domain', '2. Candidate Details', '3. Review Application', '4. Confirmation'].map((label, i) => (
+          <div className="flex items-center space-x-2 mt-4 text-xs font-mono overflow-x-auto pb-1">
+            {[
+              '1. Domain',
+              '2. Details',
+              '3. Review',
+              '4. Payment (₹99)',
+              '5. Confirmed',
+            ].map((label, i) => (
               <span
                 key={label}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors ${
                   step === i + 1
                     ? 'bg-[#28533D] text-[#FFFDF8]'
                     : step > i + 1
@@ -165,8 +407,14 @@ export default function InternshipApplicationWizard() {
         </div>
 
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs font-medium">
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs font-medium animate-fadeIn">
             ⚠️ {errorMessage}
+          </div>
+        )}
+
+        {dismissNotice && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-medium animate-fadeIn">
+            ℹ️ {dismissNotice}
           </div>
         )}
 
@@ -180,11 +428,11 @@ export default function InternshipApplicationWizard() {
               {[
                 { id: 'java', label: 'Java Development', desc: 'Enterprise algorithms, Spring Boot, multithreading.' },
                 { id: 'python', label: 'Python Systems', desc: 'AsyncIO, computational data engines, APIs.' },
-                { id: 'cpp', label: 'C++ Systems', desc: 'Memory models, allocators, low-latency algorithms.' }
-              ].map(track => (
+                { id: 'cpp', label: 'C++ Systems', desc: 'Memory models, allocators, low-latency algorithms.' },
+              ].map((track) => (
                 <div
                   key={track.id}
-                  onClick={() => setFormData(prev => ({ ...prev, domain: track.id }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, domain: track.id }))}
                   className={`p-5 rounded-2xl border cursor-pointer transition-all ${
                     formData.domain === track.id
                       ? 'border-[#28533D] bg-[#E4E9DD]/40 dark:bg-[#28382F]/40 shadow-sm ring-2 ring-[#28533D]'
@@ -211,7 +459,7 @@ export default function InternshipApplicationWizard() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-xs"
+                className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer"
               >
                 Continue to Details →
               </button>
@@ -372,13 +620,13 @@ export default function InternshipApplicationWizard() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-5 py-2.5 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F] hover:text-[#24231F]"
+                className="px-5 py-2.5 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F] hover:text-[#24231F] cursor-pointer"
               >
                 ← Back to Domain Selection
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-xs"
+                className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer"
               >
                 Review Application →
               </button>
@@ -397,12 +645,18 @@ export default function InternshipApplicationWizard() {
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
                   <span className="font-mono text-[#69665F]">Domain Track:</span>
-                  <p className="font-bold text-[#28533D] dark:text-[#88C49F] text-sm mt-0.5">{currentProgram.domain} Development</p>
+                  <p className="font-bold text-[#28533D] dark:text-[#88C49F] text-sm mt-0.5">
+                    {currentProgram.domain} Development
+                  </p>
                 </div>
                 <div>
                   <span className="font-mono text-[#69665F]">Duration:</span>
                   <p className="font-bold text-[#24231F] dark:text-[#FFFDF8] mt-0.5">
-                    {formData.duration === '1_month' ? '1 Month' : formData.duration === '2_months' ? '2 Months' : '3 Months'}
+                    {formData.duration === '1_month'
+                      ? '1 Month'
+                      : formData.duration === '2_months'
+                      ? '2 Months'
+                      : '3 Months'}
                   </p>
                 </div>
                 <div>
@@ -415,7 +669,9 @@ export default function InternshipApplicationWizard() {
                 </div>
                 <div>
                   <span className="font-mono text-[#69665F]">College / Branch:</span>
-                  <p className="font-semibold text-[#24231F] dark:text-[#FFFDF8] mt-0.5">{formData.college} ({formData.branch})</p>
+                  <p className="font-semibold text-[#24231F] dark:text-[#FFFDF8] mt-0.5">
+                    {formData.college} ({formData.branch})
+                  </p>
                 </div>
                 <div>
                   <span className="font-mono text-[#69665F]">Academic Standing:</span>
@@ -431,14 +687,17 @@ export default function InternshipApplicationWizard() {
                 </div>
               </div>
 
-              {/* Payment Architecture Note */}
-              <div className="mt-4 p-4 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] text-xs text-[#69665F] dark:text-[#8E8B83] space-y-1">
-                <div className="font-bold text-[#28533D] dark:text-[#88C49F]">
-                  ℹ️ Certificate & Fee Processing Information
+              {/* Pricing & Checkout Summary Box */}
+              <div className="mt-4 p-4 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#28533D]/30 text-xs space-y-2">
+                <div className="flex items-center justify-between font-bold text-sm">
+                  <span className="text-[#24231F] dark:text-[#FFFDF8]">Internship Registration Fee:</span>
+                  <span className="font-mono text-[#28533D] dark:text-[#88C49F] text-base">₹99.00</span>
                 </div>
-                <p>
-                  Application review and program registration are processed free of charge. Nominal certificate fee processing is currently pending Razorpay gateway activation and will only be collected upon verified program completion.
-                </p>
+                <div className="text-[11px] text-[#69665F] dark:text-[#8E8B83] leading-relaxed">
+                  Currency: INR | Payment Gateway: Razorpay Standard Web Checkout.
+                  <br />
+                  Registration becomes active upon confirmed payment. Verified completion unlock criteria apply.
+                </div>
               </div>
             </div>
 
@@ -446,55 +705,177 @@ export default function InternshipApplicationWizard() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-5 py-2.5 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F] hover:text-[#24231F]"
+                className="px-5 py-2.5 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F] hover:text-[#24231F] cursor-pointer"
               >
                 ← Edit Details
               </button>
               <button
                 type="button"
                 disabled={loading}
-                onClick={handleSubmit}
-                className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-xs flex items-center space-x-2"
+                onClick={handleSubmitApplication}
+                className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-xs flex items-center space-x-2 cursor-pointer disabled:opacity-50"
               >
-                {loading ? (
-                  <span>Submitting Application...</span>
-                ) : (
-                  <span>Confirm & Submit Application ✓</span>
-                )}
+                {loading ? <span>Saving Application...</span> : <span>Proceed to Registration Fee (₹99) →</span>}
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 4: CONFIRMATION & TIMELINE */}
+        {/* STEP 4: ORDER REVIEW & SECURE PAYMENT */}
         {step === 4 && submittedApplication && (
           <div className="space-y-6 animate-fadeIn">
+            {/* Sandbox Notice Banner if in test mode */}
+            {paymentOrderData?.isTestMode && (
+              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs flex items-center space-x-2">
+                <span className="text-base">🧪</span>
+                <div>
+                  <span className="font-bold uppercase tracking-wider">Sandbox / Test Mode Active:</span>
+                  <span className="ml-1">
+                    Authorized test credentials are active. Use Razorpay test card / UPI methods for validation.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="p-6 bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] rounded-2xl shadow-xs space-y-6">
+              <div className="flex items-center justify-between border-b border-[#DED9CE] dark:border-[#383630] pb-4">
+                <div>
+                  <span className="text-[10px] font-mono font-bold text-[#69665F] dark:text-[#8E8B83]">
+                    APPLICATION ID: {submittedApplication.applicationId}
+                  </span>
+                  <h2 className="text-xl font-bold text-[#24231F] dark:text-[#FFFDF8]">
+                    Order Summary & Secure Checkout
+                  </h2>
+                </div>
+                <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  PENDING PAYMENT
+                </span>
+              </div>
+
+              {/* Order Itemization Table */}
+              <div className="border border-[#DED9CE] dark:border-[#383630] rounded-xl overflow-hidden text-xs">
+                <div className="bg-[#FAF8F3] dark:bg-[#1C1B18] px-4 py-3 font-mono font-bold text-[#69665F] dark:text-[#8E8B83] flex justify-between border-b border-[#DED9CE] dark:border-[#383630]">
+                  <span>Item Description</span>
+                  <span>Amount</span>
+                </div>
+                <div className="px-4 py-3.5 flex justify-between items-center border-b border-[#DED9CE] dark:border-[#383630]">
+                  <div>
+                    <div className="font-bold text-[#24231F] dark:text-[#FFFDF8]">
+                      {submittedApplication.domainTitle || 'Engineering Internship'} Registration
+                    </div>
+                    <div className="text-[11px] text-[#69665F] dark:text-[#8E8B83] mt-0.5">
+                      Fellowship Candidate: {formData.fullName || submittedApplication.fullName}
+                    </div>
+                  </div>
+                  <span className="font-mono font-bold text-sm">₹99.00</span>
+                </div>
+                <div className="bg-[#FAF8F3] dark:bg-[#1C1B18] px-4 py-3 flex justify-between items-center font-bold">
+                  <span className="text-[#24231F] dark:text-[#FFFDF8]">Total Payable Amount:</span>
+                  <span className="font-mono text-base text-[#28533D] dark:text-[#88C49F]">₹99.00 INR</span>
+                </div>
+              </div>
+
+              {/* Payment Security Assurance */}
+              <div className="p-4 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] text-xs text-[#69665F] dark:text-[#8E8B83] space-y-1.5">
+                <div className="font-bold text-[#28533D] dark:text-[#88C49F] flex items-center space-x-1.5">
+                  <span>🔒</span>
+                  <span>Bank-Grade Encryption & Server Verification</span>
+                </div>
+                <p className="leading-relaxed">
+                  Transactions are processed securely through Razorpay's PCI-DSS compliant infrastructure. All payment
+                  signatures and amounts are verified directly by AlgoMania's server before updating your registration.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    disabled={paymentLoading}
+                    className="px-4 py-2 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F] hover:text-[#24231F] cursor-pointer disabled:opacity-50"
+                  >
+                    ← Edit Application
+                  </button>
+                  <button
+                    type="button"
+                    onClick={checkPaymentStatus}
+                    disabled={paymentLoading}
+                    className="px-4 py-2 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F] hover:text-[#24231F] cursor-pointer disabled:opacity-50"
+                  >
+                    Check Status
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={paymentLoading}
+                  onClick={handleInitiatePayment}
+                  className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 transition-transform active:scale-95"
+                >
+                  {paymentLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Preparing Secure Checkout...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔒</span>
+                      <span>Pay ₹99 Securely</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: CONFIRMATION & TIMELINE */}
+        {step === 5 && submittedApplication && (
+          <div className="space-y-6 animate-fadeIn">
             <div className="p-8 bg-[#FFFDF8] dark:bg-[#24231F] border border-[#28533D] rounded-2xl shadow-md text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-[#E4E9DD] dark:bg-[#28382F] flex items-center justify-center text-2xl text-[#28533D]">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#E4E9DD] dark:bg-[#28382F] flex items-center justify-center text-3xl text-[#28533D]">
                 ✓
               </div>
 
               <span className="inline-block px-3 py-1 rounded-md text-xs font-mono font-bold bg-[#E4E9DD] text-[#28533D]">
-                STATUS: PENDING REVIEW
+                PAYMENT CONFIRMED &bull; APPLICATION ACTIVE
               </span>
 
               <h2 className="text-2xl font-serif font-bold text-[#24231F] dark:text-[#FFFDF8]">
-                Application Successfully Submitted!
+                Registration Confirmed!
               </h2>
 
               <p className="text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95] max-w-md mx-auto">
-                Your application for the <span className="font-bold text-[#28533D]">{submittedApplication.domainTitle}</span> has been assigned reference ID:
+                Your ₹99 registration fee for the{' '}
+                <span className="font-bold text-[#28533D]">{submittedApplication.domainTitle || 'Engineering Track'}</span>{' '}
+                has been verified and confirmed.
               </p>
 
-              <div className="p-3 bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] rounded-xl font-mono text-sm font-bold text-[#EF592A] max-w-xs mx-auto">
-                {submittedApplication.applicationId}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto text-left">
+                <div className="p-3 bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] rounded-xl font-mono text-xs">
+                  <span className="text-[#69665F] block text-[10px]">APPLICATION ID:</span>
+                  <span className="font-bold text-[#EF592A] text-sm">{submittedApplication.applicationId}</span>
+                </div>
+                <div className="p-3 bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] rounded-xl font-mono text-xs">
+                  <span className="text-[#69665F] block text-[10px]">PAYMENT STATUS:</span>
+                  <span className="font-bold text-[#28533D] dark:text-[#88C49F] text-sm">PAID (₹99.00)</span>
+                </div>
               </div>
 
-              <p className="text-xs text-[#69665F] dark:text-[#A09D95] max-w-lg mx-auto">
-                Our academic review committee verifies engineering credentials within 2 business days. You can track your application milestone progression, mentor assignments, and completion criteria from your dashboard.
-              </p>
+              {/* Certificate Unlock Rule Notice */}
+              <div className="p-4 bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#28533D]/30 rounded-xl max-w-lg mx-auto text-xs text-[#69665F] dark:text-[#A09D95] text-left space-y-1">
+                <div className="font-bold text-[#28533D] dark:text-[#88C49F]">
+                  📜 Official Certificate Eligibility Criteria
+                </div>
+                <p>
+                  Your registration payment is verified. Your completion certificate will unlock after your internship
+                  milestones are completed and verified by academic administration.
+                </p>
+              </div>
 
-              <div className="pt-4 flex justify-center gap-3">
+              <div className="pt-4 flex flex-wrap justify-center gap-3">
                 <Link
                   href="/internships/my-applications"
                   className="px-6 py-2.5 rounded-xl bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] text-xs font-bold uppercase tracking-wider"
@@ -505,7 +886,7 @@ export default function InternshipApplicationWizard() {
                   href="/internships"
                   className="px-5 py-2.5 rounded-xl border border-[#DED9CE] text-xs font-semibold text-[#69665F]"
                 >
-                  Back to Programs
+                  Browse Other Programs
                 </Link>
               </div>
             </div>
