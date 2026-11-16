@@ -8,8 +8,20 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { DEFAULT_INTERNSHIP_PROGRAMS } from '../../lib/internships/internshipData';
 
 export default function InternshipApplicationWizard() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, getIdToken, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // AuthContext exposes the Firebase token accessor separately from the user profile.
+  const getFreshAuthToken = useCallback(async () => {
+    if (typeof getIdToken !== 'function') {
+      throw new Error('Authentication is still initializing. Please refresh and sign in again.');
+    }
+    const token = await getIdToken(true);
+    if (!token) {
+      throw new Error('Your session has expired. Please sign in again.');
+    }
+    return token;
+  }, [getIdToken]);
 
   // Wizard Steps:
   // 1: Domain Selection
@@ -65,7 +77,7 @@ export default function InternshipApplicationWizard() {
       if (!user || !appId) return;
       try {
         setLoading(true);
-        const token = await user.getIdToken();
+        const token = await getFreshAuthToken();
         const res = await fetch(`/api/payments/status?applicationId=${encodeURIComponent(appId)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -142,7 +154,7 @@ export default function InternshipApplicationWizard() {
     setErrorMessage('');
 
     try {
-      const token = await user.getIdToken();
+      const token = await getFreshAuthToken();
       const res = await fetch('/api/internships/apply', {
         method: 'POST',
         headers: {
@@ -190,7 +202,7 @@ export default function InternshipApplicationWizard() {
     setDismissNotice('');
 
     try {
-      const token = await user.getIdToken();
+      const token = await getFreshAuthToken();
 
       // Step A: Load SDK script
       const sdkLoaded = await loadRazorpayScript();
@@ -279,7 +291,7 @@ export default function InternshipApplicationWizard() {
     setPaymentLoading(true);
     setErrorMessage('');
     try {
-      const token = await user.getIdToken();
+      const token = await getFreshAuthToken();
       const verifyRes = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: {
@@ -316,7 +328,7 @@ export default function InternshipApplicationWizard() {
     setErrorMessage('');
     setDismissNotice('');
     try {
-      const token = await user.getIdToken();
+      const token = await getFreshAuthToken();
       const res = await fetch(
         `/api/payments/status?applicationId=${encodeURIComponent(submittedApplication.applicationId)}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -341,7 +353,7 @@ export default function InternshipApplicationWizard() {
 
   const checkPaymentStatusSilent = async (appId) => {
     try {
-      const token = await user.getIdToken();
+      const token = await getFreshAuthToken();
       const res = await fetch(`/api/payments/status?applicationId=${encodeURIComponent(appId)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
