@@ -34,7 +34,6 @@ const TreeVisualizer = () => {
 
   const pseudocode = showTraversal ? treeTraversalPseudocode : bstPseudocode;
   const complexity = showTraversal ? traversalComplexity : bstComplexity;
-
   const handleAdd = () => {
     if (!inputValue.trim()) return;
     const value = parseInt(inputValue, 10);

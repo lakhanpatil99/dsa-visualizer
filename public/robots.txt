@@ -1,9 +1,18 @@
-# Allow all crawlers
+# Algomania Robots.txt
+# Allow all standard crawlers
 User-agent: *
 Allow: /
 
-# Sitemap location (update with your actual domain)
-Sitemap: https://your-domain.vercel.app/sitemap.xml
+# Explicitly ensure Googlebot & Googlebot-Image can crawl all brand and favicon assets
+User-agent: Googlebot
+Allow: /
 
-# Crawl delay
-Crawl-delay: 1
+User-agent: Googlebot-Image
+Allow: /
+Allow: /*.ico$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+
+# Production Sitemap
+Sitemap: https://www.algomania.in/sitemap.xml
