@@ -40,8 +40,11 @@ const VisualizerCanvas = ({
             }`}
           style={{
             minHeight: `${height}px`,
+            height: `${height}px`,
             maxWidth: `${width}px`,
-            margin: '0 auto'
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column'
           }}
         >
           {children}

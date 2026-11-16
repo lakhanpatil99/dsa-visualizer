@@ -82,12 +82,36 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     updateDisplay();
   }, [updateDisplay]);
 
-  // Initialize search array with some default values
+  // Initialize sample data on mount so visualizers are immediately populated and interactive
   useEffect(() => {
-    const defaultArray = [3, 7, 12, 15, 18, 22, 25, 30, 35, 40];
-    searchingAlgorithms.setArray(defaultArray);
+    if (stack.isEmpty()) {
+      [18, 42, 65, 88].forEach(val => stack.push(val));
+    }
+    if (queue.isEmpty()) {
+      [14, 28, 42, 56, 70].forEach(val => queue.enqueue(val));
+    }
+    if (linkedList.isEmpty()) {
+      [12, 24, 36, 48].forEach(val => linkedList.append(val));
+      [12, 24, 36, 48].forEach(val => doublyLinkedList.append(val));
+      [12, 24, 36, 48].forEach(val => circularLinkedList.append(val));
+    }
+    if (heap.size === 0 || (heap.heap && heap.heap.length === 0)) {
+      [90, 75, 80, 50, 65, 45, 70].forEach(val => heap.insert(val));
+    }
+    try {
+      if (hashTable.getCount() === 0) {
+        hashTable.set('key_a', 24);
+        hashTable.set('key_b', 48);
+        hashTable.set('key_c', 72);
+      }
+    } catch (e) {}
+
+    const defaultArray = [8, 15, 23, 34, 42, 56, 67, 78, 89, 95];
+    searchingAlgorithms.setArray(defaultArray, false);
     setSearchArray(defaultArray);
-  }, [searchingAlgorithms]);
+
+    updateDisplay();
+  }, [stack, queue, linkedList, doublyLinkedList, circularLinkedList, heap, hashTable, searchingAlgorithms, updateDisplay]);
 
   // Calculate progress
   useEffect(() => {
@@ -1011,34 +1035,86 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     const highlightedIndex = isStepMode && algorithmSteps[currentAlgorithmStep] 
       ? algorithmSteps[currentAlgorithmStep].highlightedIndex 
       : null;
+
+    const topIndex = items.length - 1;
     
     return (
-      <div className="flex flex-col items-center space-y-4">
-        <div className={`text-lg font-semibold ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
-          Stack (LIFO)
+      <div className="flex flex-col items-center justify-between h-full p-4 space-y-4">
+        <div className="w-full flex items-center justify-between px-2">
+          <div className="flex items-center space-x-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#EF592A]"></span>
+            <span className="text-xs font-mono font-bold uppercase text-[#EF592A] tracking-wider">
+              STACK REPOSITORY // LIFO (LAST IN, FIRST OUT)
+            </span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-[#69665F] dark:text-[#A09D95]">Capacity: </span>
+            <strong className="text-[#24231F] dark:text-[#FFFDF8]">Bounded (8 items)</strong>
+            <span className="mx-2 text-[#DED9CE]">|</span>
+            <span className="text-[#69665F] dark:text-[#A09D95]">Count: </span>
+            <strong className="text-[#EF592A]">{items.length} / 8</strong>
+          </div>
         </div>
-        <div className={`w-32 h-64 border-2 rounded-lg flex flex-col-reverse items-center p-2 transition-colors duration-300 ${
-          isDarkMode 
-            ? 'border-gray-600 bg-gray-800' 
-            : 'border-gray-300 bg-gray-50'
-        }`}>
-          {items.map((item, index) => (
+
+        {/* Stack Container with sliding TOP pointer */}
+        <div className="relative flex items-center justify-center w-full max-w-md my-auto">
+          {items.length > 0 && (
             <div
-              key={index}
-              className={`w-20 h-12 text-white rounded-md flex items-center justify-center font-bold text-lg mb-2 transition-all duration-300 hover:bg-blue-600 ${
-                highlightedIndex === index ? 'bg-yellow-500 scale-110' : 'bg-blue-500'
-              }`}
+              className="absolute -left-28 sm:-left-32 flex items-center space-x-1.5 transition-all duration-300 z-10"
+              style={{
+                bottom: `${(items.length - 1) * 44 + 22}px`
+              }}
             >
-              {item}
+              <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#EF592A] text-[#FFFDF8] shadow-sm animate-pulse">
+                TOP [{items[topIndex]}]
+              </span>
+              <span className="text-base font-bold text-[#EF592A]">→</span>
             </div>
-          ))}
+          )}
+
+          <div className={`w-64 sm:w-72 h-[360px] border-b-4 border-l-4 border-r-4 rounded-b-2xl p-3 flex flex-col-reverse items-center justify-start gap-2 shadow-inner transition-colors duration-200 ${
+            isDarkMode 
+              ? 'border-[#4A473F] bg-[#1A1916]' 
+              : 'border-[#24231F] bg-[#FAF8F3]'
+          }`}>
+            {items.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-[#69665F] dark:text-[#A09D95] space-y-1.5 font-mono text-xs">
+                <span>[ Stack is Empty ]</span>
+                <span className="text-[10px] text-[#A09D95]">Use controls to Push values</span>
+              </div>
+            ) : (
+              items.map((item, index) => {
+                const isTop = index === topIndex;
+                const isHighlighted = highlightedIndex === index;
+
+                return (
+                  <div
+                    key={index}
+                    className={`w-full h-10 sm:h-11 rounded-xl flex items-center justify-between px-4 font-mono font-bold text-sm shadow-xs transition-all duration-300 ${
+                      isHighlighted
+                        ? 'bg-[#EF592A] text-[#FFFDF8] scale-102 ring-2 ring-[#EF592A]'
+                        : isTop
+                        ? 'bg-[#28533D] text-[#FFFDF8] border border-[#28533D]'
+                        : isDarkMode
+                        ? 'bg-[#2A2925] text-[#FFFDF8] border border-[#3E3C36]'
+                        : 'bg-[#FFFDF8] text-[#24231F] border border-[#DED9CE]'
+                    }`}
+                  >
+                    <span className="text-xs opacity-70">[{index}]</span>
+                    <span className="text-base tracking-wide">{item}</span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider">
+                      {isTop ? 'TOP' : 'SLOT'}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-        <div className={`text-sm ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          Size: {items.length} | Top: {items.length > 0 ? items[items.length - 1] : "Empty"}
+
+        <div className="w-full flex items-center justify-between text-xs font-mono border-t border-[#DED9CE] dark:border-[#383630] pt-2 text-[#69665F] dark:text-[#A09D95]">
+          <span>Push: <strong>O(1)</strong> | Pop: <strong>O(1)</strong> | Peek: <strong>O(1)</strong></span>
+          <span>Top Element: <strong className="text-[#EF592A]">{items.length > 0 ? items[topIndex] : 'None'}</strong></span>
         </div>
       </div>
     );
@@ -1053,34 +1129,77 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     const highlightedIndex = isStepMode && algorithmSteps[currentAlgorithmStep] 
       ? algorithmSteps[currentAlgorithmStep].highlightedIndex 
       : null;
-    
+
     return (
-      <div className="flex flex-col items-center space-y-4">
-        <div className={`text-lg font-semibold ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
-          Queue (FIFO)
+      <div className="flex flex-col items-center justify-between h-full p-4 space-y-4">
+        <div className="w-full flex items-center justify-between px-2">
+          <div className="flex items-center space-x-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#28533D]"></span>
+            <span className="text-xs font-mono font-bold uppercase text-[#28533D] dark:text-[#76A889] tracking-wider">
+              LINEAR QUEUE // FIFO (FIRST IN, FIRST OUT)
+            </span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-[#69665F] dark:text-[#A09D95]">Size: </span>
+            <strong className="text-[#28533D] dark:text-[#E4E9DD]">{items.length} items</strong>
+          </div>
         </div>
-        <div className={`w-96 h-24 border-2 rounded-lg flex items-center justify-start p-2 space-x-2 transition-colors duration-300 ${
-          isDarkMode 
-            ? 'border-gray-600 bg-gray-800' 
-            : 'border-gray-300 bg-gray-50'
-        }`}>
-          {items.map((item, index) => (
-            <div
-              key={index}
-              className={`w-16 h-16 rounded-md flex items-center justify-center font-bold text-lg transition-all duration-300 text-white hover:scale-105 ${
-                highlightedIndex === index ? 'bg-yellow-500 scale-110' : (index === 0 ? 'bg-green-500' : 'bg-blue-500')
-              }`}
-            >
-              {item}
-            </div>
-          ))}
+
+        <div className="w-full flex flex-col items-center justify-center my-auto px-4">
+          <div className="w-full flex items-center justify-between mb-2 text-xs font-mono font-bold">
+            <span className="text-[#28533D] flex items-center space-x-1">
+              <span>← FRONT (DEQUEUE EXIT)</span>
+            </span>
+            <span className="text-[#EF592A] flex items-center space-x-1">
+              <span>REAR (ENQUEUE ENTRY) ←</span>
+            </span>
+          </div>
+
+          <div className={`w-full max-w-3xl min-h-[140px] border-y-4 border-dashed rounded-xl p-4 flex items-center justify-start space-x-3 overflow-x-auto transition-colors ${
+            isDarkMode 
+              ? 'border-[#4A473F] bg-[#1A1916]' 
+              : 'border-[#24231F] bg-[#FAF8F3]'
+          }`}>
+            {items.length === 0 ? (
+              <div className="w-full text-center py-6 text-xs font-mono text-[#69665F] dark:text-[#A09D95]">
+                [ Queue is Empty — Enqueue new items on the right ]
+              </div>
+            ) : (
+              items.map((item, index) => {
+                const isFront = index === 0;
+                const isRear = index === items.length - 1;
+                const isHighlighted = highlightedIndex === index;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex-shrink-0 w-20 h-24 rounded-2xl flex flex-col items-center justify-between p-2.5 font-mono shadow-sm transition-all duration-300 ${
+                      isHighlighted
+                        ? 'bg-[#EF592A] text-[#FFFDF8] scale-105 ring-2 ring-[#EF592A]'
+                        : isFront
+                        ? 'bg-[#28533D] text-[#FFFDF8] border border-[#28533D]'
+                        : isRear
+                        ? 'bg-[#EF592A] text-[#FFFDF8] border border-[#EF592A]'
+                        : isDarkMode
+                        ? 'bg-[#2A2925] text-[#FFFDF8] border border-[#3E3C36]'
+                        : 'bg-[#FFFDF8] text-[#24231F] border border-[#DED9CE]'
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold opacity-75">
+                      {isFront ? 'FRONT' : isRear ? 'REAR' : `[${index}]`}
+                    </span>
+                    <span className="text-xl font-black">{item}</span>
+                    <span className="text-[9px] font-mono opacity-60">slot {index}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-        <div className={`text-sm ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          Size: {items.length} | Front: {items.length > 0 ? items[0] : "Empty"}
+
+        <div className="w-full flex items-center justify-between text-xs font-mono border-t border-[#DED9CE] dark:border-[#383630] pt-2 text-[#69665F] dark:text-[#A09D95]">
+          <span>Enqueue: <strong>O(1)</strong> | Dequeue: <strong>O(1)</strong> | Front: <strong>O(1)</strong></span>
+          <span>Front Element: <strong className="text-[#28533D] dark:text-[#E4E9DD]">{items.length > 0 ? items[0] : 'None'}</strong></span>
         </div>
       </div>
     );
@@ -1099,141 +1218,131 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     const currentLL = getCurrentLinkedList();
     
     return (
-      <div className="flex flex-col items-center space-y-4">
-        <div className={`text-lg font-semibold ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
-          {selectedLinkedListType === 'singly' && 'Singly Linked List'}
-          {selectedLinkedListType === 'doubly' && 'Doubly Linked List'}
-          {selectedLinkedListType === 'circular' && 'Circular Linked List'}
-        </div>
-        
-        {/* LinkedList Type Selector */}
-        <div className="flex items-center space-x-4">
-          <select
-            value={selectedLinkedListType}
-            onChange={(e) => setSelectedLinkedListType(e.target.value)}
-            className={`p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-              isDarkMode 
-                ? 'bg-gray-600 border-gray-500 text-white' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-          >
-            <option value="singly">Singly</option>
-            <option value="doubly">Doubly</option>
-            <option value="circular">Circular</option>
-          </select>
+      <div className="flex flex-col items-center justify-between h-full p-4 space-y-4">
+        {/* Header Indicator */}
+        <div className="w-full flex items-center justify-between px-2">
+          <div className="flex items-center space-x-3">
+            <span className="text-xs font-mono font-bold uppercase text-[#EF592A] tracking-wider">
+              {selectedLinkedListType === 'singly' && 'SINGLY LINKED LIST (HEAD → TAIL → NULL)'}
+              {selectedLinkedListType === 'doubly' && 'DOUBLY LINKED LIST (PREV ⇄ NEXT)'}
+              {selectedLinkedListType === 'circular' && 'CIRCULAR LINKED LIST (TAIL → HEAD)'}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <select
+              value={selectedLinkedListType}
+              onChange={(e) => setSelectedLinkedListType(e.target.value)}
+              aria-label="Linked List Type"
+              className={`p-1.5 text-xs font-mono font-bold border rounded-lg outline-none transition-colors ${
+                isDarkMode 
+                  ? 'bg-[#1D1C19] border-[#383630] text-[#FFFDF8]' 
+                  : 'bg-[#FAF8F3] border-[#DED9CE] text-[#24231F]'
+              }`}
+            >
+              <option value="singly">Singly Linked</option>
+              <option value="doubly">Doubly Linked</option>
+              <option value="circular">Circular Linked</option>
+            </select>
+          </div>
         </div>
 
-        {/* Legend */}
-        <div className={`text-xs space-y-1 ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          {selectedLinkedListType === 'doubly' && (
-            <div className="flex items-center justify-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-1 bg-blue-500"></div>
-                <span>Next Pointer</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-1 bg-red-500"></div>
-                <span>Previous Pointer</span>
-              </div>
+        {/* Linked List Node Diagram Strip */}
+        <div className="w-full flex items-center justify-center my-auto px-2 overflow-x-auto py-6">
+          {currentItems.length === 0 ? (
+            <div className="py-8 font-mono text-xs text-[#69665F] dark:text-[#A09D95]">
+              [ Linked List is Empty — Insert a node using the sidebar ]
             </div>
-          )}
-          {selectedLinkedListType === 'circular' && (
-            <div className="flex items-center justify-center">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-1 bg-green-500"></div>
-                <span>Circular Connection</span>
+          ) : (
+            <div className="flex items-center space-x-2 flex-nowrap min-w-max px-4">
+              {/* HEAD Pointer */}
+              <div className="flex items-center space-x-1 flex-shrink-0">
+                <span className="px-2 py-1 rounded bg-[#28533D] text-[#FFFDF8] font-mono text-[10px] font-bold shadow-xs">
+                  HEAD
+                </span>
+                <span className="font-bold text-[#28533D]">→</span>
               </div>
+
+              {currentItems.map((item, index) => {
+                const isHead = index === 0;
+                const isTail = index === currentItems.length - 1;
+                const isHighlighted = highlightedIndex === index;
+
+                return (
+                  <div key={index} className="flex items-center space-x-2 flex-shrink-0 animate-fadeIn">
+                    {/* CS Node Box: [ Data | Next Pointer ] */}
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] font-mono text-[#A09D95] dark:text-[#69665F] mb-1">
+                        Node {index}
+                      </span>
+                      <div className={`flex items-stretch border-2 rounded-xl overflow-hidden shadow-xs transition-all duration-300 ${
+                        isHighlighted
+                          ? 'border-[#EF592A] ring-2 ring-[#EF592A]'
+                          : isHead
+                          ? 'border-[#28533D]'
+                          : isTail
+                          ? 'border-[#EF592A]'
+                          : isDarkMode
+                          ? 'border-[#383630]'
+                          : 'border-[#24231F]'
+                      } ${
+                        isDarkMode ? 'bg-[#1E1D19]' : 'bg-[#FFFDF8]'
+                      }`}>
+                        {/* Data cell */}
+                        <div className={`px-4 py-2.5 font-mono font-bold text-base flex items-center justify-center border-r transition-colors ${
+                          isHighlighted
+                            ? 'bg-[#EF592A] text-[#FFFDF8] border-[#EF592A]'
+                            : isDarkMode
+                            ? 'border-[#383630] text-[#FFFDF8]'
+                            : 'border-[#DED9CE] text-[#24231F]'
+                        }`}>
+                          {item}
+                        </div>
+                        {/* Next pointer compartment */}
+                        <div className={`px-2.5 py-2.5 font-mono text-xs flex items-center justify-center ${
+                          isDarkMode ? 'bg-[#252420] text-[#EF592A]' : 'bg-[#FAF8F3] text-[#EF592A]'
+                        }`}>
+                          •→
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Connecting Pointer Arrow */}
+                    {!isTail ? (
+                      <div className="flex flex-col items-center px-1">
+                        {selectedLinkedListType === 'doubly' ? (
+                          <span className="font-mono text-xs font-bold text-[#28533D] tracking-tighter">
+                            ⇄
+                          </span>
+                        ) : (
+                          <span className="font-mono text-sm font-bold text-[#24231F] dark:text-[#DED9CE]">
+                            →
+                          </span>
+                        )}
+                      </div>
+                    ) : selectedLinkedListType === 'circular' ? (
+                      <div className="flex items-center space-x-1 text-[#28533D] font-mono text-[10px] font-bold px-1">
+                        <span>↺ (Loop to HEAD)</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1 font-mono text-[11px] font-bold text-[#69665F] dark:text-[#A09D95] px-1">
+                        <span>→</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#FAF8F3] dark:bg-[#1E1D19] border border-[#DED9CE] dark:border-[#383630]">
+                          NULL
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Visualization */}
-        <div className="flex items-center space-x-2">
-          {currentItems.map((item, index) => (
-            <div key={index} className="flex items-center animate-fadeIn">
-              {/* Node */}
-              <div className="relative">
-                <div className={`w-16 h-16 text-white rounded-md flex items-center justify-center font-bold text-lg transition-all duration-300 hover:bg-blue-600 hover:scale-105 shadow-lg ${
-                  highlightedIndex === index ? 'bg-yellow-500 scale-110' : 'bg-blue-500'
-                }`}>
-                  {item}
-                </div>
-                
-                {/* Doubly Linked List Previous Pointer */}
-                {selectedLinkedListType === 'doubly' && index > 0 && (
-                  <div className="absolute -left-6 top-1/2 transform -translate-y-1/2 animate-slideInLeft">
-                    <div className={`w-6 h-1 bg-red-500 transform rotate-180 transition-all duration-300 ${
-                      isDarkMode ? 'bg-red-400' : 'bg-red-500'
-                    }`}></div>
-                    <div className={`w-3 h-3 border-l-2 border-b-2 border-red-500 transform rotate-45 absolute -left-1 top-1/2 -translate-y-1/2 ${
-                      isDarkMode ? 'border-red-400' : 'border-red-500'
-                    }`}></div>
-                  </div>
-                )}
-                
-                {/* Doubly Linked List Next Pointer */}
-                {selectedLinkedListType === 'doubly' && index < currentItems.length - 1 && (
-                  <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 animate-slideInRight">
-                    <div className={`w-6 h-1 bg-blue-500 transition-all duration-300 ${
-                      isDarkMode ? 'bg-blue-400' : 'bg-blue-500'
-                    }`}></div>
-                    <div className={`w-3 h-3 border-r-2 border-t-2 border-blue-500 transform rotate-45 absolute -right-1 top-1/2 -translate-y-1/2 ${
-                      isDarkMode ? 'border-blue-400' : 'border-blue-500'
-                    }`}></div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Next Pointer (for all types) */}
-              {index < currentItems.length - 1 && (
-                <div className="relative mx-2 animate-fadeIn">
-                  <div className={`w-8 h-1 transition-colors duration-200 ${
-                    selectedLinkedListType === 'doubly' ? 'bg-blue-500' : 
-                    selectedLinkedListType === 'circular' ? 'bg-green-500' : 
-                    isDarkMode ? 'bg-gray-500' : 'bg-gray-400'
-                  }`}></div>
-                  <div className={`w-3 h-3 border-r-2 border-t-2 absolute -right-1 top-1/2 -translate-y-1/2 transform rotate-45 ${
-                    selectedLinkedListType === 'doubly' ? 'border-blue-500' : 
-                    selectedLinkedListType === 'circular' ? 'border-green-500' : 
-                    isDarkMode ? 'border-gray-500' : 'border-gray-400'
-                  }`}></div>
-                </div>
-              )}
-              
-              {/* Circular Connection (last to first) */}
-              {selectedLinkedListType === 'circular' && index === currentItems.length - 1 && currentItems.length > 1 && (
-                <div className="relative animate-bounce">
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                    <div className={`w-1 h-8 bg-green-500 transition-all duration-300 ${
-                      isDarkMode ? 'bg-green-400' : 'bg-green-500'
-                    }`}></div>
-                    <div className={`w-3 h-3 border-l-2 border-b-2 border-green-500 transform rotate-45 absolute -left-1 top-0 ${
-                      isDarkMode ? 'border-green-400' : 'border-green-500'
-                    }`}></div>
-                  </div>
-                  <div className="absolute -top-8 -left-8">
-                    <div className={`w-8 h-1 bg-green-500 transition-all duration-300 ${
-                      isDarkMode ? 'bg-green-400' : 'bg-green-500'
-                    }`}></div>
-                    <div className={`w-3 h-3 border-r-2 border-t-2 border-green-500 transform rotate-45 absolute -right-1 top-0 ${
-                      isDarkMode ? 'border-green-400' : 'border-green-500'
-                    }`}></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        
-        <div className={`text-sm ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          Size: {currentLL.getSize()} | Head: {currentItems.length > 0 ? currentItems[0] : "Empty"}
-          {selectedLinkedListType === 'doubly' && currentItems.length > 0 && ` | Tail: ${currentItems[currentItems.length - 1]}`}
+        {/* Footer Info Strip */}
+        <div className="w-full flex items-center justify-between text-xs font-mono border-t border-[#DED9CE] dark:border-[#383630] pt-2 text-[#69665F] dark:text-[#A09D95]">
+          <span>Prepend: <strong>O(1)</strong> | Append: <strong>O(1)</strong> | Search: <strong>O(n)</strong></span>
+          <span>Node Count: <strong className="text-[#24231F] dark:text-[#FFFDF8]">{currentLL.getSize()}</strong></span>
         </div>
       </div>
     );
@@ -1249,12 +1358,12 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
       ? algorithmSteps[currentAlgorithmStep].highlightedIndex 
       : null;
     
-    // Calculate positions for tree visualization
-    const getNodePosition = (index, level, maxLevel) => {
+    // Robust coordinate calculation without division by zero
+    const getNodePosition = (index, level) => {
       const levelWidth = Math.pow(2, level);
       const positionInLevel = index - Math.pow(2, level) + 1;
-      const x = (positionInLevel / (levelWidth - 1)) * 400 - 200;
-      const y = level * 80;
+      const x = ((positionInLevel + 0.5) / levelWidth) * 440 + 10;
+      const y = level * 65 + 30;
       return { x, y };
     };
     
@@ -1265,79 +1374,92 @@ const DataStructureVisualizer = ({ initialStructure = 'stack' }) => {
     const maxLevel = items.length > 0 ? getLevel(items.length - 1) : 0;
     
     return (
-      <div className="flex flex-col items-center space-y-4">
-        <div className={`text-lg font-semibold ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
-          Max Heap
+      <div className="flex flex-col items-center justify-between h-full p-4 space-y-4">
+        {/* Header Indicator */}
+        <div className="w-full flex items-center justify-between px-2">
+          <div className="flex items-center space-x-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#EF592A]"></span>
+            <span className="text-xs font-mono font-bold uppercase text-[#EF592A] tracking-wider">
+              BINARY MAX-HEAP (PARENT ≥ CHILDREN)
+            </span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-[#69665F] dark:text-[#A09D95]">Max (Root): </span>
+            <strong className="text-[#EF592A]">{heap.peek() ?? 'None'}</strong>
+            <span className="mx-2 text-[#DED9CE]">|</span>
+            <span className="text-[#69665F] dark:text-[#A09D95]">Nodes: </span>
+            <strong className="text-[#28533D] dark:text-[#E4E9DD]">{items.length}</strong>
+          </div>
         </div>
-        
-        {/* Tree Visualization */}
-        <div className="relative w-96 h-64 border-2 border-gray-300 rounded-lg bg-gray-50">
+
+        {/* Tree Canvas */}
+        <div className={`relative w-full max-w-lg h-56 rounded-2xl border transition-colors overflow-hidden ${
+          isDarkMode ? 'bg-[#1A1916] border-[#383630]' : 'bg-[#FAF8F3] border-[#E8E4DA]'
+        }`}>
           {items.map((item, index) => {
             const level = getLevel(index);
-            const { x, y } = getNodePosition(index, level, maxLevel);
+            const { x, y } = getNodePosition(index, level);
             const parentIndex = Math.floor((index - 1) / 2);
             const hasParent = parentIndex >= 0;
             const parentLevel = hasParent ? getLevel(parentIndex) : 0;
-            const parentPos = hasParent ? getNodePosition(parentIndex, parentLevel, maxLevel) : null;
-            
+            const parentPos = hasParent ? getNodePosition(parentIndex, parentLevel) : null;
+            const isRoot = index === 0;
+            const isHighlighted = highlightedIndex === index;
+
             return (
-              <div key={index} className="absolute transform -translate-x-1/2 -translate-y-1/2">
-                {/* Connection line to parent */}
+              <React.Fragment key={index}>
                 {hasParent && parentPos && (
-                  <svg
-                    className="absolute w-full h-full pointer-events-none"
-                    style={{
-                      left: `${parentPos.x}px`,
-                      top: `${parentPos.y}px`,
-                      width: `${x - parentPos.x}px`,
-                      height: `${y - parentPos.y}px`
-                    }}
-                  >
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
                     <line
-                      x1="0"
-                      y1="0"
-                      x2={x - parentPos.x}
-                      y2={y - parentPos.y}
-                      stroke={isDarkMode ? '#6B7280' : '#9CA3AF'}
+                      x1={parentPos.x}
+                      y1={parentPos.y}
+                      x2={x}
+                      y2={y}
+                      stroke={isDarkMode ? '#4A473F' : '#DED9CE'}
                       strokeWidth="2"
                     />
                   </svg>
                 )}
-                
-                {/* Node */}
-                <div 
-                  className={`w-12 h-12 text-white rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 hover:bg-blue-600 hover:scale-110 shadow-lg ${
-                    highlightedIndex === index ? 'bg-yellow-500 scale-125' : 'bg-blue-500'
+
+                <div
+                  className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex flex-col items-center justify-center font-mono font-bold text-xs shadow-xs transition-all duration-300 z-10 ${
+                    isHighlighted
+                      ? 'bg-[#EF592A] text-[#FFFDF8] scale-110 ring-2 ring-[#EF592A]'
+                      : isRoot
+                      ? 'bg-[#EF592A] text-[#FFFDF8]'
+                      : 'bg-[#28533D] text-[#FFFDF8]'
                   }`}
-                  style={{
-                    left: `${x}px`,
-                    top: `${y}px`
-                  }}
+                  style={{ left: `${x}px`, top: `${y}px` }}
                 >
-                  {item}
+                  <span>{item}</span>
+                  <span className="text-[7px] opacity-75 leading-none">[{index}]</span>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })}
         </div>
-        
-        {/* Array Representation */}
-        <div className="flex items-center space-x-2">
-          {items.map((item, index) => (
-            <div key={index} className={`w-12 h-12 text-white rounded-md flex items-center justify-center font-bold text-sm transition-all duration-300 hover:bg-green-600 ${
-              highlightedIndex === index ? 'bg-yellow-500 scale-110' : 'bg-green-500'
-            }`}>
-              {item}
-            </div>
-          ))}
-        </div>
-        
-        <div className={`text-sm ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          Size: {heap.getSize()} | Max: {heap.peek() || "Empty"} | Load Factor: {(heap.getSize() / Math.pow(2, maxLevel + 1) * 100).toFixed(1)}%
+
+        {/* Array Representation Strip */}
+        <div className="w-full flex items-center space-x-2 pt-2 border-t border-[#DED9CE] dark:border-[#383630] overflow-x-auto">
+          <span className="text-[10px] font-mono font-bold uppercase text-[#69665F] dark:text-[#A09D95] flex-shrink-0">
+            HEAP ARRAY:
+          </span>
+          <div className="flex items-center space-x-1.5 flex-nowrap">
+            {items.map((item, index) => (
+              <div key={index} className="flex flex-col items-center flex-shrink-0">
+                <span className="text-[9px] font-mono text-[#A09D95]">[{index}]</span>
+                <div className={`w-9 h-9 rounded-lg font-mono font-bold text-xs flex items-center justify-center border transition-all ${
+                  index === 0
+                    ? 'bg-[#EF592A] text-[#FFFDF8] border-[#EF592A]'
+                    : isDarkMode
+                    ? 'bg-[#24231F] text-[#FFFDF8] border-[#383630]'
+                    : 'bg-[#FFFDF8] text-[#24231F] border-[#DED9CE]'
+                }`}>
+                  {item}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

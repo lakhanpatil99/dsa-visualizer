@@ -17,10 +17,12 @@ import { countingSort, countingSortPseudocode, countingSortComplexity } from '..
 import { radixSort, radixSortPseudocode, radixSortComplexity } from '../algorithms/sorting/radixSort';
 import { shellSort, shellSortPseudocode, shellSortComplexity } from '../algorithms/sorting/shellSort';
 
+const DEFAULT_SORTING_ARRAY = [52, 28, 84, 38, 76, 16, 92, 44, 68, 20, 60, 32, 72, 12];
+
 const SortingVisualizer = () => {
   const { isDarkMode } = useContext(DarkModeContext);
-  const [array, setArray] = useState([]);
-  const [originalArray, setOriginalArray] = useState([]);
+  const [array, setArray] = useState(DEFAULT_SORTING_ARRAY);
+  const [originalArray, setOriginalArray] = useState(DEFAULT_SORTING_ARRAY);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [comparingIndex, setComparingIndex] = useState(-1);
   const [pivotIndex, setPivotIndex] = useState(-1);
@@ -199,7 +201,8 @@ const SortingVisualizer = () => {
   };
 
   const getBarHeight = (value) => {
-    return `${Math.max(15, (value / 100) * 100)}%`;
+    const maxVal = Math.max(100, ...array);
+    return `${Math.max(16, (value / maxVal) * 78 + 12)}%`;
   };
 
   const getBarColor = (index) => {
@@ -423,9 +426,11 @@ const SortingVisualizer = () => {
                 ? 'text-[#28533D] dark:text-[#E4E9DD]' 
                 : isRunning 
                   ? 'text-[#EF592A]' 
-                  : 'text-[#69665F]'
+                  : isPaused
+                    ? 'text-[#8E5016] dark:text-[#F3B367]'
+                    : 'text-[#28533D] dark:text-[#76A889]'
             }`}>
-              {isCompleted ? '✓ Sorted' : isRunning ? '⚡ Running' : 'Idle'}
+              {isCompleted ? '✓ Sorted' : isRunning ? '⚡ Running' : isPaused ? '⏸ Paused' : '● Ready'}
             </span>
           </div>
         </div>

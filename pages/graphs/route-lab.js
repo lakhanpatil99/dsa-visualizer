@@ -49,6 +49,11 @@ export default function RouteLabPage() {
 
   const canvasRef = useRef(null);
 
+  // Automatically calculate route on mount and when source/destination changes
+  useEffect(() => {
+    runRouteSimulation();
+  }, [source, destination]);
+
   // Redraw Highway Map
   useEffect(() => {
     const canvas = canvasRef.current;

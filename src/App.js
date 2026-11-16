@@ -14,17 +14,31 @@ import { DarkModeContext } from '../context/ThemeContext';
 export { DarkModeContext };
 
 const App = () => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('darkMode') : null;
+      if (saved !== null) {
+        setIsDarkMode(JSON.parse(saved));
+      }
+    } catch (e) {
+      // Ignore during SSR
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+      }
+    } catch (e) {}
+    if (typeof document !== 'undefined') {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, [isDarkMode]);
 
