@@ -87,6 +87,18 @@ describe('AlgoMania Razorpay Payment Gateway Integration', () => {
       assert.equal(config.feePaise, 9900);
     });
 
+    it('accepts matching live credentials with RAZORPAY_MODE=live', () => {
+      process.env.RAZORPAY_KEY_ID = 'rzp_live_ValidKey123';
+      process.env.RAZORPAY_KEY_SECRET = 'ValidLiveSecret123';
+      process.env.RAZORPAY_WEBHOOK_SECRET = 'ValidLiveWebhookSecret123';
+      process.env.RAZORPAY_MODE = 'live';
+
+      const config = getRazorpayConfig();
+      assert.equal(config.keyId, 'rzp_live_ValidKey123');
+      assert.equal(config.mode, 'live');
+      assert.equal(config.feePaise, 9900);
+    });
+
     it('correctly checks RAZORPAY_TEST_ALLOWED_UIDS allowlist', () => {
       process.env.RAZORPAY_TEST_ALLOWED_UIDS = 'uid_admin_1, uid_tester_2, uid_founder_3';
 
