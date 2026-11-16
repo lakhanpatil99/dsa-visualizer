@@ -121,7 +121,7 @@ async function handler(req, res) {
     learningObjectives: learningObjectives.trim(),
     priorExperience: (priorExperience || '').trim(),
     status: 'PENDING_REVIEW',
-    paymentStatus: 'NOT_CONFIGURED',
+    paymentStatus: 'PENDING_PAYMENT',
     appliedAt: new Date()
   };
 

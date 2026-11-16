@@ -9,12 +9,12 @@ export default function AdminPortal() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('applications');
   const [applications, setApplications] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   // Modal / Action states
-  const [selectedApp, setSelectedApp] = useState(null);
   const [revokeCertId, setRevokeCertId] = useState('');
   const [revokeReason, setRevokeReason] = useState('');
 
@@ -23,7 +23,7 @@ export default function AdminPortal() {
     try {
       const token = await user.getIdToken();
       const res = await fetch('/api/admin/applications', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success) {
@@ -38,9 +38,26 @@ export default function AdminPortal() {
     }
   };
 
+  const fetchPayments = async () => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/admin/payments', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPayments(data.payments || []);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch payments:', err);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchApplications();
+      fetchPayments();
     } else if (!authLoading) {
       setLoading(false);
     }
@@ -53,12 +70,12 @@ export default function AdminPortal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           applicationId,
-          status: newStatus
-        })
+          status: newStatus,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -73,21 +90,25 @@ export default function AdminPortal() {
   };
 
   const handleIssueCertificate = async (app) => {
+    if (app.paymentStatus !== 'PAID_VERIFIED') {
+      setErrorMsg(`Cannot issue certificate for ${app.applicationId}: Registration fee is not verified (status: ${app.paymentStatus || 'PENDING_PAYMENT'}).`);
+      return;
+    }
     try {
       const token = await user.getIdToken();
       const res = await fetch('/api/admin/issue-certificate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           type: 'internship',
           targetId: app.applicationId,
           recipientName: app.fullName,
           domain: app.domainTitle,
-          duration: app.duration
-        })
+          duration: app.duration,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -110,12 +131,12 @@ export default function AdminPortal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           certificateId: revokeCertId.trim(),
-          reason: revokeReason || 'Administrative revocation'
-        })
+          reason: revokeReason || 'Administrative revocation',
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -165,20 +186,33 @@ export default function AdminPortal() {
         )}
 
         {/* Tab Navigation */}
-        <div className="flex items-center space-x-2 mb-6 border-b border-[#DED9CE] dark:border-[#2E2C27] pb-3">
+        <div className="flex items-center space-x-2 mb-6 border-b border-[#DED9CE] dark:border-[#2E2C27] pb-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab('applications')}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase ${
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase cursor-pointer whitespace-nowrap ${
               activeTab === 'applications'
                 ? 'bg-[#28533D] text-[#FFFDF8]'
                 : 'text-[#69665F] hover:text-[#24231F]'
             }`}
           >
-            Internship Applications ({applications.length})
+            Applications ({applications.length})
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('payments');
+              fetchPayments();
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase cursor-pointer whitespace-nowrap ${
+              activeTab === 'payments'
+                ? 'bg-[#28533D] text-[#FFFDF8]'
+                : 'text-[#69665F] hover:text-[#24231F]'
+            }`}
+          >
+            Payments ({payments.length})
           </button>
           <button
             onClick={() => setActiveTab('revocation')}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase ${
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase cursor-pointer whitespace-nowrap ${
               activeTab === 'revocation'
                 ? 'bg-[#28533D] text-[#FFFDF8]'
                 : 'text-[#69665F] hover:text-[#24231F]'
@@ -207,7 +241,7 @@ export default function AdminPortal() {
                       <th className="p-4">App ID</th>
                       <th className="p-4">Candidate</th>
                       <th className="p-4">Domain / Duration</th>
-                      <th className="p-4">College</th>
+                      <th className="p-4">Payment</th>
                       <th className="p-4">Status</th>
                       <th className="p-4">Actions</th>
                     </tr>
@@ -222,9 +256,19 @@ export default function AdminPortal() {
                         </td>
                         <td className="p-4">
                           <span className="font-semibold text-[#28533D] dark:text-[#88C49F]">{app.domainTitle}</span>
-                          <div className="text-[10px] text-[#69665F]">{app.duration.replace('_', ' ')}</div>
+                          <div className="text-[10px] text-[#69665F]">{app.duration?.replace('_', ' ')}</div>
                         </td>
-                        <td className="p-4 text-[#69665F]">{app.college}</td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              app.paymentStatus === 'PAID_VERIFIED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {app.paymentStatus === 'PAID_VERIFIED' ? '✓ PAID' : 'PENDING'}
+                          </span>
+                        </td>
                         <td className="p-4">
                           <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FAF8F3] border border-[#DED9CE]">
                             {app.status}
@@ -235,7 +279,7 @@ export default function AdminPortal() {
                             {app.status === 'PENDING_REVIEW' && (
                               <button
                                 onClick={() => handleUpdateStatus(app.applicationId, 'APPROVED')}
-                                className="px-2.5 py-1 bg-blue-600 text-white rounded text-[10px] font-bold"
+                                className="px-2.5 py-1 bg-blue-600 text-white rounded text-[10px] font-bold cursor-pointer"
                               >
                                 Approve
                               </button>
@@ -243,7 +287,7 @@ export default function AdminPortal() {
                             {app.status === 'APPROVED' && (
                               <button
                                 onClick={() => handleUpdateStatus(app.applicationId, 'IN_PROGRESS')}
-                                className="px-2.5 py-1 bg-amber-600 text-white rounded text-[10px] font-bold"
+                                className="px-2.5 py-1 bg-amber-600 text-white rounded text-[10px] font-bold cursor-pointer"
                               >
                                 Start
                               </button>
@@ -251,7 +295,7 @@ export default function AdminPortal() {
                             {app.status === 'IN_PROGRESS' && (
                               <button
                                 onClick={() => handleUpdateStatus(app.applicationId, 'COMPLETED')}
-                                className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold"
+                                className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold cursor-pointer"
                               >
                                 Mark Completed
                               </button>
@@ -259,7 +303,11 @@ export default function AdminPortal() {
                             {app.status === 'COMPLETED' && !app.certificateIssued && (
                               <button
                                 onClick={() => handleIssueCertificate(app)}
-                                className="px-2.5 py-1 bg-[#28533D] text-white rounded text-[10px] font-bold"
+                                className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer ${
+                                  app.paymentStatus === 'PAID_VERIFIED'
+                                    ? 'bg-[#28533D] text-white'
+                                    : 'bg-gray-400 text-white opacity-70 cursor-not-allowed'
+                                }`}
                               >
                                 Issue Cert
                               </button>
@@ -270,6 +318,73 @@ export default function AdminPortal() {
                               </span>
                             )}
                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PAYMENTS TAB */}
+        {activeTab === 'payments' && (
+          <div className="space-y-4">
+            {payments.length === 0 ? (
+              <div className="p-8 text-center text-xs text-[#69665F] bg-[#FFFDF8] dark:bg-[#24231F] rounded-xl border border-[#DED9CE]">
+                No payment transactions recorded yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] rounded-2xl shadow-xs">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#FAF8F3] dark:bg-[#1C1B18] border-b border-[#DED9CE] dark:border-[#383630] font-mono text-[#69665F]">
+                    <tr>
+                      <th className="p-4">Order / Razorpay ID</th>
+                      <th className="p-4">App ID</th>
+                      <th className="p-4">Candidate</th>
+                      <th className="p-4">Amount</th>
+                      <th className="p-4">Mode</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Captured At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#DED9CE] dark:divide-[#383630]">
+                    {payments.map((p) => (
+                      <tr key={p.orderId} className="hover:bg-[#FAF8F3] dark:hover:bg-[#1F1E1B]">
+                        <td className="p-4 font-mono">
+                          <div className="font-bold text-[#24231F] dark:text-[#FFFDF8]">{p.orderId}</div>
+                          <div className="text-[10px] text-[#69665F]">{p.razorpayOrderId || '—'}</div>
+                        </td>
+                        <td className="p-4 font-mono font-bold text-[#EF592A]">{p.applicationId}</td>
+                        <td className="p-4 text-[#69665F]">{p.userEmail}</td>
+                        <td className="p-4 font-mono font-bold">₹{(p.amountPaise / 100).toFixed(2)}</td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              p.paymentMode === 'test'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {p.paymentMode?.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              p.status === 'CAPTURED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : p.status === 'FAILED'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-[10px] text-[#69665F]">
+                          {p.capturedAt ? new Date(p.capturedAt).toLocaleString() : '—'}
                         </td>
                       </tr>
                     ))}
@@ -321,7 +436,7 @@ export default function AdminPortal() {
 
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider"
+                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
               >
                 Confirm Revocation
               </button>

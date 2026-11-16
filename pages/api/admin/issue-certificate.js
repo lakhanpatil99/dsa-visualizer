@@ -48,9 +48,9 @@ async function handler(req, res) {
   let milestoneCount = null;
   let finalDomain = domain || null;
   let finalDuration = duration || null;
+  let app = null;
 
   if (type === 'internship') {
-    let app = null;
     if (isConnected) {
       app = await InternshipApplication.findOne({ applicationId: targetId });
     } else {
@@ -65,6 +65,13 @@ async function handler(req, res) {
       return res.status(400).json({
         success: false,
         message: `Cannot issue certificate: Application status is ${app.status}. Must be COMPLETED.`
+      });
+    }
+
+    if (app.paymentStatus !== 'PAID_VERIFIED') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot issue certificate: Payment status is ${app.paymentStatus}. Registration fee must be verified.`
       });
     }
 
@@ -131,7 +138,10 @@ async function handler(req, res) {
     founderTitle: 'Founder, AlgoMania',
     verificationUrl,
     metadata: {
-      issuedByAdmin: req.user.email
+      issuedByAdmin: req.user.email,
+      ...(type === 'internship' && app?.metadata?.paymentMode === 'test'
+        ? { isTestCertificate: true, paymentMode: 'test' }
+        : {})
     }
   };
 
