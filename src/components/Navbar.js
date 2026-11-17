@@ -123,6 +123,17 @@ export default function Navbar() {
               Certificates
             </Link>
 
+            <Link
+              href="/certificates/verify"
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                router.pathname.startsWith('/certificates/verify')
+                  ? 'bg-[#E4E9DD] text-[#28533D]'
+                  : 'text-[#24231F] dark:text-[#EAE7DF] hover:bg-[#EAE5D8] dark:hover:bg-[#272622]'
+              }`}
+            >
+              Verify
+            </Link>
+
             {/* Direct Links */}
             <Link
               href="/algorithms"
@@ -249,7 +260,7 @@ export default function Navbar() {
               <div className="px-3 py-1 text-[11px] font-mono font-bold uppercase text-[#69665F] dark:text-[#8E8B83]">
                 Career & Achievements
               </div>
-              <div className="grid grid-cols-3 gap-1.5 px-2 mt-1">
+              <div className="grid grid-cols-4 gap-1.5 px-2 mt-1">
                 <Link
                   href="/internships"
                   onClick={() => setMobileMenuOpen(false)}
@@ -263,6 +274,13 @@ export default function Navbar() {
                   className="p-2 text-center rounded-lg text-xs font-semibold text-[#EF592A] bg-[#EF592A]/10 border border-[#EF592A]/30"
                 >
                   Competitions
+                </Link>
+                <Link
+                  href="/certificates/verify"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-center rounded-lg text-xs font-semibold text-[#28533D] dark:text-[#A8C8AE] bg-[#E4E9DD]/50 dark:bg-[#28382F]/50 border border-[#DED9CE] dark:border-[#383630]"
+                >
+                  Verify
                 </Link>
                 <Link
                   href="/certificates"
