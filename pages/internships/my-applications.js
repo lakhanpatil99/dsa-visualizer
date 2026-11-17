@@ -6,7 +6,7 @@ import Footer from '../../src/components/Footer';
 import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function MyApplications() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, getIdToken, loading: authLoading } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,15 +15,23 @@ export default function MyApplications() {
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const getAuthToken = useCallback(async (forceRefresh = false) => {
+    try {
+      if (typeof user?.getIdToken === 'function') return await user.getIdToken(forceRefresh);
+      if (typeof getIdToken === 'function') return await getIdToken(forceRefresh);
+    } catch {}
+    return null;
+  }, [user, getIdToken]);
+
   const fetchApplications = useCallback(async ({ silent = false } = {}) => {
     if (!user) return;
     if (!silent) setLoading(true);
     setRefreshing(true);
 
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
       const response = await fetch('/api/internships/my-applications', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: 'no-store'
       });
       const data = await response.json();
@@ -69,9 +77,9 @@ export default function MyApplications() {
     setCheckingAppId(appId);
     setStatusNotice((prev) => ({ ...prev, [appId]: 'Checking payment status...' }));
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
       const res = await fetch(`/api/payments/status?applicationId=${encodeURIComponent(appId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
       if (data.success) {
@@ -94,9 +102,9 @@ export default function MyApplications() {
   const downloadOfficialCertificate = async (certificate) => {
     if (!user || !certificate?.certificateId || certificate.status !== 'VALID') return;
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
       const response = await fetch(`/api/certificates/download/${encodeURIComponent(certificate.certificateId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: 'no-store'
       });
       if (!response.ok) {

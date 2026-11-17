@@ -418,9 +418,10 @@ export const AuthProvider = ({ children }) => {
       displayName: firebaseUser.displayName || dbUser?.displayName,
       photoURL: firebaseUser.photoURL || dbUser?.photoURL,
       emailVerified: firebaseUser.emailVerified,
-      createdAt: dbUser?.createdAt || firebaseUser.metadata?.creationTime
+      createdAt: dbUser?.createdAt || firebaseUser.metadata?.creationTime,
+      getIdToken: (forceRefresh) => getIdToken(forceRefresh)
     };
-  }, [firebaseUser, dbUser]);
+  }, [firebaseUser, dbUser, getIdToken]);
 
   const value = {
     // States

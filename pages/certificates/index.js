@@ -8,7 +8,7 @@ import CertificatePreviewModal from '../../src/components/certificates/Certifica
 import AchievementBadge from '../../src/components/competitions/AchievementBadge';
 
 export default function MyCertificatesDashboard() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, getIdToken, loading: authLoading } = useAuth();
   const [issuedCerts, setIssuedCerts] = useState([]);
   const [pendingCerts, setPendingCerts] = useState([]);
   const [badges, setBadges] = useState([]);
@@ -19,15 +19,23 @@ export default function MyCertificatesDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
 
+  const getAuthToken = useCallback(async (forceRefresh = false) => {
+    try {
+      if (typeof user?.getIdToken === 'function') return await user.getIdToken(forceRefresh);
+      if (typeof getIdToken === 'function') return await getIdToken(forceRefresh);
+    } catch {}
+    return null;
+  }, [user, getIdToken]);
+
   const loadCertificates = useCallback(async ({ silent = false } = {}) => {
     if (!user) return;
     if (!silent) setLoading(true);
     setRefreshing(true);
 
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
       const response = await fetch('/api/certificates/my-certificates', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: 'no-store'
       });
       const data = await response.json();
@@ -75,9 +83,9 @@ export default function MyCertificatesDashboard() {
   const handleDownloadPdf = async (cert) => {
     if (!user) return;
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
       const res = await fetch(`/api/certificates/download/${encodeURIComponent(cert.certificateId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: 'no-store'
       });
       if (!res.ok) {

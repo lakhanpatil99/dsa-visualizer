@@ -27,7 +27,7 @@ const ALL_CATEGORIES = [
 ];
 
 export default function CompetitionPortal() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, getIdToken } = useAuth();
   const [challenges, setChallenges] = useState([]);
   const [stats, setStats] = useState({
     uniqueSolvedCount: 0,
@@ -52,6 +52,21 @@ export default function CompetitionPortal() {
   const [submissionResult, setSubmissionResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Resilient token retriever: supports unifiedUser.getIdToken, auth.getIdToken, and context token
+  const getAuthToken = useCallback(async (forceRefresh = false) => {
+    try {
+      if (typeof user?.getIdToken === 'function') {
+        return await user.getIdToken(forceRefresh);
+      }
+      if (typeof getIdToken === 'function') {
+        return await getIdToken(forceRefresh);
+      }
+    } catch (tokenErr) {
+      console.warn('[CompetitionAuth] Failed to acquire token:', tokenErr?.message);
+    }
+    return null;
+  }, [user, getIdToken]);
+
   // Certificate Modal State
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -72,8 +87,14 @@ export default function CompetitionPortal() {
     try {
       const headers = {};
       if (user) {
-        const token = await user.getIdToken();
-        headers.Authorization = `Bearer ${token}`;
+        try {
+          const token = await getAuthToken();
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
+        } catch (tokenErr) {
+          console.warn('[CompetitionPortal] Proceeding with public challenge catalogue:', tokenErr?.message);
+        }
       }
 
       const challengeResponse = await fetch('/api/competitions/challenges', {
@@ -194,7 +215,10 @@ export default function CompetitionPortal() {
     setErrorMsg('');
 
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Authentication session expired. Please sign in again to submit code.');
+      }
       const res = await fetch('/api/competitions/submit', {
         method: 'POST',
         headers: {
@@ -230,9 +254,9 @@ export default function CompetitionPortal() {
   const handleDownloadCertificate = async (certificate) => {
     if (!user || !certificate?.certificateId) return;
     try {
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
       const response = await fetch(`/api/certificates/download/${encodeURIComponent(certificate.certificateId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: 'no-store'
       });
       if (!response.ok) {
@@ -290,9 +314,9 @@ export default function CompetitionPortal() {
     // may enter ISSUED mode. A reached milestone alone is not an issued credential.
     if (isUnlocked && isAuthenticated && user) {
       try {
-        const token = await user.getIdToken();
+        const token = await getAuthToken();
         const response = await fetch('/api/certificates/my-certificates', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         const data = await response.json();
         if (response.ok && data.success) {

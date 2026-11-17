@@ -332,12 +332,14 @@ export default function CertificatePreviewModal({
 
                 {/* Founder Authorization Area */}
                 <div className="flex flex-col items-end text-right">
-                  <img
-                    src="/LakhansingSignature.png"
-                    alt="Founder Signature"
-                    className="h-10 w-auto object-contain mb-1"
-                  />
-                  <div className="w-36 h-px bg-[#28533D] mb-1"></div>
+                  <div className="relative flex items-end justify-center w-40">
+                    <img
+                      src="/LakhansingSignature.png"
+                      alt="Founder Signature"
+                      className="h-16 w-auto max-w-[125px] object-contain -mb-2"
+                    />
+                  </div>
+                  <div className="w-40 h-[1.5px] bg-[#28533D] mb-1"></div>
                   <span className="text-xs font-bold text-[#24231F]">Lakhansing Patil</span>
                   <span className="text-[10px] font-mono text-[#28533D]">Founder, AlgoMania</span>
                 </div>

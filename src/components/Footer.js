@@ -124,12 +124,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#69665F] dark:text-[#8E8B83] gap-4">
           <div className="font-mono">
-            © {new Date().getFullYear()} AlgoMania. All rights reserved.
-          </div>
-          <div className="flex items-center space-x-4 text-[11px] font-mono">
-            <span>Founded by Lakhansing Patil</span>
-            <span>•</span>
-            <span className="text-[#28533D] dark:text-[#76A889] font-bold">Deterministic Engine</span>
+            © 2026–2027 AlgoMania. All rights reserved.
           </div>
         </div>
       </div>

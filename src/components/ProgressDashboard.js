@@ -14,7 +14,7 @@ const ProgressDashboard = () => {
   const [competitionSyncAt, setCompetitionSyncAt] = useState(null);
   const [competitionRefreshing, setCompetitionRefreshing] = useState(false);
 
-  const { progressService, isAuthenticated, user } = useAuth();
+  const { progressService, isAuthenticated, user, getIdToken } = useAuth();
   const { isDarkMode } = useContext(DarkModeContext);
 
   useEffect(() => {
@@ -46,9 +46,11 @@ const ProgressDashboard = () => {
     if (!silent) setCompetitionRefreshing(true);
 
     try {
-      const token = await user.getIdToken();
+      const token = typeof user?.getIdToken === 'function'
+        ? await user.getIdToken()
+        : (typeof getIdToken === 'function' ? await getIdToken() : null);
       const response = await fetch('/api/competitions/stats', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: 'no-store'
       });
       const data = await response.json();

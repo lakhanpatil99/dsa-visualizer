@@ -114,14 +114,7 @@ export default function HomeFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#69665F] gap-4">
           <div className="font-mono">
-            © {new Date().getFullYear()} AlgoMania. All rights reserved.
-          </div>
-          <div className="flex items-center space-x-6 text-[11px] font-mono">
-            <span>Founded by Lakhansing Patil</span>
-            <span>•</span>
-            <span>No external canvas tracking</span>
-            <span>•</span>
-            <span className="text-[#28533D] font-bold">Production Ready</span>
+            © 2026–2027 AlgoMania. All rights reserved.
           </div>
         </div>
       </div>

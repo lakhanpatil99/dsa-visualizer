@@ -102,7 +102,7 @@ describe('Session Security — AuthContext Session Limits', () => {
 // ── Footer Cleanup ──────────────────────────────────────────────────────────
 
 describe('Footer Cleanup — No Framework Credits', () => {
-  it('Footer.js does not display "Next.js 14 + React 18"', () => {
+  it('Footer.js displays clean copyright without framework credits or founder tags', () => {
     const footerPath = path.resolve('src/components/Footer.js');
     const content = fs.readFileSync(footerPath, 'utf-8');
 
@@ -111,12 +111,12 @@ describe('Footer Cleanup — No Framework Credits', () => {
       'Footer should not display framework version text'
     );
     assert.ok(
-      content.includes('Founded by Lakhansing Patil'),
-      'Footer should display founder attribution'
+      content.includes('2026–2027 AlgoMania. All rights reserved.'),
+      'Footer should display 2026-2027 copyright claim'
     );
   });
 
-  it('HomeFooter.js does not display "Next.js 14 + React 18"', () => {
+  it('HomeFooter.js displays clean copyright without framework credits or founder tags', () => {
     const homeFooterPath = path.resolve('src/components/home/HomeFooter.js');
     const content = fs.readFileSync(homeFooterPath, 'utf-8');
 
@@ -125,8 +125,8 @@ describe('Footer Cleanup — No Framework Credits', () => {
       'HomeFooter should not display framework version text'
     );
     assert.ok(
-      content.includes('Founded by Lakhansing Patil'),
-      'HomeFooter should display founder attribution'
+      content.includes('2026–2027 AlgoMania. All rights reserved.'),
+      'HomeFooter should display 2026-2027 copyright claim'
     );
   });
 });
