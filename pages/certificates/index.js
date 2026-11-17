@@ -103,7 +103,14 @@ export default function MyCertificatesDashboard() {
             </p>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/certificates/verify"
+              className="px-4 py-2.5 rounded-xl bg-[#E4E9DD] dark:bg-[#28382F] text-[#28533D] dark:text-[#E4E9DD] border border-[#28533D]/30 text-xs font-semibold hover:border-[#28533D] flex items-center space-x-1.5"
+            >
+              <span>🛡️</span>
+              <span>Verify Credential Registry ↗</span>
+            </Link>
             <Link
               href="/competitions"
               className="px-4 py-2.5 rounded-xl bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] text-xs font-semibold hover:border-[#EF592A]"
