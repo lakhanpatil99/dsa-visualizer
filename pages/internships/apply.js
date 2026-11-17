@@ -7,21 +7,66 @@ import Footer from '../../src/components/Footer';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { DEFAULT_INTERNSHIP_PROGRAMS } from '../../lib/internships/internshipData';
 
+// Shared singleton promise to prevent duplicate Razorpay SDK script injection
+let razorpaySdkLoadingPromise = null;
+
+function preloadRazorpaySdk() {
+  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (window.Razorpay) return Promise.resolve(true);
+  if (razorpaySdkLoadingPromise) return razorpaySdkLoadingPromise;
+
+  razorpaySdkLoadingPromise = new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true));
+      existing.addEventListener('error', () => {
+        razorpaySdkLoadingPromise = null;
+        resolve(false);
+      });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      razorpaySdkLoadingPromise = null;
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+
+  return razorpaySdkLoadingPromise;
+}
+
 export default function InternshipApplicationWizard() {
   const { user, getIdToken, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // AuthContext exposes the Firebase token accessor separately from the user profile.
-  const getFreshAuthToken = useCallback(async () => {
+  // Pre-created order cache & in-flight promise for instant Step 4 checkout opening
+  const precreatedOrderRef = useRef(null);
+  const precreationPromiseRef = useRef(null);
+
+  // Fast token accessor: defaults to cached token (0ms) rather than forcing STS roundtrip
+  const getFreshAuthToken = useCallback(async (forceRefresh = false) => {
     if (typeof getIdToken !== 'function') {
       throw new Error('Authentication is still initializing. Please refresh and sign in again.');
     }
-    const token = await getIdToken(true);
+    const token = await getIdToken(forceRefresh);
     if (!token) {
       throw new Error('Your session has expired. Please sign in again.');
     }
     return token;
   }, [getIdToken]);
+
+  // Preload Razorpay SDK script on component mount
+  useEffect(() => {
+    preloadRazorpaySdk();
+  }, []);
 
   // Wizard Steps:
   // 1: Domain Selection
@@ -178,21 +223,42 @@ export default function InternshipApplicationWizard() {
     }
   };
 
-  // ── Dynamically load Razorpay SDK ──────────────────────────────────
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (typeof window !== 'undefined' && window.Razorpay) {
-        resolve(true);
-        return;
+  // ── Pre-create order in background upon entering Step 4 ────────────
+  const precreateOrder = useCallback(async (appId) => {
+    if (!appId || precreatedOrderRef.current || precreationPromiseRef.current) return;
+    const promise = (async () => {
+      try {
+        const token = await getFreshAuthToken(false);
+        const res = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            'x-correlation-id': `pre_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          },
+          body: JSON.stringify({ applicationId: appId }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          precreatedOrderRef.current = data;
+          setPaymentOrderData(data);
+          return data;
+        }
+      } catch (e) {
+        console.warn('[apply] Pre-create order notice:', e.message);
+      } finally {
+        precreationPromiseRef.current = null;
       }
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
+      return null;
+    })();
+    precreationPromiseRef.current = promise;
+  }, [getFreshAuthToken]);
+
+  useEffect(() => {
+    if (step === 4 && submittedApplication?.applicationId) {
+      precreateOrder(submittedApplication.applicationId);
+    }
+  }, [step, submittedApplication, precreateOrder]);
 
   // ── Step 4: Initiate Razorpay Order & Open Checkout ────────────────
   const handleInitiatePayment = async () => {
@@ -201,31 +267,79 @@ export default function InternshipApplicationWizard() {
     setErrorMessage('');
     setDismissNotice('');
 
-    try {
-      const token = await getFreshAuthToken();
+    const correlationId = `chk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const prepStart = Date.now();
 
-      // Step A: Load SDK script
-      const sdkLoaded = await loadRazorpayScript();
+    try {
+      // Step A & B in parallel: Ensure SDK is loaded AND order is ready
+      const sdkPromise = preloadRazorpaySdk();
+
+      let orderPromise;
+      if (precreatedOrderRef.current && precreatedOrderRef.current.applicationId === submittedApplication.applicationId) {
+        // Fast-path: order was pre-created in background (0ms!)
+        orderPromise = Promise.resolve(precreatedOrderRef.current);
+      } else if (precreationPromiseRef.current) {
+        // In-flight pre-creation: join existing promise
+        orderPromise = precreationPromiseRef.current.then((order) => {
+          if (order) return order;
+          throw new Error('Pre-creation failed, retrying...');
+        }).catch(async () => {
+          const token = await getFreshAuthToken(false);
+          const res = await fetch('/api/payments/create-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+              'x-correlation-id': correlationId,
+            },
+            body: JSON.stringify({ applicationId: submittedApplication.applicationId }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.message || 'Failed to initialize payment order.');
+          return data;
+        });
+      } else {
+        // Create order directly with 8s bounded timeout
+        orderPromise = (async () => {
+          const token = await getFreshAuthToken(false);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          try {
+            const res = await fetch('/api/payments/create-order', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+                'x-correlation-id': correlationId,
+              },
+              body: JSON.stringify({ applicationId: submittedApplication.applicationId }),
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.message || 'Failed to initialize payment order.');
+            return data;
+          } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+              throw new Error('Order creation timed out. Please click Retry Checkout.');
+            }
+            throw fetchErr;
+          }
+        })();
+      }
+
+      const [sdkLoaded, orderData] = await Promise.all([sdkPromise, orderPromise]);
+
       if (!sdkLoaded) {
         throw new Error('Unable to connect to Razorpay payment network. Please check your internet connection.');
       }
 
-      // Step B: Call backend to create Razorpay Order
-      const orderRes = await fetch('/api/payments/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ applicationId: submittedApplication.applicationId }),
-      });
-
-      const orderData = await orderRes.json();
-      if (!orderRes.ok || !orderData.success) {
-        throw new Error(orderData.message || 'Failed to initialize payment order.');
-      }
-
       setPaymentOrderData(orderData);
+      precreatedOrderRef.current = orderData;
+
+      const totalPrepTimeMs = Date.now() - prepStart;
+      console.log(`[apply] Checkout prepared in ${totalPrepTimeMs}ms correlationId=${correlationId}`);
 
       // Step C: Configure Razorpay Standard Checkout
       const options = {
@@ -244,6 +358,7 @@ export default function InternshipApplicationWizard() {
         notes: {
           applicationId: submittedApplication.applicationId,
           domain: formData.domain,
+          correlationId,
         },
         theme: {
           color: '#28533D', // AlgoMania Forest Green
@@ -274,14 +389,16 @@ export default function InternshipApplicationWizard() {
         setPaymentLoading(false);
         setErrorMessage(
           failedResponse.error?.description ||
-            'Payment was declined or failed. Please retry with another payment method.'
+          'Payment was declined or failed. Please retry with another payment method.'
         );
       });
 
       rzpInstance.open();
+      // Stop loading once checkout overlay is displayed
+      setPaymentLoading(false);
     } catch (err) {
       console.error('Payment initiation error:', err);
-      setErrorMessage(err.message);
+      setErrorMessage(err.message || 'Payment initiation encountered an error. Please click Retry Checkout.');
       setPaymentLoading(false);
     }
   };
@@ -362,7 +479,7 @@ export default function InternshipApplicationWizard() {
         setPaymentVerificationResult(data.order);
         setStep(5);
       }
-    } catch {}
+    } catch { }
   };
 
   const currentProgram =
@@ -374,6 +491,10 @@ export default function InternshipApplicationWizard() {
     <div className="min-h-screen flex flex-col bg-[#F8F5ED] dark:bg-[#1C1B18] text-[#24231F] dark:text-[#EAE7DF] transition-colors duration-200">
       <Head>
         <title>Apply for Engineering Internship — AlgoMania</title>
+        <link rel="preconnect" href="https://checkout.razorpay.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://api.razorpay.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
+        <link rel="dns-prefetch" href="https://api.razorpay.com" />
       </Head>
 
       <Navbar />
@@ -404,13 +525,12 @@ export default function InternshipApplicationWizard() {
             ].map((label, i) => (
               <span
                 key={label}
-                className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                  step === i + 1
+                className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors ${step === i + 1
                     ? 'bg-[#28533D] text-[#FFFDF8]'
                     : step > i + 1
-                    ? 'bg-[#E4E9DD] dark:bg-[#28382F] text-[#28533D] dark:text-[#E4E9DD]'
-                    : 'bg-[#FAF8F3] dark:bg-[#24231F] text-[#8E8B83]'
-                }`}
+                      ? 'bg-[#E4E9DD] dark:bg-[#28382F] text-[#28533D] dark:text-[#E4E9DD]'
+                      : 'bg-[#FAF8F3] dark:bg-[#24231F] text-[#8E8B83]'
+                  }`}
               >
                 {label}
               </span>
@@ -445,11 +565,10 @@ export default function InternshipApplicationWizard() {
                 <div
                   key={track.id}
                   onClick={() => setFormData((prev) => ({ ...prev, domain: track.id }))}
-                  className={`p-5 rounded-2xl border cursor-pointer transition-all ${
-                    formData.domain === track.id
+                  className={`p-5 rounded-2xl border cursor-pointer transition-all ${formData.domain === track.id
                       ? 'border-[#28533D] bg-[#E4E9DD]/40 dark:bg-[#28382F]/40 shadow-sm ring-2 ring-[#28533D]'
                       : 'border-[#DED9CE] dark:border-[#383630] bg-[#FFFDF8] dark:bg-[#24231F] hover:border-[#EF592A]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-[#24231F] dark:text-[#FFFDF8]">{track.label}</span>
@@ -667,8 +786,8 @@ export default function InternshipApplicationWizard() {
                     {formData.duration === '1_month'
                       ? '1 Month'
                       : formData.duration === '2_months'
-                      ? '2 Months'
-                      : '3 Months'}
+                        ? '2 Months'
+                        : '3 Months'}
                   </p>
                 </div>
                 <div>
@@ -830,6 +949,11 @@ export default function InternshipApplicationWizard() {
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Preparing Secure Checkout...</span>
+                    </>
+                  ) : errorMessage ? (
+                    <>
+                      <span>🔄</span>
+                      <span>Retry Checkout (₹99)</span>
                     </>
                   ) : (
                     <>

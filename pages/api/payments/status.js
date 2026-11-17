@@ -82,9 +82,11 @@ async function handler(req, res) {
   }
 
   // ── Active / In-Flight Reconciliation with Razorpay API ────────────
+  const pendingStatuses = ['PENDING', 'CREATED', 'ORDER_CREATED', 'PAYMENT_PENDING', 'CHECKOUT_OPEN', 'CHECKOUT_OPENED', 'AUTHORIZED', 'PAYMENT_AUTHORIZED'];
   if (
-    (paymentOrder.status === 'PENDING' || paymentOrder.status === 'CREATED' || paymentOrder.status === 'AUTHORIZED') &&
-    paymentOrder.status !== 'CAPTURED'
+    pendingStatuses.includes(paymentOrder.status) &&
+    paymentOrder.status !== 'CAPTURED' &&
+    paymentOrder.status !== 'PAYMENT_CAPTURED'
   ) {
     try {
       let capturedPayment = null;
