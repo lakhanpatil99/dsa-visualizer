@@ -5,6 +5,8 @@ import memoryStore from '../../../lib/memoryStore.js';
 import { getChallengeById } from '../../../lib/competitions/challengesData.js';
 import { executeChallengeCode } from '../../../lib/competitions/codeRunner.js';
 import { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
+import { COMPETITION_CHALLENGES } from '../../../lib/competitions/challengesData.js';
+import { ensureCompetitionMilestoneCertificates } from '../../../lib/certificates/competitionMilestoneIssuance.js';
 import crypto from 'crypto';
 
 const MILESTONES = [
@@ -120,6 +122,24 @@ async function handler(req, res) {
       )
       .map((milestone) => milestone.tier);
 
+    // A genuine accepted submission may cross a competition threshold.
+    // Issue the corresponding permanent credential internally, using the
+    // verified DB identity and an idempotent MongoDB source key.
+    let certificateIssuancePending = false;
+    if (connected && execResult.status === 'ACCEPTED') {
+      try {
+        await ensureCompetitionMilestoneCertificates({
+          firebaseUid: user.uid,
+          userEmail: user.email,
+          recipientName: req.dbUser?.displayName || req.dbUser?.username || user.name,
+          uniqueSolvedCount
+        });
+      } catch (issuanceError) {
+        certificateIssuancePending = true;
+        console.error('[CompetitionSubmit] Automatic milestone issuance deferred:', issuanceError?.message || 'Unknown error');
+      }
+    }
+
     return res.status(200).json({
       success: true,
       result: execResult,
@@ -128,7 +148,8 @@ async function handler(req, res) {
       uniqueSolvedCount,
       solvedChallengeIds: solvedAfter,
       unlockedTiers,
-      totalChallenges: (await import('../../../lib/competitions/challengesData.js')).COMPETITION_CHALLENGES.length,
+      certificateIssuancePending,
+      totalChallenges: COMPETITION_CHALLENGES.length,
       progressUpdatedAt: new Date().toISOString()
     });
   } catch (error) {
