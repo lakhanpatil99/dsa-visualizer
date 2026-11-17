@@ -83,6 +83,11 @@ export default function HomeFooter() {
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm text-[#69665F]">
               <li>
+                <Link href="/certificates/verify" className="hover:text-[#EF592A] transition-colors">
+                  Verify a Certificate
+                </Link>
+              </li>
+              <li>
                 <Link href="/app" className="hover:text-[#EF592A] transition-colors">
                   Interactive Workspace
                 </Link>
