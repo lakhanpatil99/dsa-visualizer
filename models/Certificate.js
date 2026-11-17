@@ -7,6 +7,14 @@ const CertificateSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  // Stable issuance source key prevents duplicate credentials for the same eligible source record.
+  // Sparse uniqueness preserves compatibility with already-issued historical certificates.
+  sourceKey: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true
+  },
   firebaseUid: {
     type: String,
     required: true,
