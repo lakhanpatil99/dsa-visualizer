@@ -284,6 +284,7 @@ export default function CompetitionPortal() {
     const thresholdMap = { bronze: 20, silver: 100, gold: 200 };
     const targetThreshold = thresholdMap[tier] || 20;
     let issuedCertificate = null;
+    let revokedCertificate = null;
 
     // Only a persisted certificate returned by the authenticated registry API
     // may enter ISSUED mode. A reached milestone alone is not an issued credential.
@@ -295,16 +296,18 @@ export default function CompetitionPortal() {
         });
         const data = await response.json();
         if (response.ok && data.success) {
-          issuedCertificate = (data.issuedCertificates || []).find(
-            (item) => item.type === `competition_${tier}` && item.status === 'VALID'
+          const matchingCertificate = (data.issuedCertificates || []).find(
+            (item) => item.type === `competition_${tier}`
           ) || null;
+          issuedCertificate = matchingCertificate?.status === 'VALID' ? matchingCertificate : null;
+          revokedCertificate = matchingCertificate?.status === 'REVOKED' ? matchingCertificate : null;
         }
       } catch (error) {
         console.warn('[CompetitionCertificates] Unable to load issued credential:', error?.message || 'Unknown error');
       }
     }
 
-    const previewCertificate = issuedCertificate || {
+    const previewCertificate = issuedCertificate || revokedCertificate || {
       recipientName: user?.displayName || (user?.email ? user.email.split('@')[0] : 'Prospective Algorist'),
       title: tier === 'gold'
         ? 'Gold Algorithmic Mastery'
@@ -319,7 +322,7 @@ export default function CompetitionPortal() {
     setModalState({
       isOpen: true,
       certificate: previewCertificate,
-      mode: issuedCertificate ? 'ISSUED' : isUnlocked ? 'PENDING_ISSUANCE' : 'LOCKED',
+      mode: issuedCertificate ? 'ISSUED' : revokedCertificate ? 'REVOKED' : isUnlocked ? 'PENDING_ISSUANCE' : 'LOCKED',
       userSolvedCount: stats.uniqueSolvedCount || 0,
       requiredCount: targetThreshold
     });
