@@ -38,17 +38,18 @@ export default async function handler(req, res) {
     try {
       decoded = await verifyIdToken(token);
     } catch (error) {
-      return res.status(401).json({
-        success: false,
-        code: 'INVALID_SESSION',
-        message: 'Your session could not be verified. Please sign in again.'
-      });
+      // This endpoint serves a public challenge catalogue. A stale optional
+      // token must not turn all 227 public challenges into an empty page.
+      progressAvailable = false;
+      progressMessage = 'The public challenge catalogue is available, but your session could not be verified. Sign in again to sync personal progress.';
     }
 
     if (!decoded?.uid) {
-      return res.status(401).json({ success: false, code: 'INVALID_SESSION', message: 'Invalid user session.' });
+      progressAvailable = false;
+      progressMessage = progressMessage || 'The public challenge catalogue is available. Sign in to sync personal progress.';
     }
 
+    if (decoded?.uid) {
     try {
       const connection = await dbConnect();
       let solvedChallengeIds = [];
@@ -76,6 +77,7 @@ export default async function handler(req, res) {
       progressAvailable = false;
       progressMessage = 'Challenge catalogue loaded. Personal progress could not be synchronized; retry shortly.';
       console.error('[CompetitionChallenges] Progress lookup unavailable:', error?.message || 'Unknown error');
+    }
     }
   }
 
