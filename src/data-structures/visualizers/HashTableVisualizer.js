@@ -126,11 +126,10 @@ export default function HashTableVisualizer() {
   };
 
   const complexity = {
-    time: {
-      best: 'O(1) Direct Hash',
-      average: 'O(1) Load Factor ≤ 0.7',
-      worst: 'O(n) Full Collision'
-    },
+    bestCase: 'O(1) Direct Hash',
+    averageCase: 'O(1) Load Factor ≤ 0.7',
+    worstCase: 'O(n) Full Collision',
+    time: 'O(1) Avg',
     space: 'O(n)'
   };
 

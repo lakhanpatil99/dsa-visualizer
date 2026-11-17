@@ -126,11 +126,10 @@ export default function HeapVisualizer() {
   };
 
   const complexity = {
-    time: {
-      best: 'O(1) Peek',
-      average: 'O(log n) Insert / Extract',
-      worst: 'O(n) Build Heap'
-    },
+    bestCase: 'O(1) Peek',
+    averageCase: 'O(log n) Insert / Extract',
+    worstCase: 'O(n) Build Heap',
+    time: 'O(log n)',
     space: 'O(n)'
   };
 

@@ -177,11 +177,10 @@ export default function LinkedListVisualizer() {
   };
 
   const complexity = {
-    time: {
-      best: 'O(1) Head / Tail',
-      average: 'O(n) Arbitrary',
-      worst: 'O(n) Search'
-    },
+    bestCase: 'O(1) Head / Tail',
+    averageCase: 'O(n) Arbitrary',
+    worstCase: 'O(n) Search',
+    time: 'O(n)',
     space: 'O(n)'
   };
 

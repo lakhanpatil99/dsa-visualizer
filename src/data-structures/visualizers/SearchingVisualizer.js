@@ -137,10 +137,10 @@ export default function SearchingVisualizer() {
   const currentStep = trace[currentStepIdx] || null;
 
   const complexities = {
-    linear: { time: { best: 'O(1)', average: 'O(n)', worst: 'O(n)' }, space: 'O(1)' },
-    binary: { time: { best: 'O(1)', average: 'O(log n)', worst: 'O(log n)' }, space: 'O(1)' },
-    jump: { time: { best: 'O(1)', average: 'O(√n)', worst: 'O(√n)' }, space: 'O(1)' },
-    interpolation: { time: { best: 'O(1)', average: 'O(log log n)', worst: 'O(n)' }, space: 'O(1)' }
+    linear: { bestCase: 'O(1)', averageCase: 'O(n)', worstCase: 'O(n)', time: 'O(n)', space: 'O(1)' },
+    binary: { bestCase: 'O(1)', averageCase: 'O(log n)', worstCase: 'O(log n)', time: 'O(log n)', space: 'O(1)' },
+    jump: { bestCase: 'O(1)', averageCase: 'O(√n)', worstCase: 'O(√n)', time: 'O(√n)', space: 'O(1)' },
+    interpolation: { bestCase: 'O(1)', averageCase: 'O(log log n)', worstCase: 'O(n)', time: 'O(log log n)', space: 'O(1)' }
   };
 
   const pseudocodes = {
