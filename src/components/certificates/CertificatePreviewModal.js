@@ -14,6 +14,7 @@ export default function CertificatePreviewModal({
   isOpen,
   onClose,
   onDownload,
+  onShare,
   mode = 'ISSUED', // 'ISSUED' | 'LOCKED' | 'SAMPLE' | 'PENDING_ISSUANCE'
   userSolvedCount = 0,
   requiredCount = 20
@@ -114,12 +115,22 @@ export default function CertificatePreviewModal({
 
           <div className="flex items-center space-x-3">
             {isIssued ? (
-              <button
-                onClick={() => onDownload && onDownload(certificate)}
-                className="px-4 py-2 bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] rounded-xl text-xs font-semibold shadow-xs transition-transform hover:scale-[1.02]"
-              >
-                Download Official PDF
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => onDownload && onDownload(certificate)}
+                  className="px-4 py-2 bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] rounded-xl text-xs font-semibold shadow-xs transition-transform hover:scale-[1.02]"
+                >
+                  Download Official PDF
+                </button>
+                {onShare && (
+                  <button
+                    onClick={() => onShare(certificate)}
+                    className="px-4 py-2 border border-[#28533D]/30 text-[#28533D] dark:text-[#A8C8AE] rounded-xl text-xs font-semibold hover:bg-[#E4E9DD]/60 dark:hover:bg-[#28382F]"
+                  >
+                    Share Credential ↗
+                  </button>
+                )}
+              </div>
             ) : isLocked ? (
               <div className="flex items-center space-x-2">
                 <span className="hidden sm:inline-block px-3 py-1 rounded-lg bg-[#FAF4ED] dark:bg-[#332A24] border border-[#CD7F32]/30 text-[#8C5028] dark:text-[#E2A676] text-xs font-mono font-semibold">
