@@ -174,8 +174,12 @@ async function handler(req, res) {
     tier: type.startsWith('competition_') ? type.replace('competition_', '') : null,
     milestoneCount,
     duration: finalDuration,
-    startDate: startDate ? new Date(startDate) : null,
-    endDate: endDate ? new Date(endDate) : null,
+    startDate: type === 'internship'
+      ? (app?.verifiedStartDate || (startDate ? new Date(startDate) : null))
+      : (startDate ? new Date(startDate) : null),
+    endDate: type === 'internship'
+      ? (app?.verifiedEndDate || (endDate ? new Date(endDate) : null))
+      : (endDate ? new Date(endDate) : null),
     issueDate: new Date(),
     status: 'VALID',
     founderName: 'Lakhansing Patil',
