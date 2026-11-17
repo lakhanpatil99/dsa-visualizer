@@ -37,18 +37,18 @@ export async function getServerSideProps(context) {
 }
 
 function formatDate(value) {
-  if (!value) return 'Not recorded';
+  if (!value) return null;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Not recorded';
+  if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-function Detail({ label, value }) {
+function Detail({ label, value, isMono = false }) {
   if (!value) return null;
   return (
-    <div className="rounded-xl border border-[#DED9CE] bg-[#FAF8F3] p-4">
+    <div className="rounded-2xl border border-[#DED9CE] bg-[#FAF8F3] p-4 transition-all hover:border-[#28533D]/30 shadow-2xs">
       <dt className="text-[10px] font-mono uppercase tracking-wider text-[#777268]">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold text-[#24231F] break-words">{value}</dd>
+      <dd className={`mt-1.5 text-sm font-semibold text-[#24231F] ${isMono ? 'font-mono text-xs break-all tracking-tight text-[#28533D]' : 'break-words'}`}>{value}</dd>
     </div>
   );
 }
@@ -100,7 +100,7 @@ export default function CertificateVerificationPage({ certificateId, verificatio
               {certificate.description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#69665F]">{certificate.description}</p>}
 
               <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Detail label="Credential ID" value={certificate.certificateId} />
+                <Detail label="Credential ID" value={certificate.certificateId} isMono={true} />
                 <Detail label="Credential type" value={certificate.type?.replace(/_/g, ' ').toUpperCase()} />
                 <Detail label="Program / domain" value={certificate.domain || (certificate.tier ? `${certificate.tier} competition tier` : null)} />
                 <Detail label="Duration" value={certificate.duration} />

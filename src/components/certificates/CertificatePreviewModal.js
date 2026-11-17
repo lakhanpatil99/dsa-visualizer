@@ -223,7 +223,7 @@ export default function CertificatePreviewModal({
             )}
 
             {/* Delicate Inner Border */}
-            <div className={`relative p-6 sm:p-8 border border-dashed ${borderColor} rounded-lg bg-[#FFFDF8] z-10`}>
+            <div className={`relative p-6 sm:p-8 border border-solid ${borderColor}/50 rounded-lg bg-[#FFFDF8] z-10`}>
               {/* Header Logos */}
               <div className="flex items-center justify-between mb-4">
                 <img
@@ -244,11 +244,11 @@ export default function CertificatePreviewModal({
                 <p className={`text-xs sm:text-sm font-mono font-bold tracking-widest uppercase ${accentColor}`}>
                   {categoryLabel}
                 </p>
-                <div className="w-32 h-0.5 mx-auto my-2 bg-gradient-to-r from-transparent via-[#EF592A] to-transparent"></div>
+                <div className="w-36 h-0.5 mx-auto my-2.5 bg-[#EF592A]/50"></div>
                 <p className="text-[11px] font-sans tracking-wide text-[#69665F] uppercase mt-3">
                   This is proudly presented to
                 </p>
-                <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#24231F] my-2">
+                <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#24231F] my-2 tracking-tight">
                   {certificate.recipientName || 'Candidate Name'}
                 </h2>
                 <div className="w-48 h-0.5 mx-auto bg-[#28533D]/30 mb-4"></div>
@@ -294,44 +294,48 @@ export default function CertificatePreviewModal({
                 </p>
               </div>
 
-              {/* Credential ID and Date Strip */}
-              <div className="my-6 p-3 bg-[#FAF7EE] border border-[#E4E9DD] rounded-lg max-w-md mx-auto text-center">
-                <p className="text-xs font-mono font-bold text-[#28533D]">
+              {/* Credential Plaque Container */}
+              <div className="my-6 px-5 py-3.5 bg-[#FAF7EE] dark:bg-[#252420] border border-[#E4E9DD] dark:border-[#383630] rounded-xl max-w-xl mx-auto text-center shadow-xs">
+                <p className="text-xs font-mono font-bold text-[#28533D] dark:text-[#A8C8AE] tracking-wide uppercase">
                   {certificate.title}
                 </p>
-                <p className="text-[11px] font-mono text-[#69665F] mt-1">
-                  Issued: {issueDateFormatted} • Credential ID: {displayCertificateId}
-                </p>
+                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-mono text-[#69665F] dark:text-[#A8A49C]">
+                  <span>Issued: <span className="font-semibold text-[#24231F] dark:text-[#FAF7EE]">{issueDateFormatted}</span></span>
+                  <span className="hidden sm:inline text-[#DED9CE]">•</span>
+                  <span>Credential ID: <span className="font-semibold text-[#28533D] dark:text-[#76A889] break-all">{displayCertificateId}</span></span>
+                </div>
               </div>
 
               {/* Lower Seal & Signature Row */}
-              <div className="grid grid-cols-3 items-end pt-6 border-t border-[#DED9CE] mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-end pt-6 border-t border-[#DED9CE] mt-6">
                 {/* QR Code */}
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-center sm:items-start max-w-[140px] mx-auto sm:mx-0 text-center sm:text-left">
                   {qrDataUrl && (
                     <img src={qrDataUrl} alt="QR Code" className="w-16 h-16 rounded border border-[#DED9CE]" />
                   )}
-                  <span className="text-[10px] font-mono font-bold text-[#28533D] mt-1">
-                    {isIssued ? 'Scan to Verify' : isRevoked ? 'View revocation record' : 'Sample route only'}
+                  <span className="text-[10px] font-mono font-bold text-[#28533D] mt-1.5">
+                    {isIssued ? 'Scan to Verify' : isRevoked ? 'Revocation Record' : 'Sample Route'}
                   </span>
-                  <span className="text-[9px] font-mono text-[#69665F]">{displayCertificateId}</span>
+                  <span className="text-[8px] font-mono text-[#69665F] break-all max-w-[140px] mt-0.5" title={displayCertificateId}>
+                    {displayCertificateId}
+                  </span>
                 </div>
 
                 {/* Academic Medal Seal */}
                 <div className="flex flex-col items-center justify-center">
-                  <div className={`w-16 h-16 rounded-full border-2 ${borderColor} flex flex-col items-center justify-center bg-[#FAF7EE] shadow-xs text-center p-1`}>
-                    <span className="text-[7px] font-mono font-bold tracking-tight text-[#28533D]">ALGOMANIA</span>
-                    <span className="text-[9px] font-bold text-[#EF592A] uppercase">
+                  <div className={`w-18 h-18 rounded-full border-2 ${borderColor} flex flex-col items-center justify-center bg-[#FAF7EE] shadow-xs text-center p-1.5 ring-4 ring-[#FAF7EE]`}>
+                    <span className="text-[8px] font-mono font-bold tracking-wider text-[#28533D]">ALGOMANIA</span>
+                    <span className="text-[10px] font-bold text-[#EF592A] uppercase my-0.5">
                       {isGold ? 'GOLD' : isSilver ? 'SILVER' : isBronze ? 'BRONZE' : 'VERIFIED'}
                     </span>
-                    <span className="text-[6px] font-mono text-[#69665F]">
+                    <span className="text-[7px] font-mono text-[#69665F]">
                       {isIssued ? 'OFFICIAL SEAL' : 'SAMPLE SEAL'}
                     </span>
                   </div>
                 </div>
 
                 {/* Founder Authorization Area */}
-                <div className="flex flex-col items-end text-right">
+                <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
                   <div className="relative flex items-end justify-center w-40">
                     <img
                       src="/LakhansingSignature.png"
@@ -347,7 +351,7 @@ export default function CertificatePreviewModal({
 
               {/* Verification URL Footer */}
               <div className="text-center mt-6 pt-3 border-t border-[#DED9CE]/60">
-                <p className="text-[9px] font-mono text-[#8C887E]">
+                <p className="text-[9px] font-mono text-[#8C887E] break-all px-4">
                   {isIssued
                     ? `Official validation record securely hosted at: ${certificate.verificationUrl}`
                     : isRevoked
