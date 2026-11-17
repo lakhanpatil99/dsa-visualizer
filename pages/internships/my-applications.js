@@ -245,6 +245,14 @@ export default function MyApplications() {
             Loading application records...
           </div>
         )}
+        {error && !loading && (
+          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
+            {error}
+            <button type="button" onClick={() => fetchApplications()} className="ml-2 font-bold underline">
+              Retry
+            </button>
+          </div>
+        )}
 
         {!loading && isAuthenticated && applications.length === 0 && (
           <div className="p-12 text-center rounded-2xl bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] space-y-4">
@@ -374,7 +382,7 @@ export default function MyApplications() {
                 {/* Status Notice if checked */}
                 {(statusNotice[app.applicationId] || statusNotice.download || statusNotice.share) && (
                   <div className="p-3 bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] rounded-xl text-xs font-mono text-[#28533D] dark:text-[#88C49F]">
-                    {statusNotice[app.applicationId]}
+                    {statusNotice[app.applicationId] || statusNotice.download || statusNotice.share}
                   </div>
                 )}
 
