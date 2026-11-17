@@ -153,33 +153,47 @@ export default function CompetitionPortal() {
     }
   };
 
-  const handleBadgeClick = (tier) => {
+  const handleBadgeClick = async (tier) => {
     const isUnlocked = stats.unlockedTiers?.includes(tier);
     const thresholdMap = { bronze: 20, silver: 100, gold: 200 };
     const targetThreshold = thresholdMap[tier] || 20;
+    let issuedCertificate = null;
 
-    const sampleCert = {
-      certificateId: isUnlocked
-        ? `ALG-COMP-${tier.toUpperCase()}-${user?.uid?.slice(-6) || 'OFFICIAL'}`
-        : `SAMPLE-${tier.toUpperCase()}-PREVIEW`,
+    // Only a persisted certificate returned by the authenticated registry API
+    // may enter ISSUED mode. A reached milestone alone is not an issued credential.
+    if (isUnlocked && isAuthenticated && user) {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch('/api/certificates/my-certificates', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          issuedCertificate = (data.issuedCertificates || []).find(
+            (item) => item.type === `competition_${tier}` && item.status === 'VALID'
+          ) || null;
+        }
+      } catch (error) {
+        console.warn('[CompetitionCertificates] Unable to load issued credential:', error?.message || 'Unknown error');
+      }
+    }
+
+    const previewCertificate = issuedCertificate || {
       recipientName: user?.displayName || (user?.email ? user.email.split('@')[0] : 'Prospective Algorist'),
       title: tier === 'gold'
-        ? 'Executive Gold Algorithmic Master'
+        ? 'Gold Algorithmic Mastery'
         : tier === 'silver'
-        ? 'Distinguished Silver Grandmaster'
-        : 'Certified Bronze Algorist',
+          ? 'Silver Algorithmic Achievement'
+          : 'Bronze Algorithmic Achievement',
       type: `competition_${tier}`,
       milestoneCount: targetThreshold,
-      issueDate: Date.now(),
-      verificationUrl: isUnlocked
-        ? `https://www.algomania.in/certificates/verify/ALG-COMP-${tier.toUpperCase()}`
-        : 'https://www.algomania.in/certificates/sample'
+      issueDate: null
     };
 
     setModalState({
       isOpen: true,
-      certificate: sampleCert,
-      mode: isUnlocked ? 'ISSUED' : 'LOCKED',
+      certificate: previewCertificate,
+      mode: issuedCertificate ? 'ISSUED' : isUnlocked ? 'PENDING_ISSUANCE' : 'LOCKED',
       userSolvedCount: stats.uniqueSolvedCount || 0,
       requiredCount: targetThreshold
     });
