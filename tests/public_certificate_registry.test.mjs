@@ -47,7 +47,7 @@ describe('AlgoMania public credential registry contracts', () => {
     const competitions = read('pages/competitions/index.js');
     const modal = read('src/components/certificates/CertificatePreviewModal.js');
     assert.match(competitions, /data\.issuedCertificates/);
-    assert.match(competitions, /issuedCertificate \? 'ISSUED' : isUnlocked \? 'PENDING_ISSUANCE'/);
+    assert.match(competitions, /issuedCertificate \? 'ISSUED' : (?:revokedCertificate \? 'REVOKED' : )?isUnlocked \? 'PENDING_ISSUANCE'/);
     assert.doesNotMatch(competitions, /ALG-COMP-\$\{tier\.toUpperCase\(\)\}/);
     assert.match(modal, /PENDING_ISSUANCE/);
     assert.match(modal, /NO OFFICIAL ID/);
