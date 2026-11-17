@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '../../src/components/Navbar';
@@ -12,36 +12,58 @@ export default function MyApplications() {
   const [error, setError] = useState('');
   const [checkingAppId, setCheckingAppId] = useState(null);
   const [statusNotice, setStatusNotice] = useState({});
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async ({ silent = false } = {}) => {
     if (!user) return;
+    if (!silent) setLoading(true);
+    setRefreshing(true);
+
     try {
       const token = await user.getIdToken();
-      const res = await fetch('/api/internships/my-applications', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch('/api/internships/my-applications', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
       });
-      const data = await res.json();
-      if (data.success) {
-        setApplications(data.applications || []);
-      } else {
-        setError(data.message || 'Failed to load applications.');
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to load applications.');
       }
+
+      setApplications(data.applications || []);
+      setError('');
+      setLastSyncedAt(new Date().toISOString());
     } catch (err) {
-      setError('Network error while retrieving applications.');
+      setError(err.message || 'Network error while retrieving applications.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchApplications();
-    } else if (!authLoading) {
-      setLoading(false);
+    if (!isAuthenticated) {
+      if (!authLoading) setLoading(false);
+      return undefined;
     }
-  }, [user, isAuthenticated, authLoading]);
+
+    fetchApplications();
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') fetchApplications({ silent: true });
+    };
+    const interval = setInterval(refreshIfVisible, 12000);
+    window.addEventListener('focus', refreshIfVisible);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('online', refreshIfVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', refreshIfVisible);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('online', refreshIfVisible);
+    };
+  }, [fetchApplications, isAuthenticated, authLoading]);
 
   const handleCheckPaymentStatus = async (appId) => {
     setCheckingAppId(appId);
@@ -66,6 +88,59 @@ export default function MyApplications() {
       setStatusNotice((prev) => ({ ...prev, [appId]: 'Failed to reach payment service.' }));
     } finally {
       setCheckingAppId(null);
+    }
+  };
+
+  const downloadOfficialCertificate = async (certificate) => {
+    if (!user || !certificate?.certificateId || certificate.status !== 'VALID') return;
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/certificates/download/${encodeURIComponent(certificate.certificateId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Certificate PDF is not available.');
+      }
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = `${certificate.certificateId}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      setStatusNotice((prev) => ({ ...prev, download: error.message || 'Unable to download certificate.' }));
+    }
+  };
+
+  const shareOfficialCertificate = async (certificate) => {
+    if (!certificate?.certificateId) return;
+    const url = certificate.verificationUrl ||
+      `https://www.algomania.in/certificates/verify/${certificate.certificateId}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: certificate.title || 'AlgoMania Internship Certificate',
+          text: `Verify my AlgoMania internship credential: ${certificate.certificateId}`,
+          url
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setStatusNotice((prev) => ({ ...prev, share: 'Official verification link copied.' }));
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(url);
+          setStatusNotice((prev) => ({ ...prev, share: 'Official verification link copied.' }));
+        } catch {
+          window.prompt('Copy the official verification link:', url);
+        }
+      }
     }
   };
 
@@ -135,6 +210,12 @@ export default function MyApplications() {
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#24231F] dark:text-[#FFFDF8]">
               My Fellowship Applications & Milestones
             </h1>
+            <p className="mt-2 text-[10px] font-mono text-[#8E8B83]">
+              {lastSyncedAt ? `Live status sync · ${new Date(lastSyncedAt).toLocaleTimeString()}` : 'Syncing application and certificate status'}
+              <button type="button" onClick={() => fetchApplications()} disabled={refreshing} className="ml-3 font-bold text-[#28533D] underline disabled:opacity-50">
+                {refreshing ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </p>
           </div>
 
           <Link
@@ -279,13 +360,19 @@ export default function MyApplications() {
                   <div>
                     <span className="font-mono text-[#69665F]">Certificate State:</span>
                     <p className="font-semibold text-[#28533D] dark:text-[#88C49F]">
-                      {app.certificateIssued ? `Issued (${app.certificateId})` : 'Awaiting Completion'}
+                      {app.officialCertificate?.status === 'VALID'
+                        ? `Issued · ${app.officialCertificate.certificateId}`
+                        : app.officialCertificate?.status === 'REVOKED'
+                          ? 'Revoked'
+                          : app.status === 'COMPLETED' && app.paymentStatus === 'PAID_VERIFIED'
+                            ? 'Awaiting official issuance'
+                            : 'Awaiting completion'}
                     </p>
                   </div>
                 </div>
 
                 {/* Status Notice if checked */}
-                {statusNotice[app.applicationId] && (
+                {(statusNotice[app.applicationId] || statusNotice.download || statusNotice.share) && (
                   <div className="p-3 bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] rounded-xl text-xs font-mono text-[#28533D] dark:text-[#88C49F]">
                     {statusNotice[app.applicationId]}
                   </div>
@@ -302,8 +389,14 @@ export default function MyApplications() {
                       <span className="text-[#28533D] font-bold">
                         ✓ Official certificate ready for download in your Certificate Library.
                       </span>
+                    ) : app.certificateIssued ? (
+                      <span className="text-[#28533D] font-bold">
+                        ✓ Official completion certificate is ready.
+                      </span>
+                    ) : app.status === 'COMPLETED' ? (
+                      <span>Completion recorded. Waiting for authorized certificate issuance.</span>
                     ) : (
-                      <span>Certificate unlocks after program completion and academic verification.</span>
+                      <span>₹99 registration payment is verified. Complete the internship and mentor review to unlock the completion certificate.</span>
                     )}
                   </div>
 
@@ -325,16 +418,41 @@ export default function MyApplications() {
                           Pay ₹99 Securely →
                         </Link>
                       </>
-                    ) : (
-                      app.certificateIssued && (
+                    ) : app.officialCertificate?.status === 'VALID' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => downloadOfficialCertificate(app.officialCertificate)}
+                          className="px-3.5 py-2 rounded-xl bg-[#EF592A] text-white text-xs font-semibold hover:bg-[#d64b20]"
+                        >
+                          Download PDF ↓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => shareOfficialCertificate(app.officialCertificate)}
+                          className="px-3.5 py-2 rounded-xl border border-[#28533D]/30 text-[#28533D] text-xs font-semibold hover:bg-[#E4E9DD]/50"
+                        >
+                          Share ↗
+                        </button>
                         <Link
                           href="/certificates"
-                          className="px-4 py-2 rounded-xl bg-[#28533D] text-[#FFFDF8] text-xs font-semibold hover:bg-[#1f4230]"
+                          className="px-3.5 py-2 rounded-xl bg-[#28533D] text-white text-xs font-semibold hover:bg-[#1f4230]"
                         >
-                          View in Certificates Library →
+                          Certificate Library
                         </Link>
-                      )
-                    )}
+                      </>
+                    ) : app.officialCertificate?.status === 'REVOKED' ? (
+                      <span className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-semibold">
+                        Certificate revoked
+                      </span>
+                    ) : app.paymentStatus === 'PAID_VERIFIED' ? (
+                      <Link
+                        href="/certificates"
+                        className="px-3.5 py-2 rounded-xl border border-[#DED9CE] text-[#28533D] text-xs font-semibold hover:border-[#28533D]"
+                      >
+                        Track Certificate Progress →
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               </div>
