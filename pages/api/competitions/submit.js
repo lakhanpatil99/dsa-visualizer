@@ -1,21 +1,47 @@
 import withAuth from '../../../lib/auth.js';
 import dbConnect from '../../../lib/dbConnect.js';
 import CompetitionSubmission from '../../../models/CompetitionSubmission.js';
-import CompetitionAchievement, { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
 import memoryStore from '../../../lib/memoryStore.js';
 import { getChallengeById } from '../../../lib/competitions/challengesData.js';
 import { executeChallengeCode } from '../../../lib/competitions/codeRunner.js';
+import { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
+import { COMPETITION_CHALLENGES } from '../../../lib/competitions/challengesData.js';
+import { ensureCompetitionMilestoneCertificates } from '../../../lib/certificates/competitionMilestoneIssuance.js';
 import crypto from 'crypto';
 
+const MILESTONES = [
+  { tier: 'bronze', count: ACHIEVEMENT_THRESHOLDS.BRONZE },
+  { tier: 'silver', count: ACHIEVEMENT_THRESHOLDS.SILVER },
+  { tier: 'gold', count: ACHIEVEMENT_THRESHOLDS.GOLD }
+];
+
+async function getSolvedIds(userId, connected) {
+  if (connected) {
+    return CompetitionSubmission.distinct('challengeId', {
+      firebaseUid: userId,
+      status: 'ACCEPTED'
+    });
+  }
+
+  return [...new Set(
+    memoryStore.getSubmissionsByUser(userId)
+      .filter((submission) => submission.status === 'ACCEPTED')
+      .map((submission) => submission.challengeId)
+  )];
+}
+
 async function handler(req, res) {
+  res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
   const user = req.user;
   const { challengeId, code, language = 'javascript' } = req.body || {};
 
-  if (!challengeId || typeof challengeId !== 'string') {
+  if (typeof challengeId !== 'string' || !challengeId.trim()) {
     return res.status(400).json({ success: false, message: 'Challenge ID is required.' });
   }
 
@@ -24,11 +50,38 @@ async function handler(req, res) {
     return res.status(404).json({ success: false, message: 'Challenge not found.' });
   }
 
-  if (!code || typeof code !== 'string' || code.trim().length === 0) {
+  if (typeof code !== 'string' || !code.trim()) {
     return res.status(400).json({ success: false, message: 'Source code is required.' });
   }
 
-  // Execute against all test cases (both public and hidden)
+  let connected = false;
+  try {
+    const connection = await dbConnect();
+    connected = Boolean(connection?.connection?.readyState === 1);
+  } catch (error) {
+    console.warn('[CompetitionSubmit] Database connection failed:', error?.message || 'Unknown error');
+  }
+
+  if (process.env.NODE_ENV === 'production' && !connected) {
+    return res.status(503).json({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Competition progress storage is temporarily unavailable. Your code was not submitted; please retry.'
+    });
+  }
+
+  let solvedBefore = [];
+  try {
+    solvedBefore = await getSolvedIds(user.uid, connected);
+  } catch (error) {
+    console.error('[CompetitionSubmit] Unable to read existing progress:', error?.message || 'Unknown error');
+    return res.status(503).json({
+      success: false,
+      code: 'PROGRESS_LOOKUP_UNAVAILABLE',
+      message: 'Your existing competition progress could not be checked. Please retry.'
+    });
+  }
+
   const execResult = await executeChallengeCode(
     code,
     challenge.functionName || 'solve',
@@ -36,26 +89,8 @@ async function handler(req, res) {
     1500
   );
 
-  const submissionId = `SUB-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-
-  let isConnected = false;
-  try {
-    const conn = await dbConnect();
-    if (conn && conn.connection && conn.connection.readyState === 1) isConnected = true;
-  } catch (err) {
-    console.warn('MongoDB connection check failed:', err.message);
-  }
-
-  if (process.env.NODE_ENV === 'production' && !isConnected) {
-    return res.status(503).json({
-      success: false,
-      code: 'SERVICE_UNAVAILABLE',
-      message: 'Competition database is temporarily unavailable. Please retry shortly.'
-    });
-  }
-
   const submissionDoc = {
-    submissionId,
+    submissionId: `SUB-${Date.now()}-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
     firebaseUid: user.uid,
     userEmail: user.email,
     challengeId,
@@ -69,116 +104,62 @@ async function handler(req, res) {
     submittedAt: new Date()
   };
 
-  // Persist submission
-  if (isConnected) {
-    await CompetitionSubmission.create(submissionDoc);
-  } else {
-    memoryStore.saveSubmission(submissionDoc);
-  }
-
-  // Update achievements only on genuine ACCEPTED result
-  let newlyUnlockedTiers = [];
-  let updatedAchievement = null;
-
-  if (execResult.status === 'ACCEPTED') {
-    if (isConnected) {
-      let ach = await CompetitionAchievement.findOne({ firebaseUid: user.uid });
-      if (!ach) {
-        ach = new CompetitionAchievement({
-          firebaseUid: user.uid,
-          userEmail: user.email,
-          solvedChallengeIds: [],
-          uniqueSolvedCount: 0,
-          unlockedTiers: []
-        });
-      }
-
-      const solvedSet = new Set(ach.solvedChallengeIds || []);
-      const wasAlreadySolved = solvedSet.has(challengeId);
-
-      if (!wasAlreadySolved) {
-        solvedSet.add(challengeId);
-        ach.solvedChallengeIds = Array.from(solvedSet);
-        ach.uniqueSolvedCount = ach.solvedChallengeIds.length;
-
-        // Check Milestone Thresholds
-        const currentCount = ach.uniqueSolvedCount;
-        const tiers = new Set(ach.unlockedTiers || []);
-
-        if (currentCount >= ACHIEVEMENT_THRESHOLDS.BRONZE && !tiers.has('bronze')) {
-          tiers.add('bronze');
-          ach.bronzeUnlockedAt = new Date();
-          newlyUnlockedTiers.push('bronze');
-        }
-        if (currentCount >= ACHIEVEMENT_THRESHOLDS.SILVER && !tiers.has('silver')) {
-          tiers.add('silver');
-          ach.silverUnlockedAt = new Date();
-          newlyUnlockedTiers.push('silver');
-        }
-        if (currentCount >= ACHIEVEMENT_THRESHOLDS.GOLD && !tiers.has('gold')) {
-          tiers.add('gold');
-          ach.goldUnlockedAt = new Date();
-          newlyUnlockedTiers.push('gold');
-        }
-
-        ach.unlockedTiers = Array.from(tiers);
-        await ach.save();
-      }
-      updatedAchievement = ach;
+  try {
+    if (connected) {
+      await CompetitionSubmission.create(submissionDoc);
     } else {
-      let ach = memoryStore.getAchievement(user.uid);
-      if (!ach) {
-        ach = {
+      memoryStore.saveSubmission(submissionDoc);
+    }
+
+    const solvedAfter = await getSolvedIds(user.uid, connected);
+    const uniqueSolvedCount = solvedAfter.length;
+    const unlockedTiers = MILESTONES
+      .filter((milestone) => uniqueSolvedCount >= milestone.count)
+      .map((milestone) => milestone.tier);
+    const newlyUnlockedTiers = MILESTONES
+      .filter((milestone) =>
+        solvedBefore.length < milestone.count && uniqueSolvedCount >= milestone.count
+      )
+      .map((milestone) => milestone.tier);
+
+    // A genuine accepted submission may cross a competition threshold.
+    // Issue the corresponding permanent credential internally, using the
+    // verified DB identity and an idempotent MongoDB source key.
+    let certificateIssuancePending = false;
+    if (connected && execResult.status === 'ACCEPTED') {
+      try {
+        await ensureCompetitionMilestoneCertificates({
           firebaseUid: user.uid,
           userEmail: user.email,
-          solvedChallengeIds: [],
-          uniqueSolvedCount: 0,
-          unlockedTiers: []
-        };
+          recipientName: req.dbUser?.displayName || req.dbUser?.username || user.name,
+          uniqueSolvedCount
+        });
+      } catch (issuanceError) {
+        certificateIssuancePending = true;
+        console.error('[CompetitionSubmit] Automatic milestone issuance deferred:', issuanceError?.message || 'Unknown error');
       }
-
-      const solvedSet = new Set(ach.solvedChallengeIds || []);
-      const wasAlreadySolved = solvedSet.has(challengeId);
-
-      if (!wasAlreadySolved) {
-        solvedSet.add(challengeId);
-        ach.solvedChallengeIds = Array.from(solvedSet);
-        ach.uniqueSolvedCount = ach.solvedChallengeIds.length;
-
-        const currentCount = ach.uniqueSolvedCount;
-        const tiers = new Set(ach.unlockedTiers || []);
-
-        if (currentCount >= ACHIEVEMENT_THRESHOLDS.BRONZE && !tiers.has('bronze')) {
-          tiers.add('bronze');
-          ach.bronzeUnlockedAt = new Date();
-          newlyUnlockedTiers.push('bronze');
-        }
-        if (currentCount >= ACHIEVEMENT_THRESHOLDS.SILVER && !tiers.has('silver')) {
-          tiers.add('silver');
-          ach.silverUnlockedAt = new Date();
-          newlyUnlockedTiers.push('silver');
-        }
-        if (currentCount >= ACHIEVEMENT_THRESHOLDS.GOLD && !tiers.has('gold')) {
-          tiers.add('gold');
-          ach.goldUnlockedAt = new Date();
-          newlyUnlockedTiers.push('gold');
-        }
-
-        ach.unlockedTiers = Array.from(tiers);
-        memoryStore.saveAchievement(ach);
-      }
-      updatedAchievement = ach;
     }
-  }
 
-  return res.status(200).json({
-    success: true,
-    result: execResult,
-    submissionId,
-    newlyUnlockedTiers,
-    uniqueSolvedCount: updatedAchievement?.uniqueSolvedCount || 0,
-    unlockedTiers: updatedAchievement?.unlockedTiers || []
-  });
+    return res.status(200).json({
+      success: true,
+      result: execResult,
+      submissionId: submissionDoc.submissionId,
+      newlyUnlockedTiers,
+      uniqueSolvedCount,
+      solvedChallengeIds: solvedAfter,
+      unlockedTiers,
+      certificateIssuancePending,
+      totalChallenges: COMPETITION_CHALLENGES.length,
+      progressUpdatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[CompetitionSubmit] Failed to persist or reconcile submission:', error?.message || 'Unknown error');
+    return res.status(503).json({
+      success: false,
+      code: 'SUBMISSION_PERSISTENCE_FAILED',
+      message: 'The submission could not be synchronized with your progress. Please retry.'
+    });
+  }
 }
 
 export default withAuth(handler, { requireEmailVerified: true });

@@ -2,7 +2,7 @@ import withAuth from '../../../lib/auth.js';
 import dbConnect from '../../../lib/dbConnect.js';
 import Certificate from '../../../models/Certificate.js';
 import InternshipApplication from '../../../models/InternshipApplication.js';
-import CompetitionAchievement, { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
+import CompetitionSubmission from '../../../models/CompetitionSubmission.js';
 import { isUserAdmin, recordAdminAuditLog } from '../../../lib/admin/adminAuth.js';
 import crypto from 'crypto';
 
@@ -97,28 +97,38 @@ async function handler(req, res) {
   } else {
     // Competition certificate
     firebaseUid = targetId;
-    let ach = null;
-    ach = await CompetitionAchievement.findOne({ firebaseUid });
-
-    if (!ach) {
-      return res.status(404).json({ success: false, message: 'User achievement record not found.' });
-    }
-
-    userEmail = ach.userEmail;
     const tier = type.replace('competition_', '');
-    const required = tier === 'gold' ? ACHIEVEMENT_THRESHOLDS.GOLD : tier === 'silver' ? ACHIEVEMENT_THRESHOLDS.SILVER : ACHIEVEMENT_THRESHOLDS.BRONZE;
+    const required = tier === 'gold' ? 200 : tier === 'silver' ? 100 : 20;
+    const acceptedChallengeIds = await CompetitionSubmission.distinct('challengeId', {
+      firebaseUid,
+      status: 'ACCEPTED'
+    });
+    const verifiedCount = acceptedChallengeIds.length;
 
-    if (ach.uniqueSolvedCount < required) {
+    if (verifiedCount < required) {
       return res.status(400).json({
         success: false,
-        message: `Cannot issue certificate: User has solved ${ach.uniqueSolvedCount} problems, which is below the ${required} threshold for ${tier}.`
+        message: `Cannot issue certificate: only ${verifiedCount} unique accepted problems are recorded. ${required} are required for the ${tier} tier.`
       });
     }
 
-    milestoneCount = required;
+    const latestSubmission = await CompetitionSubmission.findOne({
+      firebaseUid,
+      status: 'ACCEPTED'
+    }).sort({ submittedAt: -1 }).select('userEmail').lean();
+
+    if (!latestSubmission?.userEmail) {
+      return res.status(404).json({
+        success: false,
+        message: 'A verified competition candidate record could not be found.'
+      });
+    }
+
+    userEmail = latestSubmission.userEmail;
+    milestoneCount = verifiedCount;
     const tierDisplay = tier.charAt(0).toUpperCase() + tier.slice(1);
     certTitle = `Competition Achievement — ${tierDisplay} Tier`;
-    certDescription = `Verified mastery and successful solution of ${required}+ unique algorithmic and computational challenges on AlgoMania.`;
+    certDescription = `Verified mastery and successful solution of ${verifiedCount} unique algorithmic and computational challenges on AlgoMania.`;
   }
 
   // Stable source identity makes issuing the same eligible credential idempotent.

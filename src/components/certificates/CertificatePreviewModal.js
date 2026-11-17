@@ -14,28 +14,32 @@ export default function CertificatePreviewModal({
   isOpen,
   onClose,
   onDownload,
+  onShare,
   mode = 'ISSUED', // 'ISSUED' | 'LOCKED' | 'SAMPLE' | 'PENDING_ISSUANCE'
   userSolvedCount = 0,
   requiredCount = 20
 }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
 
-  const isIssued = mode === 'ISSUED';
+  const isRevoked = mode === 'REVOKED' || certificate?.status === 'REVOKED';
+  const isIssued = mode === 'ISSUED' && !isRevoked;
   const isLocked = mode === 'LOCKED';
   const isPending = mode === 'PENDING_ISSUANCE';
-  const isSample = mode === 'SAMPLE' || isLocked || isPending;
+  const isSample = mode === 'SAMPLE' || isLocked || isPending || isRevoked;
 
   useEffect(() => {
-    const url = isIssued && certificate?.verificationUrl
+    const url = (isIssued || isRevoked) && certificate?.verificationUrl
       ? certificate.verificationUrl
-      : 'https://www.algomania.in/certificates/verify';
+      : (isIssued || isRevoked) && certificate?.certificateId
+        ? `https://www.algomania.in/certificates/verify/${certificate.certificateId}`
+        : 'https://www.algomania.in/certificates/verify';
 
     QRCode.toDataURL(url, {
       margin: 1,
       width: 140,
       color: { dark: '#24231F', light: '#FFFDF8' }
     }).then(setQrDataUrl).catch(() => {});
-  }, [certificate, isIssued]);
+  }, [certificate, isIssued, isRevoked]);
 
   if (!isOpen || !certificate) return null;
 
@@ -77,7 +81,7 @@ export default function CertificatePreviewModal({
       })
     : 'Milestone Completion Date';
 
-  const displayCertificateId = isIssued
+  const displayCertificateId = (isIssued || isRevoked)
     ? certificate.certificateId
     : 'SAMPLE PREVIEW — NO OFFICIAL ID';
 
@@ -98,28 +102,40 @@ export default function CertificatePreviewModal({
           <div className="flex items-center space-x-2">
             <span
               className={`w-3 h-3 rounded-full ${
-                isIssued ? 'bg-[#28533D]' : isLocked ? 'bg-[#CD7F32]' : 'bg-[#EF592A]'
+                isIssued ? 'bg-[#28533D]' : isRevoked ? 'bg-red-600' : isLocked ? 'bg-[#CD7F32]' : 'bg-[#EF592A]'
               }`}
             ></span>
             <span id="modal-headline" className="text-sm font-mono font-bold text-[#24231F] dark:text-[#FFFDF8] uppercase tracking-wide">
               {isIssued
                 ? 'Official Credential Preview'
-                : isLocked
-                ? 'Locked Milestone Preview'
-                : isPending
-                  ? 'Achievement Awaiting Official Issuance'
-                  : 'Sample Credential Preview'}
+                : isRevoked
+                  ? 'Revoked Credential Record'
+                  : isLocked
+                    ? 'Locked Milestone Preview'
+                    : isPending
+                      ? 'Achievement Awaiting Official Issuance'
+                      : 'Sample Credential Preview'}
             </span>
           </div>
 
           <div className="flex items-center space-x-3">
             {isIssued ? (
-              <button
-                onClick={() => onDownload && onDownload(certificate)}
-                className="px-4 py-2 bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] rounded-xl text-xs font-semibold shadow-xs transition-transform hover:scale-[1.02]"
-              >
-                Download Official PDF
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => onDownload && onDownload(certificate)}
+                  className="px-4 py-2 bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] rounded-xl text-xs font-semibold shadow-xs transition-transform hover:scale-[1.02]"
+                >
+                  Download Official PDF
+                </button>
+                {onShare && (
+                  <button
+                    onClick={() => onShare(certificate)}
+                    className="px-4 py-2 border border-[#28533D]/30 text-[#28533D] dark:text-[#A8C8AE] rounded-xl text-xs font-semibold hover:bg-[#E4E9DD]/60 dark:hover:bg-[#28382F]"
+                  >
+                    Share Credential ↗
+                  </button>
+                )}
+              </div>
             ) : isLocked ? (
               <div className="flex items-center space-x-2">
                 <span className="hidden sm:inline-block px-3 py-1 rounded-lg bg-[#FAF4ED] dark:bg-[#332A24] border border-[#CD7F32]/30 text-[#8C5028] dark:text-[#E2A676] text-xs font-mono font-semibold">
@@ -134,6 +150,10 @@ export default function CertificatePreviewModal({
                   <span>Locked</span>
                 </button>
               </div>
+            ) : isRevoked ? (
+              <span className="px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-mono font-semibold">
+                REVOKED · NOT VALID
+              </span>
             ) : isPending ? (
               <span className="px-3 py-1.5 rounded-lg bg-[#E4E9DD] border border-[#28533D]/20 text-[#28533D] text-xs font-mono font-semibold">
                 Achievement unlocked · awaiting issuance
@@ -177,6 +197,12 @@ export default function CertificatePreviewModal({
           </div>
         )}
 
+        {isRevoked && (
+          <div className="px-6 py-3 bg-red-50 border-b border-red-200 text-xs text-red-800">
+            <strong>This certificate has been revoked.</strong> It is shown only as a historical record. Do not represent it as a currently valid credential.
+          </div>
+        )}
+
         {isPending && (
           <div className="px-6 py-3 bg-[#EAF1E9] dark:bg-[#28382F] border-b border-[#C9D8C9] dark:border-[#3A5943] text-xs text-[#28533D] dark:text-[#C1D7C3]">
             <strong>Milestone reached.</strong> The achievement is eligible, but no official certificate record has been issued yet. This preview is not a credential and cannot be downloaded or verified.
@@ -191,7 +217,7 @@ export default function CertificatePreviewModal({
             {isSample && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-20">
                 <div className="transform -rotate-25 select-none border-4 border-dashed border-[#EF592A]/40 text-[#EF592A]/20 dark:text-[#EF592A]/25 text-3xl sm:text-5xl md:text-6xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl whitespace-nowrap uppercase text-center">
-                  {isLocked ? 'LOCKED — SAMPLE PREVIEW' : isPending ? 'AWAITING ISSUANCE — SAMPLE ONLY' : 'SAMPLE — NOT AN OFFICIAL CREDENTIAL'}
+                  {isRevoked ? 'REVOKED — NOT A VALID CREDENTIAL' : isLocked ? 'LOCKED — SAMPLE PREVIEW' : isPending ? 'AWAITING ISSUANCE — SAMPLE ONLY' : 'SAMPLE — NOT AN OFFICIAL CREDENTIAL'}
                 </div>
               </div>
             )}
@@ -286,7 +312,7 @@ export default function CertificatePreviewModal({
                     <img src={qrDataUrl} alt="QR Code" className="w-16 h-16 rounded border border-[#DED9CE]" />
                   )}
                   <span className="text-[10px] font-mono font-bold text-[#28533D] mt-1">
-                    {isIssued ? 'Scan to Verify' : 'Sample route only'}
+                    {isIssued ? 'Scan to Verify' : isRevoked ? 'View revocation record' : 'Sample route only'}
                   </span>
                   <span className="text-[9px] font-mono text-[#69665F]">{displayCertificateId}</span>
                 </div>
@@ -322,7 +348,9 @@ export default function CertificatePreviewModal({
                 <p className="text-[9px] font-mono text-[#8C887E]">
                   {isIssued
                     ? `Official validation record securely hosted at: ${certificate.verificationUrl}`
-                    : 'Sample credential preview. Official verifiable certificate issued upon verified completion and milestone fulfillment.'}
+                    : isRevoked
+                      ? `Revocation record: ${certificate.verificationUrl || `https://www.algomania.in/certificates/verify/${certificate.certificateId}`}`
+                      : 'Sample credential preview. Official verifiable certificate issued upon verified completion and milestone fulfillment.'}
                 </p>
               </div>
             </div>

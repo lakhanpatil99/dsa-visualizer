@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '../../src/components/Navbar';
@@ -37,6 +37,13 @@ export default function CompetitionPortal() {
     badges: []
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [catalogError, setCatalogError] = useState('');
+  const [progressError, setProgressError] = useState('');
+  const [issuedCompetitionCertificates, setIssuedCompetitionCertificates] = useState([]);
+  const [certificateSyncError, setCertificateSyncError] = useState('');
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const initializedChallengeRef = useRef(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChallenge, setActiveChallenge] = useState(null);
@@ -54,45 +61,120 @@ export default function CompetitionPortal() {
     requiredCount: 20
   });
 
-  // Fetch challenges & user stats
-  useEffect(() => {
-    async function loadData() {
-      try {
-        let headers = {};
-        if (user) {
-          const token = await user.getIdToken();
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const [chalRes, statsRes] = await Promise.all([
-          fetch('/api/competitions/challenges', { headers }),
-          user ? fetch('/api/competitions/stats', { headers }) : Promise.resolve(null)
-        ]);
-
-        const chalData = await chalRes.json();
-        if (chalData.success) {
-          setChallenges(chalData.challenges || []);
-          if (chalData.challenges?.length > 0 && !activeChallenge) {
-            setActiveChallenge(chalData.challenges[0]);
-            setUserCode(chalData.challenges[0].starterCode);
-          }
-        }
-
-        if (statsRes) {
-          const statsData = await statsRes.json();
-          if (statsData.success) {
-            setStats(statsData.stats);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load competition data:', err);
-      } finally {
-        setLoading(false);
-      }
+  // The challenge catalogue is public; personal solved state and milestone
+  // counts are always re-read from persisted ACCEPTED submissions.
+  const refreshCompetitionData = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setRefreshing(true);
     }
 
-    loadData();
+    try {
+      const headers = {};
+      if (user) {
+        const token = await user.getIdToken();
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const challengeResponse = await fetch('/api/competitions/challenges', {
+        headers,
+        cache: 'no-store'
+      });
+      const challengeData = await challengeResponse.json();
+
+      if (!challengeResponse.ok || !challengeData.success) {
+        throw new Error(challengeData.message || 'The challenge catalogue could not be loaded.');
+      }
+
+      const nextChallenges = Array.isArray(challengeData.challenges) ? challengeData.challenges : [];
+      setChallenges(nextChallenges);
+      setCatalogError('');
+
+      if (!initializedChallengeRef.current && nextChallenges.length > 0) {
+        setActiveChallenge(nextChallenges[0]);
+        setUserCode(nextChallenges[0].starterCode || '');
+        initializedChallengeRef.current = true;
+      }
+
+      let nextProgressError = '';
+      if (user) {
+        if (challengeData.progressAvailable === false) {
+          nextProgressError = challengeData.progressMessage || 'Personal progress could not be synchronized.';
+        }
+
+        const [statsResponse, certificateResponse] = await Promise.all([
+          fetch('/api/competitions/stats', { headers, cache: 'no-store' }),
+          fetch('/api/certificates/my-certificates', { headers, cache: 'no-store' })
+        ]);
+        const [statsData, certificateData] = await Promise.all([
+          statsResponse.json(),
+          certificateResponse.json()
+        ]);
+
+        if (!statsResponse.ok || !statsData.success) {
+          nextProgressError = statsData.message || 'Your progress could not be synchronized.';
+        } else {
+          setStats(statsData.stats);
+          setProgressError('');
+        }
+
+        if (certificateResponse.ok && certificateData.success) {
+          setIssuedCompetitionCertificates(
+            (certificateData.issuedCertificates || []).filter(
+              (certificate) =>
+                certificate.type?.startsWith('competition_') &&
+                certificate.status === 'VALID'
+            )
+          );
+          setCertificateSyncError('');
+        } else {
+          setCertificateSyncError(certificateData.message || 'Official certificate status could not be synchronized.');
+        }
+      } else {
+        nextProgressError = 'Sign in to synchronize your accepted submissions and milestone progress.';
+        setStats({
+          uniqueSolvedCount: 0,
+          solvedChallengeIds: [],
+          unlockedTiers: [],
+          nextMilestone: { target: 20, remaining: 20, tier: 'bronze' },
+          badges: []
+        });
+        setIssuedCompetitionCertificates([]);
+        setCertificateSyncError('Sign in to view and download your official competition certificates.');
+      }
+
+      setProgressError(nextProgressError);
+      setLastSyncedAt(new Date().toISOString());
+    } catch (error) {
+      console.error('[CompetitionPortal] Refresh failed:', error?.message || 'Unknown error');
+      setCatalogError(error.message || 'The challenge catalogue could not be loaded.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    refreshCompetitionData();
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCompetitionData({ silent: true });
+      }
+    };
+
+    const interval = setInterval(refreshIfVisible, 15000);
+    window.addEventListener('focus', refreshIfVisible);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('online', refreshIfVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', refreshIfVisible);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('online', refreshIfVisible);
+    };
+  }, [refreshCompetitionData]);
 
   const selectChallenge = (ch) => {
     setActiveChallenge(ch);
@@ -133,18 +215,10 @@ export default function CompetitionPortal() {
 
       setSubmissionResult(data);
 
-      // Refresh stats if accepted
+      // Sync the exact server-persisted result immediately. The same data is
+      // also refreshed on focus/visibility and every 15 seconds while open.
       if (data.result?.status === 'ACCEPTED') {
-        const statsRes = await fetch('/api/competitions/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const statsData = await statsRes.json();
-        if (statsData.success) setStats(statsData.stats);
-
-        // Update solved state on challenge in memory
-        setChallenges(prev =>
-          prev.map(c => c.challengeId === activeChallenge.challengeId ? { ...c, isSolved: true } : c)
-        );
+        await refreshCompetitionData({ silent: true });
       }
     } catch (err) {
       setErrorMsg(err.message);
@@ -153,11 +227,64 @@ export default function CompetitionPortal() {
     }
   };
 
+  const handleDownloadCertificate = async (certificate) => {
+    if (!user || !certificate?.certificateId) return;
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/certificates/download/${encodeURIComponent(certificate.certificateId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Certificate PDF is not available yet.');
+      }
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = `${certificate.certificateId}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      setErrorMsg(error.message || 'Unable to download the certificate.');
+    }
+  };
+
+  const handleShareCertificate = async (certificate) => {
+    if (!certificate?.certificateId) return;
+    const url = certificate.verificationUrl ||
+      `https://www.algomania.in/certificates/verify/${certificate.certificateId}`;
+    const shareData = {
+      title: certificate.title || 'AlgoMania Certificate',
+      text: `Verify my AlgoMania credential: ${certificate.certificateId}`,
+      url
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setErrorMsg('Verification link copied. You can share it anywhere.');
+      } else {
+        window.prompt('Copy this official verification link:', url);
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        setErrorMsg('Unable to open the share sheet. Copy the verification link from My Certificates.');
+      }
+    }
+  };
+
   const handleBadgeClick = async (tier) => {
     const isUnlocked = stats.unlockedTiers?.includes(tier);
     const thresholdMap = { bronze: 20, silver: 100, gold: 200 };
     const targetThreshold = thresholdMap[tier] || 20;
     let issuedCertificate = null;
+    let revokedCertificate = null;
 
     // Only a persisted certificate returned by the authenticated registry API
     // may enter ISSUED mode. A reached milestone alone is not an issued credential.
@@ -169,16 +296,18 @@ export default function CompetitionPortal() {
         });
         const data = await response.json();
         if (response.ok && data.success) {
-          issuedCertificate = (data.issuedCertificates || []).find(
-            (item) => item.type === `competition_${tier}` && item.status === 'VALID'
+          const matchingCertificate = (data.issuedCertificates || []).find(
+            (item) => item.type === `competition_${tier}`
           ) || null;
+          issuedCertificate = matchingCertificate?.status === 'VALID' ? matchingCertificate : null;
+          revokedCertificate = matchingCertificate?.status === 'REVOKED' ? matchingCertificate : null;
         }
       } catch (error) {
         console.warn('[CompetitionCertificates] Unable to load issued credential:', error?.message || 'Unknown error');
       }
     }
 
-    const previewCertificate = issuedCertificate || {
+    const previewCertificate = issuedCertificate || revokedCertificate || {
       recipientName: user?.displayName || (user?.email ? user.email.split('@')[0] : 'Prospective Algorist'),
       title: tier === 'gold'
         ? 'Gold Algorithmic Mastery'
@@ -193,7 +322,7 @@ export default function CompetitionPortal() {
     setModalState({
       isOpen: true,
       certificate: previewCertificate,
-      mode: issuedCertificate ? 'ISSUED' : isUnlocked ? 'PENDING_ISSUANCE' : 'LOCKED',
+      mode: issuedCertificate ? 'ISSUED' : revokedCertificate ? 'REVOKED' : isUnlocked ? 'PENDING_ISSUANCE' : 'LOCKED',
       userSolvedCount: stats.uniqueSolvedCount || 0,
       requiredCount: targetThreshold
     });
@@ -229,7 +358,7 @@ export default function CompetitionPortal() {
               Computational Problem-Solving Competitions
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95] max-w-2xl leading-relaxed">
-              Solve {challenges.length || '220+'}+ verified challenges across 15 algorithmic domains. Click any achievement badge to inspect credential criteria and sample previews. Unlock Bronze (20), Silver (100), and Gold (200) mastery milestones and earn official verifiable certificates.
+              Solve {challenges.length || 227} verified challenges across 15 algorithmic domains. Click any achievement badge to inspect credential criteria and sample previews. Unlock Bronze (20), Silver (100), and Gold (200) mastery milestones and earn official verifiable certificates.
             </p>
           </div>
 
@@ -260,6 +389,22 @@ export default function CompetitionPortal() {
                 ></div>
               </div>
             </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-mono text-[#8E8B83]">
+              <span>{lastSyncedAt ? `Synced ${new Date(lastSyncedAt).toLocaleTimeString()}` : 'Waiting for first sync'}</span>
+              <button
+                type="button"
+                onClick={() => refreshCompetitionData()}
+                disabled={refreshing}
+                className="rounded-lg border border-[#DED9CE] px-3 py-1.5 font-semibold text-[#28533D] hover:border-[#28533D] disabled:opacity-50"
+              >
+                {refreshing ? 'Refreshing…' : 'Refresh progress ↻'}
+              </button>
+            </div>
+            {progressError && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                {progressError} The last verified count is kept; it will not be reset to zero.
+              </div>
+            )}
           </div>
         </div>
 
@@ -307,6 +452,54 @@ export default function CompetitionPortal() {
           </div>
         </div>
 
+        {/* Official competition certificates become available only after a real
+            persisted certificate exists in the registry. */}
+        {issuedCompetitionCertificates.length > 0 && (
+          <section className="mb-10 rounded-2xl border border-[#B9CDBD] bg-[#FFFDF8] p-5 sm:p-7">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D]">Official credentials</p>
+                <h2 className="mt-1 text-xl font-serif font-bold text-[#24231F]">Your verified competition certificates</h2>
+                <p className="mt-1 text-xs text-[#69665F]">Download the official PDF or share its public verification link.</p>
+              </div>
+              <Link href="/certificates" className="text-xs font-semibold text-[#28533D] hover:underline">
+                Open Certificate Library →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {issuedCompetitionCertificates.map((certificate) => (
+                <div key={certificate.certificateId} className="rounded-xl border border-[#DED9CE] bg-[#FAF8F3] p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#28533D]">
+                      {certificate.tier || certificate.type.replace('competition_', '')} · ISSUED
+                    </span>
+                    <span className="text-[10px] font-mono text-[#8E8B83]">{certificate.milestoneCount} solved</span>
+                  </div>
+                  <h3 className="mt-2 text-sm font-bold text-[#24231F]">{certificate.title}</h3>
+                  <p className="mt-1 text-[10px] font-mono text-[#69665F] break-all">{certificate.certificateId}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => handleDownloadCertificate(certificate)} className="rounded-lg bg-[#28533D] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#1F4230]">
+                      Download PDF ↓
+                    </button>
+                    <button type="button" onClick={() => handleShareCertificate(certificate)} className="rounded-lg border border-[#28533D]/30 px-3 py-2 text-[11px] font-semibold text-[#28533D] hover:bg-[#E4E9DD]/50">
+                      Share ↗
+                    </button>
+                    <Link href={`/certificates/verify/${certificate.certificateId}`} target="_blank" className="rounded-lg border border-[#DED9CE] px-3 py-2 text-[11px] font-semibold text-[#69665F]">
+                      Verify
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {certificateSyncError && (
+          <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            {certificateSyncError}
+          </p>
+        )}
+
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
           {/* Category Filter Pills */}
@@ -342,9 +535,31 @@ export default function CompetitionPortal() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Challenge List Column (4 cols) */}
           <div className="lg:col-span-4 space-y-3 max-h-[720px] overflow-y-auto pr-1">
-            <div className="text-[11px] font-mono text-[#69665F] dark:text-[#8E8B83] px-1">
-              Showing {filteredChallenges.length} of {challenges.length} Challenges
+            <div className="text-[11px] font-mono text-[#69665F] dark:text-[#8E8B83] px-1 flex items-center justify-between gap-2">
+              {loading
+                ? 'Loading verified challenge catalogue…'
+                : catalogError
+                  ? 'Challenge catalogue unavailable'
+                  : `Showing ${filteredChallenges.length} of ${challenges.length} Challenges`}
+              {catalogError && (
+                <button type="button" onClick={() => refreshCompetitionData()} className="font-bold text-[#28533D] underline">
+                  Retry
+                </button>
+              )}
             </div>
+            {catalogError && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
+                {catalogError}
+                <button type="button" onClick={() => refreshCompetitionData()} className="ml-2 font-bold underline">
+                  Retry catalogue
+                </button>
+              </div>
+            )}
+            {!loading && !catalogError && filteredChallenges.length === 0 && challenges.length > 0 && (
+              <div className="rounded-xl border border-[#DED9CE] bg-[#FFFDF8] p-4 text-xs text-[#69665F]">
+                No challenges match this category or search. Try All Challenges or clear your search.
+              </div>
+            )}
             {filteredChallenges.map((ch) => {
               const isSelected = activeChallenge?.challengeId === ch.challengeId;
               return (
@@ -499,6 +714,8 @@ export default function CompetitionPortal() {
         userSolvedCount={modalState.userSolvedCount}
         requiredCount={modalState.requiredCount}
         onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+        onDownload={handleDownloadCertificate}
+        onShare={handleShareCertificate}
       />
 
       <Footer />

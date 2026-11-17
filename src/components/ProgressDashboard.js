@@ -1,15 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DarkModeContext } from '../../context/ThemeContext';
 import ProtectedFeature from './ProtectedFeature';
+import Link from 'next/link';
 
 const ProgressDashboard = () => {
   const [progressSummary, setProgressSummary] = useState(null);
   const [allProgress, setAllProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [competitionStats, setCompetitionStats] = useState(null);
+  const [competitionError, setCompetitionError] = useState('');
+  const [competitionSyncAt, setCompetitionSyncAt] = useState(null);
+  const [competitionRefreshing, setCompetitionRefreshing] = useState(false);
 
-  const { progressService, isAuthenticated } = useAuth();
+  const { progressService, isAuthenticated, user } = useAuth();
   const { isDarkMode } = useContext(DarkModeContext);
 
   useEffect(() => {
@@ -35,6 +40,52 @@ const ProgressDashboard = () => {
       setLoading(false);
     }
   };
+
+  const loadCompetitionProgress = useCallback(async ({ silent = false } = {}) => {
+    if (!user) return;
+    if (!silent) setCompetitionRefreshing(true);
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/competitions/stats', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Competition progress is temporarily unavailable.');
+      }
+      setCompetitionStats(data.stats);
+      setCompetitionError('');
+      setCompetitionSyncAt(new Date().toISOString());
+    } catch (err) {
+      setCompetitionError(err.message || 'Competition progress could not be synchronized.');
+    } finally {
+      setCompetitionRefreshing(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return undefined;
+
+    loadCompetitionProgress();
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') {
+        loadCompetitionProgress({ silent: true });
+      }
+    };
+    const interval = setInterval(refreshIfVisible, 15000);
+    window.addEventListener('focus', refreshIfVisible);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('online', refreshIfVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', refreshIfVisible);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('online', refreshIfVisible);
+    };
+  }, [isAuthenticated, user, loadCompetitionProgress]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -129,6 +180,75 @@ const ProgressDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Competition progress is intentionally separate from saved visualizer walkthroughs. */}
+        <section className={`p-5 sm:p-7 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
+          }`}>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D] dark:text-[#A8C8AE]">
+                Competition Arena · Verified Submission Progress
+              </p>
+              <h3 className="mt-2 text-lg font-black text-[#24231F] dark:text-[#FFFDF8]">
+                Unique Accepted Challenges
+              </h3>
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-[#69665F] dark:text-[#A09D95]">
+                This counter is separate from algorithm walkthrough sessions. Only unique challenges with an ACCEPTED server-verified submission count toward Bronze, Silver and Gold.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/competitions" className="rounded-xl bg-[#28533D] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#1F4230]">
+                Open Competition Arena →
+              </Link>
+              <button
+                type="button"
+                onClick={() => loadCompetitionProgress()}
+                disabled={competitionRefreshing}
+                className="rounded-xl border border-[#DED9CE] px-3 py-2.5 text-xs font-semibold text-[#28533D] hover:border-[#28533D] disabled:opacity-50"
+              >
+                {competitionRefreshing ? 'Syncing…' : '↻'}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { tier: 'Bronze', target: 20, color: 'text-[#8C5028]' },
+              { tier: 'Silver', target: 100, color: 'text-[#64748B]' },
+              { tier: 'Gold', target: 200, color: 'text-[#976E1A]' }
+            ].map((milestone) => {
+              const current = competitionStats?.uniqueSolvedCount || 0;
+              const percentage = Math.min(100, Math.round((current / milestone.target) * 100));
+              const unlocked = current >= milestone.target;
+              return (
+                <div key={milestone.tier} className="rounded-xl border border-[#DED9CE] dark:border-[#383630] bg-[#FAF8F3] dark:bg-[#1C1B18] p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${milestone.color}`}>{milestone.tier}</span>
+                    <span className={`text-[10px] font-mono font-bold ${unlocked ? 'text-[#28533D]' : 'text-[#8E8B83]'}`}>
+                      {unlocked ? 'MILESTONE REACHED' : `${milestone.target - current} TO GO`}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-2xl font-black font-mono text-[#24231F] dark:text-[#FFFDF8]">
+                    {current}<span className="ml-1 text-xs font-normal text-[#8E8B83]">/ {milestone.target}</span>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E4E9DD] dark:bg-[#383630]">
+                    <div className="h-full rounded-full bg-[#28533D] transition-all duration-500" style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-[#8E8B83]">
+            <span>{competitionSyncAt ? `Competition progress synced · ${new Date(competitionSyncAt).toLocaleTimeString()}` : 'Waiting for competition progress sync'}</span>
+            <span>Source: unique ACCEPTED submissions</span>
+          </div>
+          {competitionError && (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              {competitionError} The last verified count is preserved and will be retried automatically.
+            </p>
+          )}
+        </section>
 
         {/* Detailed Progress List */}
         <div className={`p-6 rounded-2xl border transition-all ${isDarkMode ? 'bg-[#24231F] border-[#383630]' : 'bg-[#FFFDF8] border-[#DED9CE]'
