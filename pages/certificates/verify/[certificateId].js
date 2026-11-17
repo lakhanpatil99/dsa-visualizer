@@ -151,7 +151,7 @@ export default function CertificateVerificationPage({ certificateId, verificatio
             </p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
               <Link href="/certificates/verify" className="rounded-xl bg-[#28533D] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1F4230]">Try another ID</Link>
-              <Link href="/certificates/verify" className="rounded-xl border border-[#DED9CE] px-5 py-3 text-sm font-semibold text-[#24231F] hover:border-[#EF592A]">Retry verification</Link>
+              <Link href={`/certificates/verify/${encodeURIComponent(certificateId)}`} className="rounded-xl border border-[#DED9CE] px-5 py-3 text-sm font-semibold text-[#24231F] hover:border-[#EF592A]">Retry verification</Link>
             </div>
           </section>
         )}
