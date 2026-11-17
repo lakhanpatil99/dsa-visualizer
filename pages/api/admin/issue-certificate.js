@@ -3,7 +3,6 @@ import dbConnect from '../../../lib/dbConnect.js';
 import Certificate from '../../../models/Certificate.js';
 import InternshipApplication from '../../../models/InternshipApplication.js';
 import CompetitionAchievement, { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
-import memoryStore from '../../../lib/memoryStore.js';
 import { isUserAdmin, recordAdminAuditLog } from '../../../lib/admin/adminAuth.js';
 import crypto from 'crypto';
 
@@ -34,11 +33,26 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Valid certificate type required.' });
   }
 
-  let isConnected = false;
+  let connection;
   try {
-    const conn = await dbConnect();
-    if (conn && conn.connection && conn.connection.readyState === 1) isConnected = true;
-  } catch {}
+    connection = await dbConnect();
+    if (!connection || connection.connection?.readyState !== 1) {
+      throw new Error('MongoDB is not connected.');
+    }
+    // Ensure the sparse unique source index exists before issuing any credential.
+    await Certificate.collection.createIndex(
+      { sourceKey: 1 },
+      { unique: true, sparse: true, name: 'certificate_sourceKey_unique' }
+    );
+  } catch (error) {
+    console.error('[issue-certificate] Certificate registry unavailable:', error?.message || 'Unknown error');
+    return res.status(503).json({
+      success: false,
+      code: 'CERTIFICATE_REGISTRY_UNAVAILABLE',
+      message: 'The certificate registry is temporarily unavailable. Please retry.'
+    });
+  }
+  const isConnected = true;
 
   let userEmail = '';
   let firebaseUid = '';
@@ -51,11 +65,7 @@ async function handler(req, res) {
   let app = null;
 
   if (type === 'internship') {
-    if (isConnected) {
-      app = await InternshipApplication.findOne({ applicationId: targetId });
-    } else {
-      app = memoryStore.getApplication(targetId);
-    }
+    app = await InternshipApplication.findOne({ applicationId: targetId });
 
     if (!app) {
       return res.status(404).json({ success: false, message: 'Internship application not found.' });
@@ -86,11 +96,7 @@ async function handler(req, res) {
     // Competition certificate
     firebaseUid = targetId;
     let ach = null;
-    if (isConnected) {
-      ach = await CompetitionAchievement.findOne({ firebaseUid });
-    } else {
-      ach = memoryStore.getAchievement(firebaseUid);
-    }
+    ach = await CompetitionAchievement.findOne({ firebaseUid });
 
     if (!ach) {
       return res.status(404).json({ success: false, message: 'User achievement record not found.' });
@@ -113,13 +119,49 @@ async function handler(req, res) {
     certDescription = `Verified mastery and successful solution of ${required}+ unique algorithmic and computational challenges on AlgoMania.`;
   }
 
-  // Generate Unique Certificate ID: ALG-2026-XXXXX
-  const randomCode = crypto.randomBytes(3).toString('hex').toUpperCase();
-  const certificateId = `ALG-2026-${randomCode}`;
-  const verificationUrl = `https://www.algomania.in/certificates/verify/${certificateId}`;
+  // Stable source identity makes issuing the same eligible credential idempotent.
+  const sourceKey = type === 'internship'
+    ? `internship:${targetId}`
+    : `competition:${firebaseUid}:${type}`;
+
+  const existingCertificate = await Certificate.findOne({ sourceKey });
+  const legacyCertificate = type === 'internship' && app.certificateId
+    ? await Certificate.findOne({ certificateId: app.certificateId })
+    : (type.startsWith('competition_')
+      ? await Certificate.findOne({ firebaseUid, type })
+      : null);
+  const previouslyIssued = existingCertificate || legacyCertificate;
+
+  if (previouslyIssued) {
+    if (type === 'internship') {
+      await InternshipApplication.findOneAndUpdate(
+        { applicationId: targetId },
+        { certificateIssued: true, certificateId: previouslyIssued.certificateId }
+      );
+    }
+    return res.status(200).json({
+      success: true,
+      alreadyIssued: true,
+      message: 'This source record already has an official certificate.',
+      certificate: previouslyIssued
+    });
+  }
+
+  const year = new Date().getUTCFullYear();
+  const idPrefix = type === 'internship'
+    ? 'ALG-INT'
+    : type === 'competition_bronze'
+      ? 'ALG-CMP-BR'
+      : type === 'competition_silver'
+        ? 'ALG-CMP-SL'
+        : 'ALG-CMP-AU';
+
+  let certificateId = '';
+  let verificationUrl = '';
 
   const certDoc = {
     certificateId,
+    sourceKey,
     firebaseUid,
     userEmail,
     recipientName: finalRecipient,
@@ -146,26 +188,50 @@ async function handler(req, res) {
   };
 
   let savedCert = null;
-  if (isConnected) {
-    savedCert = await Certificate.create(certDoc);
-    if (type === 'internship') {
-      await InternshipApplication.findOneAndUpdate(
-        { applicationId: targetId },
-        { certificateIssued: true, certificateId }
-      );
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    certificateId = `${idPrefix}-${year}-${crypto.randomBytes(16).toString('hex').toUpperCase()}`;
+    verificationUrl = `https://www.algomania.in/certificates/verify/${certificateId}`;
+    certDoc.certificateId = certificateId;
+    certDoc.verificationUrl = verificationUrl;
+
+    try {
+      savedCert = await Certificate.create(certDoc);
+      break;
+    } catch (error) {
+      if (error?.code === 11000) {
+        // Another concurrent request may have issued this source record first.
+        const winner = await Certificate.findOne({ sourceKey });
+        if (winner) {
+          savedCert = winner;
+          break;
+        }
+        // Otherwise retry a highly unlikely credential-ID collision.
+        if (attempt < 2) continue;
+      }
+      throw error;
     }
-  } else {
-    savedCert = memoryStore.saveCertificate(certDoc);
-    if (type === 'internship') {
-      memoryStore.updateApplication(targetId, { certificateIssued: true, certificateId });
-    }
+  }
+
+  if (!savedCert) {
+    return res.status(503).json({
+      success: false,
+      code: 'CERTIFICATE_ISSUANCE_RETRY',
+      message: 'The credential could not be issued safely. Please retry.'
+    });
+  }
+
+  if (type === 'internship') {
+    await InternshipApplication.findOneAndUpdate(
+      { applicationId: targetId },
+      { certificateIssued: true, certificateId: savedCert.certificateId }
+    );
   }
 
   await recordAdminAuditLog({
     action: `ISSUE_CERTIFICATE_${type.toUpperCase()}`,
     performedBy: req.user.email,
     targetType: 'certificate',
-    targetId: certificateId,
+    targetId: savedCert.certificateId,
     details: { recipientName: finalRecipient, type, userEmail },
     ipAddress: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || ''
   });
