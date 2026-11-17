@@ -96,6 +96,7 @@ describe('AlgoMania real-time competition progress and credential issuance', () 
     const paymentStatus = read('pages/api/payments/status.js');
     assert.match(paymentPage, /precreateOrder/);
     assert.match(createOrder, /inFlightOrders/);
-    assert.match(paymentStatus, /RAZORPAY/);
+    assert.match(paymentStatus, /paymentProvider/);
+    assert.match(paymentStatus, /INTERNSHIP_FEE_PAISE/);
   });
 });
