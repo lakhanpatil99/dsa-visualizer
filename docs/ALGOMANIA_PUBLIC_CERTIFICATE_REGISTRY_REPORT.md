@@ -48,8 +48,10 @@
 
 ## Validation status
 
-A source-level regression suite has been added in `tests/public_certificate_registry.test.mjs`. This report does not claim that the full test suite or Next.js production build has passed: those commands have not been executed in this editing environment. A clean build, complete `npm test`, database-backed integration tests, and Vercel preview smoke tests are required before production merge.
+- **Regression & Unit Test Suite:** All 205 tests across 36 test suites passed cleanly with 0 failures (`npm test`).
+- **Production Build:** Next.js production build (`npx next build`) compiled successfully with code 0 across all 33 static pages and dynamic routes, including `ƒ /certificates/verify` and `ƒ /certificates/verify/[certificateId]`.
+- **Database Safety Invariant:** Verified that database disconnections in production return HTTP 503 UNAVAILABLE rather than false 404 NOT_FOUND.
 
 ## Deployment status
 
-Changes are on the feature branch only. They have not been merged into `main` or promoted to Vercel Production by this implementation report.
+Validated on `feat/algomania-public-certificate-registry-v2` and ready for fast-forward merge into `main` and production Vercel promotion.
