@@ -9,14 +9,14 @@ export const insertionSort = async (array, callback, speed = 1) => {
 
     step++;
     if (callback) {
-      callback([...arr], i, j, -1, step, false);
+      await callback([...arr], i, j, -1, step, false);
     }
 
     while (j >= 0 && arr[j] > key) {
       arr[j + 1] = arr[j];
       step++;
       if (callback) {
-        callback([...arr], j, j + 1, -1, step, true);
+        await callback([...arr], j, j + 1, -1, step, true);
       }
       j--;
       if (speed > 0) {
@@ -26,12 +26,12 @@ export const insertionSort = async (array, callback, speed = 1) => {
     arr[j + 1] = key;
     step++;
     if (callback) {
-      callback([...arr], j + 1, -1, -1, step, false);
+      await callback([...arr], j + 1, -1, -1, step, false);
     }
   }
 
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

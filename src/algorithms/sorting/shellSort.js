@@ -10,14 +10,14 @@ export const shellSort = async (array, callback, speed = 1) => {
 
       step++;
       if (callback) {
-        callback([...arr], i, j - gap, -1, step, false);
+        await callback([...arr], i, j - gap, -1, step, false);
       }
 
       while (j >= gap && arr[j - gap] > temp) {
         arr[j] = arr[j - gap];
         step++;
         if (callback) {
-          callback([...arr], j, j - gap, -1, step, true);
+          await callback([...arr], j, j - gap, -1, step, true);
         }
         j -= gap;
         if (speed > 0) {
@@ -27,13 +27,13 @@ export const shellSort = async (array, callback, speed = 1) => {
       arr[j] = temp;
       step++;
       if (callback) {
-        callback([...arr], j, -1, -1, step, false);
+        await callback([...arr], j, -1, -1, step, false);
       }
     }
   }
 
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

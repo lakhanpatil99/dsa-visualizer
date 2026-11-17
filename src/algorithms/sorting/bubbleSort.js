@@ -10,7 +10,7 @@ export const bubbleSort = async (array, callback, speed = 1) => {
       
       // Call callback with current state (comparing arr[j] and arr[j+1])
       if (callback) {
-        callback([...arr], j, j + 1, -1, step, false);
+        await callback([...arr], j, j + 1, -1, step, false);
       }
       
       if (arr[j] > arr[j + 1]) {
@@ -18,7 +18,7 @@ export const bubbleSort = async (array, callback, speed = 1) => {
         [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
         swapped = true;
         if (callback) {
-          callback([...arr], j, j + 1, -1, step + 1, true);
+          await callback([...arr], j, j + 1, -1, step + 1, true);
         }
       }
       
@@ -35,7 +35,7 @@ export const bubbleSort = async (array, callback, speed = 1) => {
   
   // Final callback to clear highlighting
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

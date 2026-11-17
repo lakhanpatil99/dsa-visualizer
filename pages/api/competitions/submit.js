@@ -42,7 +42,17 @@ async function handler(req, res) {
   try {
     const conn = await dbConnect();
     if (conn && conn.connection && conn.connection.readyState === 1) isConnected = true;
-  } catch {}
+  } catch (err) {
+    console.warn('MongoDB connection check failed:', err.message);
+  }
+
+  if (process.env.NODE_ENV === 'production' && !isConnected) {
+    return res.status(503).json({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Competition database is temporarily unavailable. Please retry shortly.'
+    });
+  }
 
   const submissionDoc = {
     submissionId,

@@ -9,13 +9,13 @@ export const selectionSort = async (array, callback, speed = 1) => {
     for (let j = i + 1; j < n; j++) {
       step++;
       if (callback) {
-        callback([...arr], minIdx, j, -1, step, false);
+        await callback([...arr], minIdx, j, -1, step, false);
       }
 
       if (arr[j] < arr[minIdx]) {
         minIdx = j;
         if (callback) {
-          callback([...arr], minIdx, j, -1, step, false);
+          await callback([...arr], minIdx, j, -1, step, false);
         }
       }
 
@@ -28,13 +28,13 @@ export const selectionSort = async (array, callback, speed = 1) => {
       [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
       step++;
       if (callback) {
-        callback([...arr], i, minIdx, -1, step, true);
+        await callback([...arr], i, minIdx, -1, step, true);
       }
     }
   }
 
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

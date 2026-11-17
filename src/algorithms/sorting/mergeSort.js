@@ -3,7 +3,7 @@ export const mergeSort = async (array, callback, speed = 1) => {
   let step = 0;
   await mergeSortHelper(arr, 0, arr.length - 1, callback, speed, step);
   // Final callback to clear highlighting
-  callback([...arr], -1, -1, -1, step + 1, false);
+  if (callback) await callback([...arr], -1, -1, -1, step + 1, false);
   return arr;
 };
 
@@ -27,7 +27,7 @@ const merge = async (arr, left, mid, right, callback, speed, step) => {
   
   while (i < leftArray.length && j < rightArray.length) {
     step++;
-    callback([...arr], k, k, -1, step, false);
+    if (callback) await callback([...arr], k, k, -1, step, false);
     
     if (leftArray[i] <= rightArray[j]) {
       arr[k] = leftArray[i];
@@ -37,7 +37,7 @@ const merge = async (arr, left, mid, right, callback, speed, step) => {
       j++;
     }
     
-    callback([...arr], k, k, -1, step + 1, true);
+    if (callback) await callback([...arr], k, k, -1, step + 1, true);
     k++;
     
     await new Promise(resolve => setTimeout(resolve, 1000 / speed));
@@ -46,7 +46,7 @@ const merge = async (arr, left, mid, right, callback, speed, step) => {
   while (i < leftArray.length) {
     step++;
     arr[k] = leftArray[i];
-    callback([...arr], k, k, -1, step, false);
+    if (callback) await callback([...arr], k, k, -1, step, false);
     i++;
     k++;
     await new Promise(resolve => setTimeout(resolve, 1000 / speed));
@@ -55,7 +55,7 @@ const merge = async (arr, left, mid, right, callback, speed, step) => {
   while (j < rightArray.length) {
     step++;
     arr[k] = rightArray[j];
-    callback([...arr], k, k, -1, step, false);
+    if (callback) await callback([...arr], k, k, -1, step, false);
     j++;
     k++;
     await new Promise(resolve => setTimeout(resolve, 1000 / speed));

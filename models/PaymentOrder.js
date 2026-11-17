@@ -91,10 +91,34 @@ const PaymentOrderSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    refundId: {
+      type: String,
+      default: null,
+    },
+    refundAmount: {
+      type: Number,
+      default: null,
+    },
+    refundStatus: {
+      type: String,
+      default: null,
+    },
+    refundReason: {
+      type: String,
+      default: null,
+    },
     refundedAt: {
       type: Date,
       default: null,
     },
+    attempts: [
+      {
+        attemptId: { type: String, required: true },
+        status: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+        failureReason: { type: String, default: null },
+      },
+    ],
     errorMessage: {
       type: String,
       default: null,

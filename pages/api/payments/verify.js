@@ -47,7 +47,15 @@ async function handler(req, res) {
       isConnected = true;
     }
   } catch (err) {
-    console.warn('MongoDB connection check failed, using memory store fallback:', err.message);
+    console.warn('MongoDB connection check failed:', err.message);
+  }
+
+  if (process.env.NODE_ENV === 'production' && !isConnected) {
+    return res.status(503).json({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Database service is temporarily unavailable. Please retry shortly.',
+    });
   }
 
   // ── Find PaymentOrder ─────────────────────────────────────────────
