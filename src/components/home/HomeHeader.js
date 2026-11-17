@@ -28,6 +28,13 @@ export default function HomeHeader() {
             Live Demo
           </a>
 
+          <Link
+            href="/certificates/verify"
+            className="inline-flex items-center rounded-lg border border-[#28533D]/25 px-2.5 sm:px-3 py-2 text-[10px] sm:text-sm font-semibold text-[#28533D] hover:bg-[#E4E9DD] transition-colors"
+          >
+            Verify Certificate
+          </Link>
+
           {isAuthenticated ? (
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Link
