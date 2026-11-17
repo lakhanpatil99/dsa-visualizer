@@ -12,8 +12,6 @@ const CertificateSchema = new mongoose.Schema({
   sourceKey: {
     type: String,
     trim: true,
-    unique: true,
-    sparse: true
   },
   firebaseUid: {
     type: String,
@@ -112,5 +110,10 @@ const CertificateSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+CertificateSchema.index(
+  { sourceKey: 1 },
+  { unique: true, sparse: true, name: 'certificate_sourceKey_unique' }
+);
 
 export default mongoose.models.Certificate || mongoose.model('Certificate', CertificateSchema);
