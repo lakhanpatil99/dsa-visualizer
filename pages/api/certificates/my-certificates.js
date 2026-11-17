@@ -5,6 +5,7 @@ import InternshipApplication from '../../../models/InternshipApplication.js';
 import CompetitionSubmission from '../../../models/CompetitionSubmission.js';
 import { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
 import memoryStore from '../../../lib/memoryStore.js';
+import { ensureCompetitionMilestoneCertificates } from '../../../lib/certificates/competitionMilestoneIssuance.js';
 
 async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
@@ -42,6 +43,27 @@ async function handler(req, res) {
     }
 
     const uniqueSolved = acceptedChallengeIds.length;
+    let certificateIssuancePending = false;
+
+    // Idempotent retry path: if issuance was interrupted after an accepted
+    // submission, loading the signed-in certificate vault completes it safely.
+    if (connection?.connection?.readyState === 1) {
+      try {
+        await ensureCompetitionMilestoneCertificates({
+          firebaseUid: req.user.uid,
+          userEmail: req.user.email,
+          recipientName: req.dbUser?.displayName || req.dbUser?.username || req.user.name,
+          uniqueSolvedCount: uniqueSolved
+        });
+        issuedCertificates = await Certificate.find({ firebaseUid: req.user.uid })
+          .sort({ issueDate: -1 })
+          .lean();
+      } catch (issuanceError) {
+        certificateIssuancePending = true;
+        console.error('[MyCertificates] Automatic competition issuance will retry:', issuanceError?.message || 'Unknown error');
+      }
+    }
+
     const unlockedTiers = [];
     if (uniqueSolved >= ACHIEVEMENT_THRESHOLDS.BRONZE) unlockedTiers.push('bronze');
     if (uniqueSolved >= ACHIEVEMENT_THRESHOLDS.SILVER) unlockedTiers.push('silver');
@@ -70,7 +92,9 @@ async function handler(req, res) {
           targetProgress: milestone.target,
           remainingProgress: Math.max(0, milestone.target - uniqueSolved),
           lockReason: milestoneReached
-            ? 'Achievement verified. Waiting for official certificate issuance. Download and sharing become available as soon as the official credential is issued.'
+            ? (certificateIssuancePending
+              ? 'Achievement verified. Official certificate creation is temporarily delayed; this page will retry automatically.'
+              : 'Achievement verified. The official credential is being synchronized. Refresh shortly if the download option is not visible.')
             : `Milestone not reached: ${uniqueSolved}/${milestone.target} unique accepted problems solved.`
         });
       }
@@ -129,6 +153,7 @@ async function handler(req, res) {
       success: true,
       issuedCertificates,
       pendingCertificates,
+      certificateIssuancePending,
       competitionProgress: {
         uniqueSolvedCount: uniqueSolved,
         solvedChallengeIds: acceptedChallengeIds,
