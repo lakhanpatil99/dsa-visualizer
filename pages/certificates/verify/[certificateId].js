@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '../../../src/components/Navbar';
@@ -54,10 +54,24 @@ function Detail({ label, value, isMono = false }) {
 }
 
 export default function CertificateVerificationPage({ certificateId, verificationStatus, certificate }) {
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [enteredId, setEnteredId] = useState(certificateId || '');
+
   const isValid = verificationStatus === 'VALID' && certificate;
   const isRevoked = verificationStatus === 'REVOKED' && certificate;
   const isUnavailable = verificationStatus === 'UNAVAILABLE';
   const isNotFound = verificationStatus === 'NOT_FOUND' || verificationStatus === 'INVALID_ID';
+
+  const handleRetryVerification = (e) => {
+    if (e) e.preventDefault();
+    setIsRetrying(true);
+    const targetId = (enteredId || certificateId || '').trim();
+    if (targetId) {
+      window.location.href = `/certificates/verify/${encodeURIComponent(targetId)}?retry=${Date.now()}`;
+    } else {
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F5ED] text-[#24231F]">
@@ -149,9 +163,60 @@ export default function CertificateVerificationPage({ certificateId, verificatio
                   ? 'Check the credential reference and try again.'
                   : 'No matching issued credential was found in the AlgoMania registry. Check the ID printed on the certificate.'}
             </p>
-            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Link href="/certificates/verify" className="rounded-xl bg-[#28533D] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1F4230]">Try another ID</Link>
-              <Link href={`/certificates/verify/${encodeURIComponent(certificateId)}`} className="rounded-xl border border-[#DED9CE] px-5 py-3 text-sm font-semibold text-[#24231F] hover:border-[#EF592A]">Retry verification</Link>
+            {/* Inline Quick ID Correction Input */}
+            <form onSubmit={handleRetryVerification} className="mt-6 mb-2 max-w-md mx-auto text-left">
+              <label htmlFor="verify-id-input" className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#777268] mb-1.5 text-center">
+                Check or correct Credential ID
+              </label>
+              <div className="flex rounded-xl border border-[#CFC9BC] bg-white p-1 shadow-2xs focus-within:border-[#28533D] focus-within:ring-2 focus-within:ring-[#28533D]/15">
+                <input
+                  id="verify-id-input"
+                  type="text"
+                  value={enteredId}
+                  onChange={(e) => setEnteredId(e.target.value)}
+                  placeholder="e.g. ALG-CMP-BR-2026-..."
+                  spellCheck="false"
+                  autoComplete="off"
+                  className="w-full px-3 py-2 text-xs font-mono uppercase tracking-wide text-[#24231F] outline-none bg-transparent"
+                />
+                <button
+                  type="submit"
+                  disabled={isRetrying}
+                  className="shrink-0 rounded-lg bg-[#28533D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F4230] transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isRetrying ? 'Checking...' : 'Check ID'}
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-5 flex flex-col sm:flex-row justify-center gap-3">
+              <Link
+                href="/certificates/verify"
+                className="rounded-xl bg-[#28533D] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1F4230] transition-colors"
+              >
+                Try another ID
+              </Link>
+              <button
+                type="button"
+                onClick={handleRetryVerification}
+                disabled={isRetrying}
+                className="rounded-xl border border-[#28533D]/30 bg-white px-5 py-3 text-sm font-semibold text-[#28533D] hover:bg-[#FAF8F3] hover:border-[#28533D] transition-all flex items-center justify-center gap-2 shadow-2xs disabled:opacity-60 cursor-pointer"
+              >
+                {isRetrying ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-[#28533D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Checking registry live...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⟳</span>
+                    <span>Retry verification</span>
+                  </>
+                )}
+              </button>
             </div>
           </section>
         )}
