@@ -82,6 +82,13 @@ export default function InternshipsPortal() {
               <span className="text-[#EF592A]">↗</span>
             </button>
 
+            <Link
+              href="/certificates/verify"
+              className="px-5 py-3 rounded-xl border border-[#28533D]/30 bg-[#FFFDF8] dark:bg-[#24231F] text-sm font-semibold text-[#28533D] dark:text-[#A8C8AE] hover:border-[#EF592A] transition-colors"
+            >
+              Verify a Certificate →
+            </Link>
+
             {isAuthenticated && (
               <Link
                 href="/internships/my-applications"
@@ -203,6 +210,19 @@ export default function InternshipsPortal() {
             </div>
           ))}
         </div>
+
+        <section className="mb-8 rounded-2xl border border-[#C9D8C9] bg-[#EAF1E9]/70 dark:bg-[#28382F]/40 p-5 sm:p-7">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D] dark:text-[#A8C8AE]">For candidates, recruiters and colleges</p>
+              <h2 className="mt-2 text-xl font-serif font-bold text-[#24231F] dark:text-[#FFFDF8]">Verify an issued internship certificate</h2>
+              <p className="mt-1 text-xs sm:text-sm text-[#69665F] dark:text-[#A09D95]">Check a Java, Python or C++ credential by its unique ID. Sign-in is not required.</p>
+            </div>
+            <Link href="/certificates/verify" className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#28533D] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1F4230]">
+              Open verification →
+            </Link>
+          </div>
+        </section>
 
         {/* Dedicated "Your Achievement. Officially Recognized." Section */}
         <div className="p-8 sm:p-12 rounded-3xl bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] shadow-xs">
