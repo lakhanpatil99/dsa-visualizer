@@ -7,13 +7,14 @@ import QRCode from 'qrcode';
  *  - ISSUED: Real earned credential with active PDF download and verifiable QR code.
  *  - LOCKED: Milestone preview with prominent watermark, solved/target progress bar, and locked download.
  *  - SAMPLE: Demonstration preview for curriculum exploration with watermark and sample notice.
+ *  - PENDING_ISSUANCE: Eligible milestone awaiting an actual persisted certificate record.
  */
 export default function CertificatePreviewModal({
   certificate,
   isOpen,
   onClose,
   onDownload,
-  mode = 'ISSUED', // 'ISSUED' | 'LOCKED' | 'SAMPLE'
+  mode = 'ISSUED', // 'ISSUED' | 'LOCKED' | 'SAMPLE' | 'PENDING_ISSUANCE'
   userSolvedCount = 0,
   requiredCount = 20
 }) {
@@ -21,12 +22,13 @@ export default function CertificatePreviewModal({
 
   const isIssued = mode === 'ISSUED';
   const isLocked = mode === 'LOCKED';
-  const isSample = mode === 'SAMPLE' || isLocked;
+  const isPending = mode === 'PENDING_ISSUANCE';
+  const isSample = mode === 'SAMPLE' || isLocked || isPending;
 
   useEffect(() => {
     const url = isIssued && certificate?.verificationUrl
       ? certificate.verificationUrl
-      : 'https://www.algomania.in/certificates/sample';
+      : 'https://www.algomania.in/certificates/verify';
 
     QRCode.toDataURL(url, {
       margin: 1,
@@ -77,7 +79,7 @@ export default function CertificatePreviewModal({
 
   const displayCertificateId = isIssued
     ? certificate.certificateId
-    : `SAMPLE-PREVIEW-${(certificate.type || 'CERT').toUpperCase()}`;
+    : 'SAMPLE PREVIEW — NO OFFICIAL ID';
 
   const remainingProblems = Math.max(0, requiredCount - userSolvedCount);
   const progressPercent = Math.min(100, Math.round((userSolvedCount / (requiredCount || 1)) * 100));
@@ -104,7 +106,9 @@ export default function CertificatePreviewModal({
                 ? 'Official Credential Preview'
                 : isLocked
                 ? 'Locked Milestone Preview'
-                : 'Sample Credential Preview'}
+                : isPending
+                  ? 'Achievement Awaiting Official Issuance'
+                  : 'Sample Credential Preview'}
             </span>
           </div>
 
@@ -130,6 +134,10 @@ export default function CertificatePreviewModal({
                   <span>Locked</span>
                 </button>
               </div>
+            ) : isPending ? (
+              <span className="px-3 py-1.5 rounded-lg bg-[#E4E9DD] border border-[#28533D]/20 text-[#28533D] text-xs font-mono font-semibold">
+                Achievement unlocked · awaiting issuance
+              </span>
             ) : (
               <span className="px-3 py-1.5 rounded-lg bg-[#EF592A]/10 border border-[#EF592A]/30 text-[#EF592A] text-xs font-mono font-semibold">
                 Sample Representation
@@ -169,6 +177,12 @@ export default function CertificatePreviewModal({
           </div>
         )}
 
+        {isPending && (
+          <div className="px-6 py-3 bg-[#EAF1E9] dark:bg-[#28382F] border-b border-[#C9D8C9] dark:border-[#3A5943] text-xs text-[#28533D] dark:text-[#C1D7C3]">
+            <strong>Milestone reached.</strong> The achievement is eligible, but no official certificate record has been issued yet. This preview is not a credential and cannot be downloaded or verified.
+          </div>
+        )}
+
         {/* Certificate Parchment Body */}
         <div className="p-6 sm:p-10 overflow-y-auto max-h-[75vh]">
           <div className={`relative p-6 sm:p-10 bg-[#FAF7EE] rounded-xl border-4 ${borderColor} shadow-inner`}>
@@ -177,7 +191,7 @@ export default function CertificatePreviewModal({
             {isSample && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-20">
                 <div className="transform -rotate-25 select-none border-4 border-dashed border-[#EF592A]/40 text-[#EF592A]/20 dark:text-[#EF592A]/25 text-3xl sm:text-5xl md:text-6xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl whitespace-nowrap uppercase text-center">
-                  {isLocked ? 'LOCKED — SAMPLE PREVIEW' : 'SAMPLE — NOT AN OFFICIAL CREDENTIAL'}
+                  {isLocked ? 'LOCKED — SAMPLE PREVIEW' : isPending ? 'AWAITING ISSUANCE — SAMPLE ONLY' : 'SAMPLE — NOT AN OFFICIAL CREDENTIAL'}
                 </div>
               </div>
             )}
@@ -272,7 +286,7 @@ export default function CertificatePreviewModal({
                     <img src={qrDataUrl} alt="QR Code" className="w-16 h-16 rounded border border-[#DED9CE]" />
                   )}
                   <span className="text-[10px] font-mono font-bold text-[#28533D] mt-1">
-                    {isIssued ? 'Scan to Verify' : 'Sample QR Verification'}
+                    {isIssued ? 'Scan to Verify' : 'Sample route only'}
                   </span>
                   <span className="text-[9px] font-mono text-[#69665F]">{displayCertificateId}</span>
                 </div>
