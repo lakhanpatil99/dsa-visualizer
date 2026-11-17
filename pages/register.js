@@ -99,6 +99,24 @@ export default function Register() {
       );
 
       if (result.success) {
+        // Fire-and-forget: create pending onboarding event for Brevo welcome email.
+        // This NEVER blocks or delays the registration flow.
+        try {
+          const { auth } = await import('../lib/firebase.js');
+          if (auth?.currentUser) {
+            const token = await auth.currentUser.getIdToken();
+            fetch('/api/auth/onboarding/initiate', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            }).catch(() => {}); // Silently ignore — Brevo must never break auth
+          }
+        } catch (_) {
+          // Silently ignore onboarding initiation failure
+        }
+
         router.push('/verify-email');
       } else {
         setServerError(result.message || 'Registration failed. Please try again.');

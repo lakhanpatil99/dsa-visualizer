@@ -279,6 +279,30 @@ export const AuthProvider = ({ children }) => {
       setIdToken(token);
       await syncWithBackend(user, token);
 
+      // Detect new Google user and trigger onboarding email (fire-and-forget).
+      // New user detection: if creationTime equals lastSignInTime (within 10s),
+      // the account was just created by this Google sign-up.
+      // SAFETY: This call never blocks the login flow.
+      try {
+        const metadata = user.metadata;
+        const creationTime = new Date(metadata.creationTime).getTime();
+        const lastSignIn = new Date(metadata.lastSignInTime).getTime();
+        const isNewUser = Math.abs(lastSignIn - creationTime) < 10000; // within 10 seconds
+
+        if (isNewUser) {
+          fetch('/api/auth/onboarding/complete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ isNewUser: true })
+          }).catch(() => {}); // Silently ignore
+        }
+      } catch (_) {
+        // Brevo failure must NEVER break Google auth
+      }
+
       return {
         success: true,
         message: 'Signed in with Google successfully!'

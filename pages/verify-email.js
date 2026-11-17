@@ -24,19 +24,41 @@ export default function VerifyEmail() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
+  // Fire-and-forget: trigger Brevo onboarding email after verification.
+  // SAFETY: This never blocks navigation to /app.
+  const triggerOnboardingEmail = useCallback(async () => {
+    try {
+      const { auth } = await import('../lib/firebase.js');
+      if (auth?.currentUser) {
+        const token = await auth.currentUser.getIdToken(true);
+        fetch('/api/auth/onboarding/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ isNewUser: true })
+        }).catch(() => {}); // Silently ignore
+      }
+    } catch (_) {
+      // Brevo failure must NEVER block the verification flow
+    }
+  }, []);
+
   // Periodic background check in case user verified in another tab or mobile device
   useEffect(() => {
     const checkInterval = setInterval(async () => {
       if (document.visibilityState === 'visible') {
         const res = await refreshUser();
         if (res && res.verified) {
+          triggerOnboardingEmail();
           router.replace('/app');
         }
       }
     }, 5000);
 
     return () => clearInterval(checkInterval);
-  }, [refreshUser, router]);
+  }, [refreshUser, router, triggerOnboardingEmail]);
 
   // Manual verification check button handler
   const handleCheckVerification = useCallback(async () => {
@@ -50,6 +72,7 @@ export default function VerifyEmail() {
           type: 'success',
           text: 'Email verified successfully! Loading your AlgoMania workspace...'
         });
+        triggerOnboardingEmail();
         setTimeout(() => {
           router.replace('/app');
         }, 1200);
@@ -67,7 +90,7 @@ export default function VerifyEmail() {
     } finally {
       setIsChecking(false);
     }
-  }, [refreshUser, router]);
+  }, [refreshUser, router, triggerOnboardingEmail]);
 
   // Resend email handler with rate limit cooldown
   const handleResend = useCallback(async () => {
