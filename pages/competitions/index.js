@@ -40,6 +40,8 @@ export default function CompetitionPortal() {
   const [refreshing, setRefreshing] = useState(false);
   const [catalogError, setCatalogError] = useState('');
   const [progressError, setProgressError] = useState('');
+  const [issuedCompetitionCertificates, setIssuedCompetitionCertificates] = useState([]);
+  const [certificateSyncError, setCertificateSyncError] = useState('');
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const initializedChallengeRef = useRef(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -100,17 +102,33 @@ export default function CompetitionPortal() {
           nextProgressError = challengeData.progressMessage || 'Personal progress could not be synchronized.';
         }
 
-        const statsResponse = await fetch('/api/competitions/stats', {
-          headers,
-          cache: 'no-store'
-        });
-        const statsData = await statsResponse.json();
+        const [statsResponse, certificateResponse] = await Promise.all([
+          fetch('/api/competitions/stats', { headers, cache: 'no-store' }),
+          fetch('/api/certificates/my-certificates', { headers, cache: 'no-store' })
+        ]);
+        const [statsData, certificateData] = await Promise.all([
+          statsResponse.json(),
+          certificateResponse.json()
+        ]);
 
         if (!statsResponse.ok || !statsData.success) {
           nextProgressError = statsData.message || 'Your progress could not be synchronized.';
         } else {
           setStats(statsData.stats);
           setProgressError('');
+        }
+
+        if (certificateResponse.ok && certificateData.success) {
+          setIssuedCompetitionCertificates(
+            (certificateData.issuedCertificates || []).filter(
+              (certificate) =>
+                certificate.type?.startsWith('competition_') &&
+                certificate.status === 'VALID'
+            )
+          );
+          setCertificateSyncError('');
+        } else {
+          setCertificateSyncError(certificateData.message || 'Official certificate status could not be synchronized.');
         }
       } else {
         nextProgressError = 'Sign in to synchronize your accepted submissions and milestone progress.';
@@ -121,6 +139,8 @@ export default function CompetitionPortal() {
           nextMilestone: { target: 20, remaining: 20, tier: 'bronze' },
           badges: []
         });
+        setIssuedCompetitionCertificates([]);
+        setCertificateSyncError('Sign in to view and download your official competition certificates.');
       }
 
       setProgressError(nextProgressError);
@@ -377,12 +397,12 @@ export default function CompetitionPortal() {
                 {refreshing ? 'Refreshing…' : 'Refresh progress ↻'}
               </button>
             </div>
+            {progressError && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                {progressError} The last verified count is kept; it will not be reset to zero.
+              </div>
+            )}
           </div>
-          {progressError && (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-              {progressError} The last verified count is kept; it will not be reset to zero.
-            </div>
-          )}
         </div>
 
         {/* Metallic Badges Showcase */}
@@ -428,6 +448,54 @@ export default function CompetitionPortal() {
             />
           </div>
         </div>
+
+        {/* Official competition certificates become available only after a real
+            persisted certificate exists in the registry. */}
+        {issuedCompetitionCertificates.length > 0 && (
+          <section className="mb-10 rounded-2xl border border-[#B9CDBD] bg-[#FFFDF8] p-5 sm:p-7">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D]">Official credentials</p>
+                <h2 className="mt-1 text-xl font-serif font-bold text-[#24231F]">Your verified competition certificates</h2>
+                <p className="mt-1 text-xs text-[#69665F]">Download the official PDF or share its public verification link.</p>
+              </div>
+              <Link href="/certificates" className="text-xs font-semibold text-[#28533D] hover:underline">
+                Open Certificate Library →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {issuedCompetitionCertificates.map((certificate) => (
+                <div key={certificate.certificateId} className="rounded-xl border border-[#DED9CE] bg-[#FAF8F3] p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#28533D]">
+                      {certificate.tier || certificate.type.replace('competition_', '')} · ISSUED
+                    </span>
+                    <span className="text-[10px] font-mono text-[#8E8B83]">{certificate.milestoneCount} solved</span>
+                  </div>
+                  <h3 className="mt-2 text-sm font-bold text-[#24231F]">{certificate.title}</h3>
+                  <p className="mt-1 text-[10px] font-mono text-[#69665F] break-all">{certificate.certificateId}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => handleDownloadCertificate(certificate)} className="rounded-lg bg-[#28533D] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#1F4230]">
+                      Download PDF ↓
+                    </button>
+                    <button type="button" onClick={() => handleShareCertificate(certificate)} className="rounded-lg border border-[#28533D]/30 px-3 py-2 text-[11px] font-semibold text-[#28533D] hover:bg-[#E4E9DD]/50">
+                      Share ↗
+                    </button>
+                    <Link href={`/certificates/verify/${certificate.certificateId}`} target="_blank" className="rounded-lg border border-[#DED9CE] px-3 py-2 text-[11px] font-semibold text-[#69665F]">
+                      Verify
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {certificateSyncError && (
+          <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            {certificateSyncError}
+          </p>
+        )}
 
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
