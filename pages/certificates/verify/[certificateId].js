@@ -3,181 +3,162 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '../../../src/components/Navbar';
 import Footer from '../../../src/components/Footer';
+import { getPublicCertificateById, normalizeCertificateId } from '../../../lib/certificates/publicVerification.js';
 
 export async function getServerSideProps(context) {
-  const { certificateId } = context.params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const rawId = context.params?.certificateId;
+  const certificateId = typeof rawId === 'string' ? rawId.trim().slice(0, 96) : '';
+  context.res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+
+  const normalizedId = normalizeCertificateId(certificateId);
+  if (!normalizedId) {
+    return { props: { certificateId, verificationStatus: 'INVALID_ID', certificate: null } };
+  }
 
   try {
-    const res = await fetch(`${baseUrl}/api/certificates/verify/${certificateId}`);
-    const data = await res.json();
-
+    const result = await getPublicCertificateById(normalizedId);
     return {
       props: {
-        certificateId,
-        isValid: data.success && data.certificate?.status === 'VALID',
-        isRevoked: data.certificate?.status === 'REVOKED',
-        certificate: data.certificate || null,
-        error: !data.success ? data.message : null
+        certificateId: normalizedId,
+        verificationStatus: result.status,
+        certificate: result.certificate
       }
     };
-  } catch (err) {
+  } catch (error) {
+    console.error('[CertificateVerificationPage] Registry lookup unavailable:', error?.message || 'Unknown error');
     return {
       props: {
-        certificateId,
-        isValid: false,
-        isRevoked: false,
-        certificate: null,
-        error: 'Unable to reach verification verification authority.'
+        certificateId: normalizedId,
+        verificationStatus: 'UNAVAILABLE',
+        certificate: null
       }
     };
   }
 }
 
-export default function CertificateVerificationPage({
-  certificateId,
-  isValid,
-  isRevoked,
-  certificate,
-  error
-}) {
-  return (
-    <div className="min-h-screen flex flex-col bg-[#F8F5ED] dark:bg-[#1C1B18] text-[#24231F] dark:text-[#EAE7DF] transition-colors duration-200">
-      <Head>
-        <title>Credential Verification: {certificateId} — AlgoMania Official Registry</title>
-        <meta name="robots" content="noindex" />
-      </Head>
+function formatDate(value) {
+  if (!value) return 'Not recorded';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Not recorded';
+  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
 
+function Detail({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="rounded-xl border border-[#DED9CE] bg-[#FAF8F3] p-4">
+      <dt className="text-[10px] font-mono uppercase tracking-wider text-[#777268]">{label}</dt>
+      <dd className="mt-1 text-sm font-semibold text-[#24231F] break-words">{value}</dd>
+    </div>
+  );
+}
+
+export default function CertificateVerificationPage({ certificateId, verificationStatus, certificate }) {
+  const isValid = verificationStatus === 'VALID' && certificate;
+  const isRevoked = verificationStatus === 'REVOKED' && certificate;
+  const isUnavailable = verificationStatus === 'UNAVAILABLE';
+  const isNotFound = verificationStatus === 'NOT_FOUND' || verificationStatus === 'INVALID_ID';
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#F8F5ED] text-[#24231F]">
+      <Head>
+        <title>Verify Credential {certificateId ? `· ${certificateId}` : ''} — AlgoMania</title>
+        <meta name="description" content="Public verification record for an AlgoMania internship or algorithmic achievement credential." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <Navbar />
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-12">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#E4E9DD] dark:bg-[#28382F] text-[#28533D] dark:text-[#E4E9DD] text-xs font-mono font-bold uppercase tracking-wider mb-2">
-            <span>🛡️</span>
-            <span>AlgoMania Credential Registry</span>
+      <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#E4E9DD] px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D]">
+            <span className="h-2 w-2 rounded-full bg-[#EF592A]" />
+            AlgoMania · Official Credential Registry
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#24231F] dark:text-[#FFFDF8]">
-            Official Certificate Verification Record
-          </h1>
-          <p className="text-xs font-mono text-[#69665F] mt-1">
-            Credential Reference: {certificateId}
+          <h1 className="mt-5 text-3xl sm:text-5xl font-serif font-bold leading-tight">Certificate verification record</h1>
+          <p className="mt-3 text-sm sm:text-base leading-relaxed text-[#69665F]">
+            An independently accessible record of an AlgoMania internship or algorithmic achievement credential.
           </p>
         </div>
 
-        {/* VALID RECORD */}
-        {isValid && certificate && (
-          <div className="p-8 sm:p-10 rounded-2xl bg-[#FFFDF8] dark:bg-[#24231F] border-2 border-[#28533D] shadow-lg space-y-6 animate-fadeIn">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#DED9CE] dark:border-[#383630] gap-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-2xl font-bold">
-                  ✓
-                </div>
+        {isValid && (
+          <section className="overflow-hidden rounded-3xl border border-[#B9CDBD] bg-[#FFFDF8] shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#EAF1E9] px-5 sm:px-8 py-5 border-b border-[#D5E1D4]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#28533D] text-2xl font-bold text-white">✓</div>
                 <div>
-                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                    Official Status: Authentic & Verified
-                  </span>
-                  <h2 className="text-lg font-bold text-[#24231F] dark:text-[#FFFDF8]">
-                    Valid AlgoMania Credential
-                  </h2>
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D]">Registry status · authentic</p>
+                  <h2 className="text-xl font-bold text-[#1E3E2E]">Verified AlgoMania Credential</h2>
                 </div>
               </div>
-
-              <div className="text-right font-mono text-xs text-[#69665F]">
-                Issued: {new Date(certificate.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-              </div>
+              <span className="inline-flex w-fit rounded-full border border-[#A9C3AE] bg-white px-3 py-1.5 text-xs font-semibold text-[#28533D]">VALID</span>
             </div>
 
-            {/* Recipient and Title */}
-            <div className="p-4 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] space-y-3">
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase text-[#69665F]">Recipient Name:</span>
-                <p className="text-xl font-serif font-bold text-[#24231F] dark:text-[#FFFDF8] mt-0.5">
-                  {certificate.recipientName}
-                </p>
+            <div className="p-5 sm:p-8">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-[#777268]">This credential is issued to</p>
+              <h3 className="mt-2 text-2xl sm:text-4xl font-serif font-bold break-words">{certificate.recipientName}</h3>
+              <p className="mt-2 text-base sm:text-lg font-semibold text-[#28533D]">{certificate.title}</p>
+              {certificate.description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#69665F]">{certificate.description}</p>}
+
+              <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Detail label="Credential ID" value={certificate.certificateId} />
+                <Detail label="Credential type" value={certificate.type?.replace(/_/g, ' ').toUpperCase()} />
+                <Detail label="Program / domain" value={certificate.domain || (certificate.tier ? `${certificate.tier} competition tier` : null)} />
+                <Detail label="Duration" value={certificate.duration} />
+                <Detail label="Verified milestone" value={certificate.milestoneCount ? `${certificate.milestoneCount} unique accepted problems` : null} />
+                <Detail label="Issue date" value={formatDate(certificate.issueDate)} />
+                <Detail label="Program start" value={formatDate(certificate.startDate)} />
+                <Detail label="Completion date" value={formatDate(certificate.endDate)} />
+                <Detail label="Issued by" value={certificate.founderTitle || 'Founder, AlgoMania'} />
               </div>
 
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase text-[#69665F]">Program / Achievement:</span>
-                <p className="text-sm font-bold text-[#28533D] dark:text-[#88C49F] mt-0.5">
-                  {certificate.title}
-                </p>
-                <p className="text-xs text-[#4A4740] dark:text-[#C4C0B6] mt-1 leading-relaxed">
-                  {certificate.description}
-                </p>
+              <div className="mt-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-[#DED9CE] pt-5">
+                <p className="text-xs text-[#777268]">Public verification record. Candidate contact and payment details are not displayed.</p>
+                <Link href="/certificates/verify" className="text-sm font-semibold text-[#28533D] hover:text-[#EF592A]">Verify another credential →</Link>
               </div>
             </div>
-
-            {/* Metadata Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono">
-              <div className="p-3 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630]">
-                <span className="text-[#69665F] text-[10px]">Type:</span>
-                <p className="font-bold text-[#24231F] dark:text-[#FFFDF8] mt-0.5">
-                  {certificate.type.replace('_', ' ').toUpperCase()}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630]">
-                <span className="text-[#69665F] text-[10px]">Authorization:</span>
-                <p className="font-bold text-[#24231F] dark:text-[#FFFDF8] mt-0.5">
-                  {certificate.founderTitle}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] border border-[#DED9CE] dark:border-[#383630] col-span-2 sm:col-span-1">
-                <span className="text-[#69665F] text-[10px]">Registry:</span>
-                <p className="font-bold text-[#28533D] dark:text-[#88C49F] mt-0.5">
-                  AlgoMania Verified ✓
-                </p>
-              </div>
-            </div>
-
-            {/* Privacy Protection Notice */}
-            <div className="p-3 rounded-xl bg-[#FAF8F3] dark:bg-[#1C1B18] text-[11px] text-[#69665F] dark:text-[#8E8B83] text-center border border-[#DED9CE] dark:border-[#383630]">
-              🔒 For data privacy protection, candidate contact details, email addresses, and payment records are omitted from public registry verification.
-            </div>
-          </div>
+          </section>
         )}
 
-        {/* REVOKED RECORD */}
         {isRevoked && (
-          <div className="p-8 rounded-2xl bg-red-50 dark:bg-red-950/40 border-2 border-red-500 shadow-md space-y-4 text-center animate-fadeIn">
-            <div className="w-14 h-14 mx-auto rounded-full bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300 flex items-center justify-center text-2xl font-bold">
-              ✕
+          <section className="rounded-3xl border border-red-300 bg-[#FFFDF8] overflow-hidden">
+            <div className="flex items-center gap-3 bg-red-50 px-5 sm:px-8 py-6 border-b border-red-200">
+              <div className="h-12 w-12 flex items-center justify-center rounded-full bg-red-700 text-2xl font-bold text-white">!</div>
+              <div>
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-red-700">Registry status</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-red-800">Certificate revoked</h2>
+              </div>
             </div>
-            <h2 className="text-xl font-bold text-red-800 dark:text-red-300">
-              Certificate Revoked
-            </h2>
-            <p className="text-xs text-red-700 dark:text-red-400 max-w-md mx-auto">
-              Credential ID <span className="font-mono font-bold">{certificateId}</span> has been formally revoked by the AlgoMania administrative authority.
-            </p>
-            {certificate?.revokedReason && (
-              <p className="text-xs font-mono text-red-800 dark:text-red-300 p-2 bg-red-100 dark:bg-red-900/40 rounded-lg inline-block">
-                Reason: {certificate.revokedReason}
-              </p>
-            )}
-          </div>
+            <div className="p-5 sm:p-8 space-y-3">
+              <p className="text-sm text-[#69665F]">Credential <strong className="font-mono text-[#24231F]">{certificate.certificateId}</strong> is no longer valid.</p>
+              {certificate.revokedReason && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-800">Public reason: {certificate.revokedReason}</p>}
+              <p className="text-xs text-[#777268]">Revoked on {formatDate(certificate.revokedAt)}.</p>
+            </div>
+          </section>
         )}
 
-        {/* NOT FOUND / INVALID RECORD */}
-        {!isValid && !isRevoked && (
-          <div className="p-8 rounded-2xl bg-[#FFFDF8] dark:bg-[#24231F] border border-[#DED9CE] dark:border-[#383630] shadow-sm space-y-4 text-center animate-fadeIn">
-            <div className="w-14 h-14 mx-auto rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-2xl">
-              ⚠️
+        {(isNotFound || isUnavailable) && (
+          <section className="rounded-3xl border border-[#DED9CE] bg-[#FFFDF8] p-6 sm:p-10 text-center shadow-sm">
+            <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full text-2xl font-bold ${isUnavailable ? 'bg-amber-100 text-amber-800' : 'bg-[#F2EDE2] text-[#777268]'}`}>
+              {isUnavailable ? '…' : '?'}
             </div>
-            <h2 className="text-xl font-bold text-[#24231F] dark:text-[#FFFDF8]">
-              Credential Not Found
-            </h2>
-            <p className="text-xs text-[#69665F] dark:text-[#A09D95] max-w-md mx-auto">
-              The credential ID <span className="font-mono font-bold text-[#EF592A]">{certificateId}</span> could not be verified in the authoritative AlgoMania registry. Please verify the ID for typographical errors.
+            <h2 className="text-xl sm:text-2xl font-bold">{isUnavailable ? 'Verification temporarily unavailable' : 'Credential not found'}</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[#69665F]">
+              {isUnavailable
+                ? 'The official registry could not be reached. This does not mean the credential is invalid. Please retry in a moment.'
+                : verificationStatus === 'INVALID_ID'
+                  ? 'Check the credential reference and try again.'
+                  : 'No matching issued credential was found in the AlgoMania registry. Check the ID printed on the certificate.'}
             </p>
-            <div className="pt-2">
-              <Link
-                href="/certificates"
-                className="px-5 py-2.5 rounded-xl bg-[#28533D] text-[#FFFDF8] text-xs font-semibold"
-              >
-                Go to Certificate Library
-              </Link>
+            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+              <Link href="/certificates/verify" className="rounded-xl bg-[#28533D] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1F4230]">Try another ID</Link>
+              <Link href="/certificates/verify" className="rounded-xl border border-[#DED9CE] px-5 py-3 text-sm font-semibold text-[#24231F] hover:border-[#EF592A]">Retry verification</Link>
             </div>
-          </div>
+          </section>
         )}
+
+        <div className="mt-8 text-center">
+          <p className="text-xs text-[#777268]">Need help? Visit the <Link href="/internships" className="font-semibold text-[#28533D] hover:text-[#EF592A]">AlgoMania program centre</Link>.</p>
+        </div>
       </main>
 
       <Footer />
