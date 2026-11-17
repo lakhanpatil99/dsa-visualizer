@@ -337,6 +337,53 @@ export default function Home() {
         </section>
 
         {/* ====================================================================
+            PUBLIC CREDENTIAL VERIFICATION
+            Recruiters and visitors can verify without creating an account.
+            ==================================================================== */}
+        <section className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-14 sm:py-20 border-t border-[#DED9CE]">
+          <div className="rounded-3xl border border-[#C9D8C9] bg-[#FFFDF8] p-6 sm:p-10 lg:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-7">
+                <span className="inline-flex rounded-full bg-[#E4E9DD] px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-[#28533D]">
+                  Public credential registry
+                </span>
+                <h2 className="mt-4 text-2xl sm:text-4xl font-serif font-bold text-[#24231F]">
+                  Every achievement has a verifiable record.
+                </h2>
+                <p className="mt-3 max-w-xl text-sm sm:text-base leading-relaxed text-[#69665F]">
+                  Confirm an AlgoMania internship or algorithmic achievement certificate using its unique credential reference. No account or sign-in is required.
+                </p>
+              </div>
+              <div className="lg:col-span-5">
+                <form action="/certificates/verify" method="GET" className="space-y-3">
+                  <label htmlFor="home-certificate-id" className="block text-xs font-mono font-bold uppercase tracking-wider text-[#69665F]">
+                    Certificate ID
+                  </label>
+                  <input
+                    id="home-certificate-id"
+                    name="id"
+                    type="text"
+                    required
+                    minLength={3}
+                    maxLength={96}
+                    autoComplete="off"
+                    spellCheck="false"
+                    placeholder="Enter credential reference"
+                    className="w-full rounded-xl border border-[#CFC9BC] bg-white px-4 py-3 text-sm font-mono uppercase text-[#24231F] outline-none focus:border-[#28533D] focus:ring-2 focus:ring-[#28533D]/15"
+                  />
+                  <button type="submit" className="w-full rounded-xl bg-[#28533D] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#1F4230]">
+                    Verify Credential →
+                  </button>
+                  <p className="text-[11px] leading-relaxed text-[#888276]">
+                    Public verification is available to recruiters, colleges and certificate recipients. Personal and payment details remain private.
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ====================================================================
             SECTION D: Final Call to Action
             Confident, high-contrast editorial banner in Burnt Orange
             ==================================================================== */}
