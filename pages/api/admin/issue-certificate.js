@@ -33,6 +33,10 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Valid certificate type required.' });
   }
 
+  if (typeof targetId !== 'string' || !targetId.trim()) {
+    return res.status(400).json({ success: false, message: 'A valid application or candidate reference is required.' });
+  }
+
   let connection;
   try {
     connection = await dbConnect();
@@ -52,8 +56,6 @@ async function handler(req, res) {
       message: 'The certificate registry is temporarily unavailable. Please retry.'
     });
   }
-  const isConnected = true;
-
   let userEmail = '';
   let firebaseUid = '';
   let finalRecipient = recipientName || '';
