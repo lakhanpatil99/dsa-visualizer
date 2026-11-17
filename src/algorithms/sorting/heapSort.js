@@ -10,7 +10,7 @@ export const heapSort = async (array, callback, speed = 1) => {
 
     step++;
     if (callback) {
-      callback([...arr], i, left < size ? left : -1, largest, step, false);
+      await callback([...arr], i, left < size ? left : -1, largest, step, false);
     }
 
     if (left < size && arr[left] > arr[largest]) {
@@ -25,7 +25,7 @@ export const heapSort = async (array, callback, speed = 1) => {
       [arr[i], arr[largest]] = [arr[largest], arr[i]];
       step++;
       if (callback) {
-        callback([...arr], i, largest, largest, step, true);
+        await callback([...arr], i, largest, largest, step, true);
       }
       if (speed > 0) {
         await new Promise(resolve => setTimeout(resolve, 1000 / speed));
@@ -44,7 +44,7 @@ export const heapSort = async (array, callback, speed = 1) => {
     [arr[0], arr[i]] = [arr[i], arr[0]];
     step++;
     if (callback) {
-      callback([...arr], 0, i, 0, step, true);
+      await callback([...arr], 0, i, 0, step, true);
     }
     if (speed > 0) {
       await new Promise(resolve => setTimeout(resolve, 1000 / speed));
@@ -53,7 +53,7 @@ export const heapSort = async (array, callback, speed = 1) => {
   }
 
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

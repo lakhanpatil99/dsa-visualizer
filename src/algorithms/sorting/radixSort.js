@@ -15,7 +15,7 @@ export const radixSort = async (array, callback, speed = 1) => {
       count[digit]++;
       step++;
       if (callback) {
-        callback([...arr], i, -1, -1, step, false);
+        await callback([...arr], i, -1, -1, step, false);
       }
     }
 
@@ -29,7 +29,7 @@ export const radixSort = async (array, callback, speed = 1) => {
       count[digit]--;
       step++;
       if (callback) {
-        callback([...output], count[digit], i, -1, step, true);
+        await callback([...output], count[digit], i, -1, step, true);
       }
       if (speed > 0) {
         await new Promise(resolve => setTimeout(resolve, 500 / speed));
@@ -46,7 +46,7 @@ export const radixSort = async (array, callback, speed = 1) => {
   }
 
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

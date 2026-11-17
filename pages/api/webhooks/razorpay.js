@@ -91,7 +91,12 @@ async function handler(req, res) {
       isConnected = true;
     }
   } catch (err) {
-    console.warn('MongoDB connection check failed, using memory store fallback:', err.message);
+    console.warn('MongoDB connection check failed:', err.message);
+  }
+
+  if (process.env.NODE_ENV === 'production' && !isConnected) {
+    console.error('[webhook] Database unavailable in production — returning 503 for Razorpay retry');
+    return res.status(503).json({ success: false, message: 'Database temporarily unavailable. Retry required.' });
   }
 
   // ── Dedup check ───────────────────────────────────────────────────
@@ -102,7 +107,7 @@ async function handler(req, res) {
     existingEvent = memoryStore.getWebhookEvent(eventId);
   }
 
-  if (existingEvent) {
+  if (existingEvent && existingEvent.status === 'PROCESSED') {
     return res.status(200).json({ success: true, message: 'Duplicate event — already processed.' });
   }
 
@@ -112,9 +117,36 @@ async function handler(req, res) {
   const razorpayOrderId = paymentEntity.order_id || orderEntity.id || null;
   const razorpayPaymentId = paymentEntity.id || null;
 
-  let processingResult = 'unhandled';
+  // ── Stage 1: Record RECEIVED / PROCESSING state ───────────────────
+  let webhookDoc = {
+    eventId,
+    eventType,
+    status: 'PROCESSING',
+    razorpayOrderId,
+    razorpayPaymentId,
+    payload: body,
+    processedAt: null,
+    processingResult: 'in_progress',
+  };
 
-  // ── Handle events ─────────────────────────────────────────────────
+  if (isConnected) {
+    try {
+      await WebhookEvent.findOneAndUpdate(
+        { eventId },
+        { $setOnInsert: webhookDoc },
+        { upsert: true, new: true }
+      );
+    } catch (e) {
+      console.warn('[webhook] Upsert warning for eventId:', e.message);
+    }
+  } else {
+    memoryStore.saveWebhookEvent(webhookDoc);
+  }
+
+  let processingResult = 'unhandled';
+  let isFailedRetryable = false;
+
+  // ── Stage 2: Execute Handlers with Retry Preservation ───────────────
   try {
     if (eventType === 'payment.captured') {
       processingResult = await handlePaymentCaptured(razorpayOrderId, razorpayPaymentId, paymentEntity, eventId, isConnected);
@@ -128,33 +160,39 @@ async function handler(req, res) {
   } catch (err) {
     console.error(`[webhook] Error handling event ${eventType}:`, err);
     processingResult = `error:${err.message}`;
+    isFailedRetryable = true;
   }
 
-  // ── Save webhook event ────────────────────────────────────────────
-  const webhookDoc = {
-    eventId,
-    eventType,
-    razorpayOrderId,
-    razorpayPaymentId,
-    payload: body,
+  // ── Stage 3: Record Final Lifecycle State ─────────────────────────
+  const finalStatus = isFailedRetryable
+    ? 'FAILED_RETRYABLE'
+    : (processingResult.startsWith('ignored') ? 'IGNORED' : 'PROCESSED');
+
+  const updateFields = {
+    status: finalStatus,
     processedAt: new Date(),
     processingResult,
   };
 
   if (isConnected) {
     try {
-      await WebhookEvent.create(webhookDoc);
+      await WebhookEvent.findOneAndUpdate({ eventId }, { $set: updateFields });
     } catch (err) {
-      // Duplicate key from race condition — harmless
-      if (err.code !== 11000) {
-        console.error('[webhook] Failed to save WebhookEvent:', err);
-      }
+      console.error('[webhook] Failed to update final WebhookEvent status:', err);
     }
   } else {
-    memoryStore.saveWebhookEvent(webhookDoc);
+    memoryStore.updateWebhookEvent(eventId, updateFields);
   }
 
-  // Always return 200 to Razorpay so it doesn't retry indefinitely
+  // If retryable failure occurred, return HTTP 500 so Razorpay retries automatically
+  if (isFailedRetryable) {
+    return res.status(500).json({
+      success: false,
+      message: 'Temporary processing failure. Event scheduled for retry.',
+      result: processingResult
+    });
+  }
+
   return res.status(200).json({ success: true, message: 'Webhook processed.', result: processingResult });
 }
 

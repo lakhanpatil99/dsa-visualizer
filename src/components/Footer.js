@@ -122,7 +122,7 @@ export default function Footer() {
             © {new Date().getFullYear()} AlgoMania. All rights reserved.
           </div>
           <div className="flex items-center space-x-4 text-[11px] font-mono">
-            <span>Next.js 14 + React 18</span>
+            <span>Founded by Lakhansing Patil</span>
             <span>•</span>
             <span className="text-[#28533D] dark:text-[#76A889] font-bold">Deterministic Engine</span>
           </div>

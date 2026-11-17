@@ -1,5 +1,6 @@
 import withAuth from '../../../lib/auth.js';
-import { paymentProvider, PAYMENT_STATUS } from '../../../lib/payments/PaymentProvider.js';
+import { paymentProvider } from '../../../lib/payments/PaymentProvider.js';
+import { INTERNSHIP_FEE_INR, INTERNSHIP_FEE_PAISE } from '../../../lib/payments/razorpayConfig.js';
 
 async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -9,7 +10,7 @@ async function handler(req, res) {
   const user = req.user;
   const { purpose, referenceId, tier } = req.body || {};
 
-  if (!purpose || !['internship_certificate', 'competition_certificate'].includes(purpose)) {
+  if (!purpose || !['internship_certificate', 'competition_certificate', 'internship_registration'].includes(purpose)) {
     return res.status(400).json({ success: false, message: 'Valid payment purpose is required.' });
   }
 
@@ -17,26 +18,23 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Reference ID is required.' });
   }
 
-  // Define nominal certificate processing fee breakdown (for future activation)
-  const amount = purpose === 'internship_certificate' ? 499 : 299;
+  // Canonical standard fee: ₹99 (9900 paise)
+  const amount = INTERNSHIP_FEE_INR;
 
   const orderResult = await paymentProvider.createOrder({
+    applicationId: referenceId,
     userId: user.uid,
     userEmail: user.email,
-    purpose,
-    referenceId,
-    amount,
-    currency: 'INR',
-    tier
   });
 
   return res.status(200).json({
     success: true,
-    paymentStatus: orderResult.status,
+    paymentStatus: 'CREATED',
     amount,
+    amountPaise: INTERNSHIP_FEE_PAISE,
     currency: 'INR',
-    isConfigured: paymentProvider.isConfigured,
-    message: orderResult.message
+    orderId: orderResult.id,
+    message: 'Payment order created successfully for ₹99 standard registration.'
   });
 }
 

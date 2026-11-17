@@ -112,7 +112,7 @@ export default function HomeFooter() {
             © {new Date().getFullYear()} AlgoMania. All rights reserved.
           </div>
           <div className="flex items-center space-x-6 text-[11px] font-mono">
-            <span>Next.js 14 + React 18</span>
+            <span>Founded by Lakhansing Patil</span>
             <span>•</span>
             <span>No external canvas tracking</span>
             <span>•</span>

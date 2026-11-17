@@ -15,7 +15,7 @@ export const countingSort = async (array, callback, speed = 1) => {
     count[arr[i] - min]++;
     step++;
     if (callback) {
-      callback([...arr], i, -1, -1, step, false);
+      await callback([...arr], i, -1, -1, step, false);
     }
     if (speed > 0) {
       await new Promise(resolve => setTimeout(resolve, 600 / speed));
@@ -35,7 +35,7 @@ export const countingSort = async (array, callback, speed = 1) => {
     count[val - min]--;
     step++;
     if (callback) {
-      callback([...output], outIdx, i, -1, step, true);
+      await callback([...output], outIdx, i, -1, step, true);
     }
     if (speed > 0) {
       await new Promise(resolve => setTimeout(resolve, 600 / speed));
@@ -48,7 +48,7 @@ export const countingSort = async (array, callback, speed = 1) => {
   }
 
   if (callback) {
-    callback([...arr], -1, -1, -1, step + 1);
+    await callback([...arr], -1, -1, -1, step + 1);
   }
   return arr;
 };

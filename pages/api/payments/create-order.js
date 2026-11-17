@@ -57,7 +57,15 @@ async function handler(req, res) {
       isConnected = true;
     }
   } catch (err) {
-    console.warn('MongoDB connection check failed, using memory store fallback:', err.message);
+    console.warn('MongoDB connection check failed:', err.message);
+  }
+
+  if (process.env.NODE_ENV === 'production' && !isConnected) {
+    return res.status(503).json({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Database service is temporarily unavailable. Please retry shortly.',
+    });
   }
 
   // ── Validate application ownership ────────────────────────────────
@@ -94,6 +102,22 @@ async function handler(req, res) {
   }
 
   if (existingOrder && existingOrder.razorpayOrderId) {
+    const retryAttempt = {
+      attemptId: `att_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`,
+      status: 'CHECKOUT_REOPENED',
+      createdAt: new Date(),
+    };
+    if (isConnected) {
+      await PaymentOrder.updateOne(
+        { _id: existingOrder._id },
+        { $push: { attempts: retryAttempt } }
+      );
+    } else {
+      const attempts = existingOrder.attempts || [];
+      attempts.push(retryAttempt);
+      memoryStore.updatePaymentOrder(existingOrder.orderId, { attempts });
+    }
+
     return res.status(200).json({
       success: true,
       orderId: existingOrder.orderId,
@@ -126,6 +150,11 @@ async function handler(req, res) {
 
   // ── Persist PaymentOrder ──────────────────────────────────────────
   const internalOrderId = `ord_${crypto.randomUUID().replace(/-/g, '')}`;
+  const initialAttempt = {
+    attemptId: `att_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`,
+    status: 'CREATED',
+    createdAt: new Date(),
+  };
 
   const orderDoc = {
     orderId: internalOrderId,
@@ -138,6 +167,7 @@ async function handler(req, res) {
     paymentMode: config.mode,
     status: 'CREATED',
     verificationStatus: 'UNVERIFIED',
+    attempts: [initialAttempt],
     createdAt: new Date(),
     updatedAt: new Date(),
   };

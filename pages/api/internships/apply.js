@@ -2,7 +2,7 @@ import withAuth from '../../../lib/auth.js';
 import dbConnect from '../../../lib/dbConnect.js';
 import InternshipApplication from '../../../models/InternshipApplication.js';
 import memoryStore from '../../../lib/memoryStore.js';
-import { getProgramByDomain } from '../../../lib/internships/internshipData.js';
+import { getProgramByDomain, validateDomain, getDomainDisplayName } from '../../../lib/internships/internshipData.js';
 import crypto from 'crypto';
 
 async function handler(req, res) {
@@ -41,11 +41,19 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Academic year is required.' });
   }
 
-  const program = getProgramByDomain(domain);
-  if (!program) {
+  const canonicalDomain = validateDomain(domain);
+  if (!canonicalDomain) {
     return res.status(400).json({
       success: false,
       message: 'Invalid domain selected. Please select Java, Python, or C++.'
+    });
+  }
+
+  const program = getProgramByDomain(canonicalDomain);
+  if (!program) {
+    return res.status(400).json({
+      success: false,
+      message: 'Program definition not found for the selected domain.'
     });
   }
 
@@ -61,9 +69,7 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Please describe your learning objectives (minimum 10 characters).' });
   }
 
-  const domainNormalized = domain.toLowerCase().trim();
-
-  // Check for duplicate active applications
+  // Check database connection
   let isConnected = false;
   try {
     const conn = await dbConnect();
@@ -71,34 +77,70 @@ async function handler(req, res) {
       isConnected = true;
     }
   } catch (err) {
-    console.warn('MongoDB connection check failed, using memory store fallback:', err.message);
+    console.warn('MongoDB connection check failed:', err.message);
   }
 
-  if (isConnected) {
-    const existing = await InternshipApplication.findOne({
-      firebaseUid: user.uid,
-      domain: domainNormalized,
-      status: { $in: ['PENDING_REVIEW', 'APPROVED', 'IN_PROGRESS'] }
+  if (process.env.NODE_ENV === 'production' && !isConnected) {
+    return res.status(503).json({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Database service is temporarily unavailable. Please retry shortly.'
     });
-    if (existing) {
-      return res.status(409).json({
-        success: false,
-        code: 'DUPLICATE_APPLICATION',
-        message: `You already have an active application (${existing.applicationId}) for the ${program.domain} program.`
-      });
-    }
+  }
+
+  // Check for existing application by this user in this domain
+  let existing = null;
+  if (isConnected) {
+    existing = await InternshipApplication.findOne({
+      firebaseUid: user.uid,
+      domain: canonicalDomain,
+    }).sort({ createdAt: -1 });
   } else {
     const existingApps = memoryStore.getApplicationsByUser(user.uid);
-    const hasDuplicate = existingApps.some(
-      a => a.domain === domainNormalized && ['PENDING_REVIEW', 'APPROVED', 'IN_PROGRESS'].includes(a.status)
-    );
-    if (hasDuplicate) {
+    existing = existingApps.find(a => a.domain === canonicalDomain) || null;
+  }
+
+  if (existing) {
+    // If already paid, reject duplicate registration
+    if (existing.paymentStatus === 'PAID_VERIFIED') {
       return res.status(409).json({
         success: false,
-        code: 'DUPLICATE_APPLICATION',
-        message: `You already have an active application for the ${program.domain} program.`
+        code: 'ALREADY_REGISTERED',
+        message: `You already have an active paid registration (${existing.applicationId}) for the ${getDomainDisplayName(canonicalDomain)} track.`
       });
     }
+
+    // If unpaid, allow updating existing application and return it to proceed to payment
+    const updateData = {
+      fullName: fullName.trim(),
+      contactNumber: contactNumber.trim(),
+      college: college.trim(),
+      branch: branch.trim(),
+      academicYear,
+      duration,
+      preferredStartDate,
+      learningObjectives: learningObjectives.trim(),
+      priorExperience: (priorExperience || '').trim(),
+      updatedAt: new Date()
+    };
+
+    let updatedApplication;
+    if (isConnected) {
+      updatedApplication = await InternshipApplication.findOneAndUpdate(
+        { applicationId: existing.applicationId },
+        { $set: updateData },
+        { new: true }
+      );
+    } else {
+      updatedApplication = memoryStore.updateApplication(existing.applicationId, updateData);
+    }
+
+    return res.status(200).json({
+      success: true,
+      isExistingPending: true,
+      message: 'Existing pending application retrieved. Please proceed to payment.',
+      application: updatedApplication || existing
+    });
   }
 
   // Generate Unique Application ID: INT-2026-XXXXX
@@ -114,7 +156,7 @@ async function handler(req, res) {
     college: college.trim(),
     branch: branch.trim(),
     academicYear,
-    domain: domainNormalized,
+    domain: canonicalDomain,
     domainTitle: program.title,
     duration,
     preferredStartDate,

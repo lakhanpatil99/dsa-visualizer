@@ -3,7 +3,7 @@ export const quickSort = async (array, callback, speed = 1) => {
   let step = 0;
   await quickSortHelper(arr, 0, arr.length - 1, callback, speed, step);
   // Final callback to clear highlighting
-  callback([...arr], -1, -1, -1, step + 1, false);
+  if (callback) await callback([...arr], -1, -1, -1, step + 1, false);
   return arr;
 };
 
@@ -19,25 +19,25 @@ const quickSortHelper = async (arr, low, high, callback, speed, step) => {
 const partition = async (arr, low, high, callback, speed, step) => {
   const pivot = arr[high];
   step++;
-  callback([...arr], -1, -1, high, step, false);
+  if (callback) await callback([...arr], -1, -1, high, step, false);
   
   let i = low - 1;
   
   for (let j = low; j < high; j++) {
     step++;
-    callback([...arr], j, -1, high, step, false);
+    if (callback) await callback([...arr], j, -1, high, step, false);
     
     if (arr[j] < pivot) {
       i++;
       [arr[i], arr[j]] = [arr[j], arr[i]];
-      callback([...arr], j, -1, high, step + 1, true);
+      if (callback) await callback([...arr], j, -1, high, step + 1, true);
     }
     
     await new Promise(resolve => setTimeout(resolve, 1000 / speed));
   }
   
   [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
-  callback([...arr], -1, -1, high, step + 1, true);
+  if (callback) await callback([...arr], -1, -1, high, step + 1, true);
   
   return i + 1;
 };

@@ -11,6 +11,12 @@ const WebhookEventSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    status: {
+      type: String,
+      enum: ['RECEIVED', 'PROCESSING', 'PROCESSED', 'FAILED_RETRYABLE', 'IGNORED'],
+      default: 'RECEIVED',
+      index: true,
+    },
     razorpayOrderId: {
       type: String,
       index: true,

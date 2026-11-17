@@ -3,8 +3,11 @@ import { DarkModeContext } from '../../context/ThemeContext';
 
 export default function Controls({
   isRunning = false,
+  isPaused = false,
+  isCompleted = false,
   onStart,
   onPause,
+  onResume,
   onNext,
   onPrevious,
   onReset,
@@ -26,19 +29,50 @@ export default function Controls({
     { label: '4x', value: 4 }
   ];
 
+  const handlePlayPauseClick = () => {
+    if (isCompleted) {
+      if (onReset) onReset();
+      setTimeout(() => {
+        if (onStart) onStart();
+      }, 50);
+    } else if (isRunning && !isPaused) {
+      if (onPause) onPause();
+    } else if (isPaused) {
+      if (onResume) {
+        onResume();
+      } else if (onStart) {
+        onStart();
+      }
+    } else {
+      if (onStart) onStart();
+    }
+  };
+
+  const getButtonLabel = () => {
+    if (isRunning && !isPaused) return 'PAUSE';
+    if (isPaused) return 'RESUME';
+    if (isCompleted) return 'REPLAY';
+    return 'PLAY';
+  };
+
+  const getButtonIcon = () => {
+    if (isRunning && !isPaused) return '⏸';
+    return '▶';
+  };
+
   return (
     <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
-      {/* Primary Actions: Play/Pause, Step, Prev, Reset */}
+      {/* Primary Actions: Play/Pause/Resume, Step, Prev, Reset */}
       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-        {/* Play/Pause Button */}
+        {/* Play/Pause/Resume Button */}
         <button
           type="button"
-          onClick={isRunning ? onPause : onStart}
+          onClick={handlePlayPauseClick}
           disabled={disabled}
           className="px-4 py-2 rounded-lg font-bold tracking-wider bg-[#EF592A] hover:bg-[#d64b20] text-[#FFFDF8] shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
         >
-          <span>{isRunning ? 'PAUSE' : 'PLAY'}</span>
-          <span>{isRunning ? '⏸' : '▶'}</span>
+          <span>{getButtonLabel()}</span>
+          <span>{getButtonIcon()}</span>
         </button>
 
         {/* Step Backward (if supported) */}
@@ -80,8 +114,8 @@ export default function Controls({
         )}
       </div>
 
-      {/* Center Timeline Scrubber (if totalSteps > 0) */}
-      {totalSteps > 0 && (
+      {/* Center Timeline Scrubber / Step Indicator */}
+      {totalSteps > 0 ? (
         <div className="flex items-center space-x-2 w-full sm:w-64">
           <span className="text-[11px] text-[#69665F] shrink-0 font-bold">
             {currentStep}/{totalSteps}
@@ -91,12 +125,21 @@ export default function Controls({
             min={0}
             max={totalSteps}
             value={currentStep}
-            disabled={disabled || isRunning}
+            disabled={disabled || (isRunning && !isPaused) || !onScrub}
             onChange={(e) => onScrub && onScrub(Number(e.target.value))}
             className="w-full accent-[#EF592A] cursor-pointer disabled:cursor-not-allowed"
           />
         </div>
-      )}
+      ) : currentStep > 0 ? (
+        <div className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-[#FAF8F3] dark:bg-[#1D1C19] border border-[#DED9CE] dark:border-[#383630]">
+          <span className="text-[10px] uppercase font-bold text-[#69665F] dark:text-[#A09D95]">
+            Step
+          </span>
+          <span className="text-xs font-bold text-[#EF592A] font-mono">
+            {currentStep}
+          </span>
+        </div>
+      ) : null}
 
       {/* Speed Controls */}
       <div className="flex items-center space-x-1.5 self-end sm:self-auto">

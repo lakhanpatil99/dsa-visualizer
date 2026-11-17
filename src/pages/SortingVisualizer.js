@@ -156,8 +156,12 @@ const SortingVisualizer = () => {
     let localComparisons = 0;
     let localSwaps = 0;
 
-    const callback = (arrSnapshot, currIdx, compIdx, pivIdx, step, isSwap) => {
-      if (!isRunningRef.current) return;
+    const callback = async (arrSnapshot, currIdx, compIdx, pivIdx, step, isSwap) => {
+      if (!isRunningRef.current) {
+        const err = new Error('SORT_STOPPED');
+        err.isAbort = true;
+        throw err;
+      }
       setArray([...arrSnapshot]);
       setCurrentIndex(currIdx);
       setComparingIndex(compIdx);
@@ -177,6 +181,17 @@ const SortingVisualizer = () => {
         const val = arrSnapshot[currIdx] || 50;
         dispatchAudio(AudioEventTypes.SORT_COMPARE, { valueRatio: val / 100 });
       }
+
+      // Cooperative pause loop: suspend animation frame until resumed or stopped
+      while (isPausedRef.current && isRunningRef.current) {
+        await new Promise((resolve) => setTimeout(resolve, 60));
+      }
+
+      if (!isRunningRef.current) {
+        const err = new Error('SORT_STOPPED');
+        err.isAbort = true;
+        throw err;
+      }
     };
 
     try {
@@ -184,6 +199,7 @@ const SortingVisualizer = () => {
       if (isRunningRef.current) {
         setArray(sortedResult);
         setIsCompleted(true);
+        setTotalSteps(currentStep);
         setCurrentIndex(-1);
         setComparingIndex(-1);
         setPivotIndex(-1);
@@ -191,10 +207,14 @@ const SortingVisualizer = () => {
         dispatchAudio(AudioEventTypes.SORT_COMPLETE, { priority: true, force: true });
       }
     } catch (e) {
-      console.error('Sorting execution error:', e);
+      if (!e?.isAbort) {
+        console.error('Sorting execution error:', e);
+      }
     } finally {
       setIsRunning(false);
+      setIsPaused(false);
       isRunningRef.current = false;
+      isPausedRef.current = false;
     }
   };
 
@@ -326,13 +346,15 @@ const SortingVisualizer = () => {
     <Controls
       isRunning={isRunning}
       isPaused={isPaused}
-      onStart={isPaused ? handleResume : handleStart}
+      isCompleted={isCompleted}
+      onStart={handleStart}
       onPause={handlePause}
+      onResume={handleResume}
       onReset={handleReset}
       onSpeedChange={setSpeed}
       speed={speed}
       currentStep={currentStep}
-      totalSteps={Math.max(currentStep, totalSteps)}
+      totalSteps={totalSteps}
       disabled={array.length === 0}
     />
   );

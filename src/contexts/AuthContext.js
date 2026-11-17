@@ -1,8 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { onAuthStateChanged, onIdTokenChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase.js';
 import * as authService from '../../lib/authService.js';
 import ProgressService from '../services/progressService.js';
+
+// Session enforcement constants
+const MAX_SESSION_AGE_MS = 8 * 60 * 60 * 1000;   // 8 hours absolute max
+const IDLE_TIMEOUT_MS    = 30 * 60 * 1000;         // 30 minutes idle timeout
+const IDLE_CHECK_INTERVAL_MS = 60 * 1000;          // Check every 60 seconds
 
 // Explicit Authentication States
 export const AuthStates = {
@@ -31,6 +36,7 @@ export const AuthProvider = ({ children }) => {
   const [dbUser, setDbUser] = useState(null);
   const [idToken, setIdToken] = useState(null);
   const [authError, setAuthError] = useState(null);
+  const lastActivityRef = useRef(Date.now());
 
   // Helper to retrieve fresh ID token on demand
   const getIdToken = useCallback(async (forceRefresh = false) => {
@@ -121,8 +127,23 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Cross-tab logout and state synchronization
+  // Cross-tab logout and state synchronization via BroadcastChannel
   useEffect(() => {
+    let bc = null;
+    try {
+      bc = new BroadcastChannel('algomania_auth');
+      bc.onmessage = (event) => {
+        if (event.data === 'LOGOUT') {
+          if (auth && auth.currentUser) {
+            auth.signOut();
+          }
+        }
+      };
+    } catch {
+      // BroadcastChannel not supported — fall back to localStorage event
+    }
+
+    // Legacy fallback for browsers without BroadcastChannel
     const handleStorageChange = (e) => {
       if (e.key === 'algomania_logout_event') {
         if (auth && auth.currentUser) {
@@ -131,7 +152,60 @@ export const AuthProvider = ({ children }) => {
       }
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (bc) bc.close();
+    };
+  }, []);
+
+  // Track user activity for idle timeout
+  useEffect(() => {
+    const updateActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, updateActivity, { passive: true }));
+    return () => {
+      events.forEach(e => window.removeEventListener(e, updateActivity));
+    };
+  }, []);
+
+  // Session enforcement: 8h max age + 30m idle timeout
+  useEffect(() => {
+    if (!auth) return;
+
+    const intervalId = setInterval(async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const now = Date.now();
+
+      // Check idle timeout (30 minutes without user interaction)
+      if (now - lastActivityRef.current > IDLE_TIMEOUT_MS) {
+        console.warn('[AlgoMania Session] Idle timeout exceeded (30 minutes). Logging out.');
+        if (auth) await auth.signOut();
+        return;
+      }
+
+      // Check absolute session lifetime (8 hours from auth_time)
+      try {
+        const tokenResult = await user.getIdTokenResult(false);
+        const authTime = tokenResult.claims.auth_time;
+        if (authTime) {
+          const authTimeMs = Number(authTime) * 1000;
+          if (now - authTimeMs > MAX_SESSION_AGE_MS) {
+            console.warn('[AlgoMania Session] Maximum session lifetime exceeded (8 hours). Logging out.');
+            if (auth) await auth.signOut();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[AlgoMania Session] Session check error:', err.message);
+      }
+    }, IDLE_CHECK_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Registration handler
@@ -221,8 +295,16 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       await authService.logoutUser();
-      // Notify other browser tabs
+      // Notify other browser tabs via BroadcastChannel
       if (typeof window !== 'undefined') {
+        try {
+          const bc = new BroadcastChannel('algomania_auth');
+          bc.postMessage('LOGOUT');
+          bc.close();
+        } catch {
+          // Fallback for no BroadcastChannel support
+        }
+        // Legacy fallback
         localStorage.setItem('algomania_logout_event', Date.now().toString());
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');

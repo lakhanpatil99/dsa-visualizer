@@ -14,8 +14,6 @@ import memoryStore from '../../../lib/memoryStore.js';
 import { paymentProvider } from '../../../lib/payments/PaymentProvider.js';
 import { INTERNSHIP_FEE_PAISE } from '../../../lib/payments/razorpayConfig.js';
 
-const STALE_PENDING_MS = 15 * 60 * 1000; // 15 minutes
-
 async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
@@ -35,7 +33,15 @@ async function handler(req, res) {
       isConnected = true;
     }
   } catch (err) {
-    console.warn('MongoDB connection check failed, using memory store fallback:', err.message);
+    console.warn('MongoDB connection check failed:', err.message);
+  }
+
+  if (process.env.NODE_ENV === 'production' && !isConnected) {
+    return res.status(503).json({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Database service is temporarily unavailable. Please retry shortly.',
+    });
   }
 
   // ── Fetch latest order for this user + application ────────────────
@@ -75,35 +81,48 @@ async function handler(req, res) {
     });
   }
 
-  // ── Stale PENDING reconciliation ──────────────────────────────────
+  // ── Active / In-Flight Reconciliation with Razorpay API ────────────
   if (
-    paymentOrder.status === 'PENDING' &&
-    paymentOrder.razorpayPaymentId &&
-    Date.now() - new Date(paymentOrder.updatedAt || paymentOrder.createdAt).getTime() > STALE_PENDING_MS
+    (paymentOrder.status === 'PENDING' || paymentOrder.status === 'CREATED' || paymentOrder.status === 'AUTHORIZED') &&
+    paymentOrder.status !== 'CAPTURED'
   ) {
     try {
-      const payment = await paymentProvider.fetchPayment(paymentOrder.razorpayPaymentId);
+      let capturedPayment = null;
 
-      if (payment.status === 'captured' && payment.amount === INTERNSHIP_FEE_PAISE) {
+      // Check specific payment ID if present
+      if (paymentOrder.razorpayPaymentId) {
+        const p = await paymentProvider.fetchPayment(paymentOrder.razorpayPaymentId);
+        if (p && p.status === 'captured' && p.amount === INTERNSHIP_FEE_PAISE) {
+          capturedPayment = p;
+        }
+      }
+
+      // Check all payments under order ID
+      if (!capturedPayment && paymentOrder.razorpayOrderId) {
+        const paymentsList = await paymentProvider.fetchOrderPayments(paymentOrder.razorpayOrderId);
+        const payments = paymentsList?.items || [];
+        capturedPayment = payments.find(p => p.status === 'captured' && p.amount === INTERNSHIP_FEE_PAISE) || null;
+      }
+
+      if (capturedPayment) {
+        const capturedUpdates = {
+          razorpayPaymentId: capturedPayment.id,
+          status: 'CAPTURED',
+          verificationStatus: 'FULLY_VERIFIED',
+          capturedAt: new Date(capturedPayment.created_at ? capturedPayment.created_at * 1000 : Date.now()),
+        };
+
         if (isConnected) {
           await PaymentOrder.findOneAndUpdate(
             { _id: paymentOrder._id, status: { $ne: 'CAPTURED' } },
-            {
-              status: 'CAPTURED',
-              verificationStatus: 'FULLY_VERIFIED',
-              capturedAt: new Date(),
-            }
+            { $set: capturedUpdates }
           );
           await InternshipApplication.findOneAndUpdate(
             { applicationId },
             { paymentStatus: 'PAID_VERIFIED', paymentRecordId: paymentOrder.orderId }
           );
         } else {
-          memoryStore.updatePaymentOrder(paymentOrder.orderId, {
-            status: 'CAPTURED',
-            verificationStatus: 'FULLY_VERIFIED',
-            capturedAt: new Date(),
-          });
+          memoryStore.updatePaymentOrder(paymentOrder.orderId, capturedUpdates);
           memoryStore.updateApplication(applicationId, {
             paymentStatus: 'PAID_VERIFIED',
             paymentRecordId: paymentOrder.orderId,
@@ -118,26 +137,13 @@ async function handler(req, res) {
           order: {
             orderId: paymentOrder.orderId,
             razorpayOrderId: paymentOrder.razorpayOrderId,
-            razorpayPaymentId: paymentOrder.razorpayPaymentId,
+            razorpayPaymentId: capturedPayment.id,
             amountPaise: paymentOrder.amountPaise,
             currency: paymentOrder.currency,
             status: 'CAPTURED',
             verificationStatus: 'FULLY_VERIFIED',
           },
         });
-      } else if (payment.status === 'failed') {
-        if (isConnected) {
-          await PaymentOrder.findOneAndUpdate(
-            { _id: paymentOrder._id, status: { $ne: 'CAPTURED' } },
-            { status: 'FAILED', failedAt: new Date(), errorMessage: payment.error_description || 'Payment failed' }
-          );
-        } else {
-          memoryStore.updatePaymentOrder(paymentOrder.orderId, {
-            status: 'FAILED',
-            failedAt: new Date(),
-            errorMessage: payment.error_description || 'Payment failed',
-          });
-        }
       }
     } catch (err) {
       console.warn('[payment-status] Reconciliation fetch failed:', err.message);
