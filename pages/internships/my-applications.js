@@ -395,11 +395,7 @@ export default function MyApplications() {
                       </span>
                     ) : app.certificateIssued ? (
                       <span className="text-[#28533D] font-bold">
-                        ✓ Official certificate ready for download in your Certificate Library.
-                      </span>
-                    ) : app.certificateIssued ? (
-                      <span className="text-[#28533D] font-bold">
-                        ✓ Official completion certificate is ready.
+                        ✓ Official completion certificate is ready for download and sharing.
                       </span>
                     ) : app.status === 'COMPLETED' ? (
                       <span>Completion recorded. Waiting for authorized certificate issuance.</span>
