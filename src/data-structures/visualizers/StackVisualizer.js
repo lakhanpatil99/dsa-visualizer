@@ -117,11 +117,10 @@ export default function StackVisualizer() {
   };
 
   const stackComplexity = {
-    time: {
-      best: 'O(1)',
-      average: 'O(1)',
-      worst: 'O(1)'
-    },
+    bestCase: 'O(1)',
+    averageCase: 'O(1)',
+    worstCase: 'O(1)',
+    time: 'O(1)',
     space: 'O(n)'
   };
 

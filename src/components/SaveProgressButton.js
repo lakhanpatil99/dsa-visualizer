@@ -6,6 +6,9 @@ import ProtectedFeature from './ProtectedFeature';
 const SaveProgressButton = ({
   algorithmType,
   algorithmName,
+  algorithmId,
+  category,
+  defaultStatus,
   currentState,
   stepsCompleted = 0,
   totalSteps = 0,
@@ -19,15 +22,18 @@ const SaveProgressButton = ({
   const { progressService, isAuthenticated } = useAuth();
   const { isDarkMode } = useContext(DarkModeContext);
 
+  const effectiveType = algorithmType || category || 'data-structures';
+  const effectiveName = algorithmName || algorithmId || 'Algorithm';
+
   useEffect(() => {
-    if (isAuthenticated && progressService && algorithmType && algorithmName) {
+    if (isAuthenticated && progressService && effectiveType && effectiveName) {
       loadProgress();
     }
-  }, [isAuthenticated, progressService, algorithmType, algorithmName]);
+  }, [isAuthenticated, progressService, effectiveType, effectiveName]);
 
   const loadProgress = async () => {
     try {
-      const result = await progressService.fetchProgress(algorithmType, algorithmName);
+      const result = await progressService.fetchProgress(effectiveType, effectiveName);
       if (result.progress && result.progress.length > 0) {
         setSavedProgress(result.progress[0]);
       }
@@ -44,15 +50,15 @@ const SaveProgressButton = ({
 
     try {
       const progressData = {
-        algorithmType,
-        algorithmName,
+        algorithmType: effectiveType,
+        algorithmName: effectiveName,
         progressData: currentState || {},
         stepsCompleted,
         totalSteps,
         timeSpent,
         lastStep,
         notes,
-        completionStatus: stepsCompleted >= totalSteps ? 'completed' : 'in_progress'
+        completionStatus: stepsCompleted >= totalSteps ? 'completed' : defaultStatus || 'in_progress'
       };
 
       const result = await progressService.saveProgress(progressData);
