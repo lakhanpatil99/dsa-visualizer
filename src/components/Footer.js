@@ -93,6 +93,11 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-xs text-[#69665F] dark:text-[#A09D95]">
               <li>
+                <Link href="/certificates/verify" className="hover:text-[#EF592A] transition-colors">
+                  Verify a Certificate
+                </Link>
+              </li>
+              <li>
                 <Link href="/app" className="hover:text-[#EF592A] transition-colors">
                   Interactive Workspace
                 </Link>
