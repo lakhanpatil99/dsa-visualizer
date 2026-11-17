@@ -4,6 +4,7 @@ import Certificate from '../../../models/Certificate.js';
 import InternshipApplication from '../../../models/InternshipApplication.js';
 import CompetitionSubmission from '../../../models/CompetitionSubmission.js';
 import { ACHIEVEMENT_THRESHOLDS } from '../../../models/CompetitionAchievement.js';
+import { COMPETITION_CHALLENGES } from '../../../lib/competitions/challengesData.js';
 import memoryStore from '../../../lib/memoryStore.js';
 import { ensureCompetitionMilestoneCertificates } from '../../../lib/certificates/competitionMilestoneIssuance.js';
 
@@ -157,7 +158,7 @@ async function handler(req, res) {
       competitionProgress: {
         uniqueSolvedCount: uniqueSolved,
         solvedChallengeIds: acceptedChallengeIds,
-        totalChallenges: 227,
+        totalChallenges: COMPETITION_CHALLENGES.length,
         unlockedTiers,
         updatedAt: new Date().toISOString()
       },
