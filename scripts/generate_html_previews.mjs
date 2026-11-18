@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
 import { CERTIFICATE_THEMES } from '../lib/certificates/certificateThemes.js';
+import { CERTIFICATE_LAYOUT } from '../lib/certificates/certificateLayout.js';
 import { 
   LAUREL_LEFT_PATH, 
   LAUREL_RIGHT_PATH, 
@@ -69,10 +70,10 @@ async function renderCertificateCard(cert) {
   }
 
   return `
-    <div style="background-color: ${theme.colors.background}; border: 3px solid ${theme.colors.primary}; border-radius: 16px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); width: 842px; height: 595px; box-sizing: border-box; position: relative; margin: 30px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div style="background-color: ${theme.colors.background}; border: 3px solid ${theme.colors.primary}; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); width: 842px; height: 595px; box-sizing: border-box; position: relative; margin: 30px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       
       <!-- Inner Panel -->
-      <div style="background-color: ${theme.colors.innerBg}; border: 1.5px solid ${theme.colors.secondary}; border-radius: 12px; height: 100%; box-sizing: border-box; padding: 24px 32px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
+      <div style="background-color: ${theme.colors.innerBg}; border: 1.5px solid ${theme.colors.secondary}; border-radius: 12px; height: 100%; box-sizing: border-box; padding: 22px 28px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
         
         <!-- Corner Accents -->
         <div style="position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-top: 1.5px solid ${theme.colors.accent}; border-left: 1.5px solid ${theme.colors.accent};"></div>
@@ -81,19 +82,25 @@ async function renderCertificateCard(cert) {
         <div style="position: absolute; bottom: 8px; right: 8px; width: 16px; height: 16px; border-bottom: 1.5px solid ${theme.colors.accent}; border-right: 1.5px solid ${theme.colors.accent};"></div>
 
         <!-- Top Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 8px;">
           <img src="data:image/png;base64,${emblemBase64}" style="width: 44px; height: 44px; object-fit: contain;" />
           <img src="data:image/png;base64,${logoBase64}" style="height: 44px; width: auto; object-fit: contain;" />
           <div style="width: 44px;"></div>
         </div>
 
         <!-- Category Ribbon Cartouche -->
-        <div style="display: flex; align-items: center; justify-content: center; margin: 4px 0;">
-          <div style="width: 50px; height: 1px; background-color: ${theme.colors.secondary}; margin-right: 8px;"></div>
-          <div style="background-color: ${theme.colors.ribbonBg}; border: 1.5px solid ${theme.colors.ribbonBorder}; border-radius: 6px; padding: 6px 24px; color: ${theme.colors.ribbonText}; font-family: monospace; font-size: 11px; font-weight: bold; letter-spacing: 2px;">
+        <div style="display: flex; align-items: center; justify-content: center; margin: 2px 0;">
+          <div style="display: flex; align-items: center;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${theme.colors.accent}; margin-right: 4px;"></div>
+            <div style="width: 40px; height: 1px; background-color: ${theme.colors.secondary}; margin-right: 8px;"></div>
+          </div>
+          <div style="background-color: ${theme.colors.ribbonBg}; border: 1.5px solid ${theme.colors.ribbonBorder}; border-radius: 6px; padding: 6px 28px; color: ${theme.colors.ribbonText}; font-family: monospace; font-size: 11px; font-weight: bold; letter-spacing: 2px; white-space: nowrap;">
             ${theme.categoryLabel}
           </div>
-          <div style="width: 50px; height: 1px; background-color: ${theme.colors.secondary}; margin-left: 8px;"></div>
+          <div style="display: flex; align-items: center;">
+            <div style="width: 40px; height: 1px; background-color: ${theme.colors.secondary}; margin-left: 8px;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${theme.colors.accent}; margin-left: 4px;"></div>
+          </div>
         </div>
 
         <!-- Proudly Presented To -->
@@ -101,28 +108,28 @@ async function renderCertificateCard(cert) {
           <div style="font-size: 10px; font-family: sans-serif; letter-spacing: 3px; color: ${theme.colors.textMuted}; text-transform: uppercase;">
             P R O U D L Y &nbsp; P R E S E N T E D &nbsp; T O
           </div>
-          <div style="font-family: 'Times New Roman', Times, serif; font-size: 34px; font-weight: bold; color: ${theme.colors.primary}; margin: 6px 0;">
+          <div style="font-family: 'Times New Roman', Times, serif; font-size: 34px; font-weight: bold; color: ${theme.colors.primary}; margin: 4px 0;">
             ${cert.recipientName}
           </div>
-          <div style="font-style: italic; font-family: 'Times New Roman', Times, serif; font-size: 13.5px; color: ${theme.colors.textMuted};">
+          <div style="font-style: italic; font-family: 'Times New Roman', Times, serif; font-size: 13px; color: ${theme.colors.textMuted};">
             ${line1}
           </div>
-          <div style="font-family: 'Times New Roman', Times, serif; font-size: 13.5px; font-weight: bold; color: ${theme.colors.textDark}; margin-top: 2px;">
+          <div style="font-family: 'Times New Roman', Times, serif; font-size: 13px; font-weight: bold; color: ${theme.colors.textDark}; margin-top: 2px;">
             ${line2}
           </div>
         </div>
 
         <!-- Plaque -->
-        <div style="background-color: ${theme.colors.plaqueBg}; border: 1px solid ${theme.colors.plaqueBorder}; border-radius: 6px; padding: 7px 18px; margin: 0 auto; text-align: center; max-width: 540px; font-family: monospace; font-size: 10.5px; color: ${theme.colors.textDark};">
+        <div style="background-color: ${theme.colors.plaqueBg}; border: 1px solid ${theme.colors.plaqueBorder}; border-radius: 6px; padding: 7px 20px; margin: 0 auto; text-align: center; max-width: 540px; font-family: monospace; font-size: 10.5px; color: ${theme.colors.textDark}; white-space: nowrap;">
           <span>Issued on: <strong>November 17, 2026</strong></span>
           <span style="color: ${theme.colors.secondary}; margin: 0 10px;">•</span>
           <span>Credential ID: <strong>${cert.certificateId}</strong></span>
         </div>
 
-        <!-- Bottom Triad -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; border-top: 1px solid ${theme.colors.secondary}50; padding-top: 10px;">
+        <!-- Bottom Triad (Zero footer collision) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; border-top: 1px solid ${theme.colors.secondary}50; padding-top: 8px;">
           <!-- Left: QR -->
-          <div style="display: flex; flex-direction: column; align-items: flex-start; padding-left: 10px;">
+          <div style="display: flex; flex-direction: column; align-items: flex-start; padding-left: 12px;">
             <img src="${qrUrl}" style="width: 62px; height: 62px; border: 1px solid ${theme.colors.plaqueBorder}; border-radius: 4px;" />
             <span style="font-family: monospace; font-size: 9.5px; font-weight: bold; color: ${theme.colors.primary}; margin-top: 4px;">Scan to Verify</span>
             <span style="font-family: monospace; font-size: 8px; color: ${theme.colors.textMuted};">Official Credential</span>
@@ -150,7 +157,7 @@ async function renderCertificateCard(cert) {
           </div>
 
           <!-- Right: Signature -->
-          <div style="display: flex; flex-direction: column; align-items: flex-end; padding-right: 10px;">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; padding-right: 12px;">
             <img src="data:image/png;base64,${sigBase64}" style="height: 52px; width: auto; object-fit: contain; margin-bottom: -6px;" />
             <div style="width: 140px; height: 1.5px; background-color: ${theme.colors.primary}; margin-bottom: 3px;"></div>
             <span style="font-size: 11px; font-weight: bold; color: ${theme.colors.textDark};">Lakhansing Patil</span>
@@ -158,8 +165,8 @@ async function renderCertificateCard(cert) {
           </div>
         </div>
 
-        <!-- Verification Footnote -->
-        <div style="text-align: center; border-top: 1px solid ${theme.colors.secondary}30; padding-top: 4px; font-family: monospace; font-size: 8px; color: ${theme.colors.textMuted};">
+        <!-- Verification Footnote (Dedicated clearance zone) -->
+        <div style="text-align: center; border-top: 1px solid ${theme.colors.secondary}30; padding-top: 4px; font-family: monospace; font-size: 8px; color: ${theme.colors.textMuted}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
           Official validation record securely hosted at: ${cert.verificationUrl}
         </div>
 

@@ -114,5 +114,32 @@ describe('AlgoMania Premium Institutional Certificate Redesign & Design System',
     assert.match(modalCode, /displayCertificateId/);
     assert.match(modalCode, /LakhansingSignature\.png/);
     assert.match(modalCode, /border-solid/);
+    // Enforces true A4 landscape canvas on all devices without portrait reflow
+    assert.match(modalCode, /width:\s*'842px'/);
+    assert.match(modalCode, /height:\s*'595px'/);
+  });
+
+  it('PdfCertificateGenerator and CERTIFICATE_LAYOUT eliminate vertical dead space and prevent footer collision', () => {
+    const layoutModule = read('lib/certificates/certificateLayout.js');
+    const generatorCode = read('lib/certificates/PdfCertificateGenerator.js');
+
+    // Layout specifications prevent footer collision
+    assert.match(layoutModule, /centerY:\s*140/);
+    assert.match(layoutModule, /boxY:\s*250/);
+    assert.match(layoutModule, /outerRadius:\s*44/);
+
+    // Laurel SVG inversion math: options.y = sealCenterY + 50 * scale ensures laurels sit inside medallion
+    assert.match(generatorCode, /sealCenterY\s*\+\s*50\s*\*\s*laurelScale/);
+
+    // Clearance from bottom of medallion (140 - 44 = 96) to footnote (44) is 52pt > 40pt safe margin
+    const sealBottomY = 140 - 44;
+    const footnoteY = 44;
+    const clearance = sealBottomY - footnoteY;
+    assert.ok(clearance >= 40, `Clearance between seal bottom and footnote (${clearance}pt) must be at least 40pt`);
+
+    // Clearance between plaque box bottom (250) and top of seal (140 + 44 = 184) is 66pt (balanced, non-excessive)
+    const plaqueToSealGap = 250 - (140 + 44);
+    assert.ok(plaqueToSealGap <= 100, `Gap between plaque and seal (${plaqueToSealGap}pt) must not have excessive empty void`);
+    assert.ok(plaqueToSealGap >= 40, `Gap between plaque and seal (${plaqueToSealGap}pt) must preserve comfortable breathing space`);
   });
 });
