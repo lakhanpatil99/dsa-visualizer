@@ -100,7 +100,7 @@ describe('AlgoMania Premium Institutional Certificate Redesign & Design System',
     assert.equal(doc.getPageCount(), 1);
   });
 
-  it('CertificatePreviewModal includes zoom controls, responsive layout, and distinct medallion SVGs', () => {
+  it('CertificatePreviewModal includes zoom controls, responsive layout, distinct medallion SVGs, and download loading states', () => {
     const modalCode = read('src/components/certificates/CertificatePreviewModal.js');
     // Zoom control presence
     assert.match(modalCode, /zoomScale/);
@@ -117,6 +117,31 @@ describe('AlgoMania Premium Institutional Certificate Redesign & Design System',
     // Enforces true A4 landscape canvas on all devices without portrait reflow
     assert.match(modalCode, /width:\s*'842px'/);
     assert.match(modalCode, /height:\s*'595px'/);
+    // Download loading and duplicate click prevention
+    assert.match(modalCode, /downloadState/);
+    assert.match(modalCode, /Generating PDF\.\.\./);
+    assert.match(modalCode, /disabled=\{downloadState === 'generating'\}/);
+  });
+
+  it('PdfCertificateGenerator removes unwanted vertical divider strokes and caches static assets', () => {
+    const generatorCode = read('lib/certificates/PdfCertificateGenerator.js');
+    const downloadApi = read('pages/api/certificates/download/[id].js');
+
+    // Asserts elimination of unwanted vertical lines beside QR and through signature
+    assert.doesNotMatch(generatorCode, /dividers\.leftX/);
+    assert.doesNotMatch(generatorCode, /dividers\.rightX/);
+
+    // Deliberate horizontal signature baseline is preserved
+    assert.match(generatorCode, /bottom\.signature\.lineWidth/);
+    assert.match(generatorCode, /bottom\.signature\.lineY/);
+
+    // In-memory static asset buffer caching
+    assert.match(generatorCode, /cachedStaticAssets/);
+    assert.match(generatorCode, /getStaticAssets/);
+
+    // Download API server-side PDF buffer cache for rapid repeated access
+    assert.match(downloadApi, /pdfBufferCache/);
+    assert.match(downloadApi, /getCachedPdf/);
   });
 
   it('PdfCertificateGenerator and CERTIFICATE_LAYOUT eliminate vertical dead space and prevent footer collision', () => {

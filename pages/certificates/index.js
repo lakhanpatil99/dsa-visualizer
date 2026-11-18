@@ -102,6 +102,7 @@ export default function MyCertificatesDashboard() {
       window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch (err) {
       alert('Unable to download PDF certificate. ' + err.message);
+      throw err;
     }
   };
 

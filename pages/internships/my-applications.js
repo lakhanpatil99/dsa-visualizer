@@ -122,6 +122,7 @@ export default function MyApplications() {
       window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
     } catch (error) {
       setStatusNotice((prev) => ({ ...prev, download: error.message || 'Unable to download certificate.' }));
+      throw error;
     }
   };
 

@@ -237,6 +237,8 @@ export default function CertificatePreviewModal({
 }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [zoomScale, setZoomScale] = useState(1);
+  const [downloadState, setDownloadState] = useState('idle'); // 'idle' | 'generating' | 'success' | 'error'
+  const [downloadStatusText, setDownloadStatusText] = useState('');
   const containerRef = useRef(null);
 
   const isRevoked = mode === 'REVOKED' || certificate?.status === 'REVOKED';
@@ -247,6 +249,29 @@ export default function CertificatePreviewModal({
 
   const theme = getCertificateTheme(certificate?.type);
   const layout = CERTIFICATE_LAYOUT;
+
+  const handleDownloadClick = async () => {
+    if (downloadState === 'generating' || !onDownload || !certificate) return;
+    setDownloadState('generating');
+    setDownloadStatusText('Generating verified PDF...');
+    try {
+      await Promise.resolve(onDownload(certificate));
+      setDownloadState('success');
+      setDownloadStatusText('Downloaded ✓');
+      setTimeout(() => {
+        setDownloadState('idle');
+        setDownloadStatusText('');
+      }, 2500);
+    } catch (err) {
+      console.error('Download error:', err);
+      setDownloadState('error');
+      setDownloadStatusText(err?.message || 'Download failed. Please retry.');
+      setTimeout(() => {
+        setDownloadState('idle');
+        setDownloadStatusText('');
+      }, 3500);
+    }
+  };
 
   // Auto-fit responsive scaling on open and resize
   useEffect(() => {
@@ -375,11 +400,33 @@ export default function CertificatePreviewModal({
             {isIssued ? (
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => onDownload && onDownload(certificate)}
-                  className="px-3.5 py-1.5 bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] rounded-xl text-xs font-semibold shadow-xs transition-transform hover:scale-[1.02] cursor-pointer"
+                  type="button"
+                  onClick={handleDownloadClick}
+                  disabled={downloadState === 'generating'}
+                  className="px-3.5 py-1.5 bg-[#28533D] hover:bg-[#1f4230] text-[#FFFDF8] rounded-xl text-xs font-semibold shadow-xs transition-all hover:scale-[1.02] cursor-pointer disabled:opacity-75 disabled:cursor-wait flex items-center space-x-1.5"
                 >
-                  Download Official PDF
+                  {downloadState === 'generating' ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : downloadState === 'success' ? (
+                    <>
+                      <span>✓</span>
+                      <span>Downloaded</span>
+                    </>
+                  ) : (
+                    <span>Download Official PDF</span>
+                  )}
                 </button>
+                {downloadStatusText && downloadState === 'error' && (
+                  <span className="text-[11px] font-mono text-red-600 dark:text-red-400">
+                    {downloadStatusText}
+                  </span>
+                )}
                 {onShare && (
                   <button
                     onClick={() => onShare(certificate)}

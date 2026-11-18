@@ -274,6 +274,7 @@ export default function CompetitionPortal() {
       window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
     } catch (error) {
       setErrorMsg(error.message || 'Unable to download the certificate.');
+      throw error;
     }
   };
 
