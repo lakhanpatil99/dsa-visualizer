@@ -101,3 +101,7 @@ logs
 tests/output/
 
 .vercel
+
+# Local animation source and preview files
+Algomania intro.js
+algomania-intro-preview.html

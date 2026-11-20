@@ -1,10 +1,18 @@
 import { Html, Head, Main, NextScript } from "next/document";
+import { ALGOMANIA_INTRO_SCRIPT } from "../src/components/intro/algoManiaIntroSource.js";
 
 export default function Document() {
   return (
     <Html lang="en">
       <Head>
         <meta charSet="utf-8" />
+        {/* AlgoMania Animated Intro Sequence (Synchronous head gatekeeper prevents flash of unstyled content / homepage) */}
+        <script
+          id="am-intro-gatekeeper"
+          dangerouslySetInnerHTML={{
+            __html: ALGOMANIA_INTRO_SCRIPT
+          }}
+        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
