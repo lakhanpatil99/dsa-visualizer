@@ -12,17 +12,17 @@
     if (typeof window !== 'undefined' && window.location && window.location.search) {
       forceIntro = window.location.search.indexOf('intro=1') !== -1 || window.location.search.indexOf('replay=1') !== -1;
     }
-  } catch (e) { }
+  } catch (e) {}
 
   try {
     if (!forceIntro && CFG.oncePerSession && sessionStorage.getItem('am-intro')) return;
-  } catch (e) { }
+  } catch (e) {}
 
   var d = document, root = d.documentElement, t0 = performance.now();
   var reduce = false;
   try {
     reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch (e) { }
+  } catch (e) {}
 
   root.classList.add('am-lock');
 
@@ -41,8 +41,6 @@ html.am-lock,html.am-lock body{overflow:hidden!important}
 .am-c::before{content:"";position:absolute;inset:0;opacity:.1;pointer-events:none;
   background:linear-gradient(var(--c) 1px,transparent 1px) 0 0/calc(44px*var(--s,1)) calc(44px*var(--s,1)),linear-gradient(90deg,var(--c) 1px,transparent 1px) 0 0/calc(44px*var(--s,1)) calc(44px*var(--s,1));
   -webkit-mask:radial-gradient(circle,#000 15%,transparent 72%);mask:radial-gradient(circle,#000 15%,transparent 72%)}
-.am-hud{position:relative;width:calc(360px*var(--s,1));max-width:100%;display:flex;justify-content:space-between;gap:12px;font-size:calc(10px*var(--s,1));letter-spacing:.22em;
-  padding-bottom:calc(12px*var(--s,1));border-bottom:1px solid rgba(247,244,236,.3);opacity:0;animation:amf .5s .05s forwards}
 .am-fit{position:relative}
 .am-stage{position:absolute;left:0;top:0;width:344px;height:276px;transform-origin:0 0}
 .am-stage svg{position:absolute;left:0;top:0;width:344px;height:150px;overflow:visible}
@@ -89,15 +87,14 @@ html.am-lock,html.am-lock body{overflow:hidden!important}
 
   /* ---------- markup ---------- */
   var vals = [62, 12, 88, 50, 25, 75, 37], X = function (i) { return i * 50; };
-  var nodes = [[50, 172, 22, 0], [25, 95, 70, 1], [75, 249, 70, 1], [12, 56, 122, 2], [37, 134, 122, 2], [62, 210, 122, 2], [88, 288, 122, 2]];
-  var edges = [[172, 22, 95, 70, 0], [172, 22, 249, 70, 0], [95, 70, 56, 122, 1], [95, 70, 134, 122, 1], [249, 70, 210, 122, 1], [249, 70, 288, 122, 1]];
+  var nodes = [[50,172,22,0],[25,95,70,1],[75,249,70,1],[12,56,122,2],[37,134,122,2],[62,210,122,2],[88,288,122,2]];
+  var edges = [[172,22,95,70,0],[172,22,249,70,0],[95,70,56,122,1],[95,70,134,122,1],[249,70,210,122,1],[249,70,288,122,1]];
   var svg = '<svg viewBox="0 0 344 150" aria-hidden="true">' +
-    edges.map(function (e) { return '<line class="am-e" pathLength="1" x1="' + e[0] + '" y1="' + e[1] + '" x2="' + e[2] + '" y2="' + e[3] + '" style="transition-delay:' + (e[4] * .14) + 's"/>'; }).join('') +
+    edges.map(function (e) { return '<line class="am-e" pathLength="1" x1="'+e[0]+'" y1="'+e[1]+'" x2="'+e[2]+'" y2="'+e[3]+'" style="transition-delay:'+(e[4]*.14)+'s"/>'; }).join('') +
     '<circle class="am-ring" cx="172" cy="22" r="22"/>' +
-    nodes.map(function (n) { return '<g class="am-n' + (n[3] ? '' : ' r') + '" style="transition-delay:' + (n[3] * .14 + .08) + 's"><circle cx="' + n[1] + '" cy="' + n[2] + '" r="' + (n[3] ? 15 : 17) + '"/><text x="' + n[1] + '" y="' + n[2] + '">' + n[0] + '</text></g>'; }).join('') + '</svg>';
+    nodes.map(function (n) { return '<g class="am-n'+(n[3]?'':' r')+'" style="transition-delay:'+(n[3]*.14+.08)+'s"><circle cx="'+n[1]+'" cy="'+n[2]+'" r="'+(n[3]?15:17)+'"/><text x="'+n[1]+'" y="'+n[2]+'">'+n[0]+'</text></g>'; }).join('') + '</svg>';
   var el = d.createElement('div'); el.id = 'am'; el.setAttribute('role', 'status'); el.setAttribute('aria-label', 'Loading AlgoMania');
   el.innerHTML = '<i class="am-p t"></i><i class="am-p b"></i><div class="am-c">' +
-    '<div class="am-hud"><span>01 // ALGORITHM INTUITION</span><span id="am-st">CS_LAB.STATE</span></div>' +
     '<div class="am-fit" id="am-fit"><div class="am-stage" id="am-stage">' + svg +
     '<i class="am-bar" id="am-bar"></i><div class="am-swap" id="am-sw">SWAP</div>' +
     '<div class="am-ptr" id="am-pi" style="top:234px">▲<br>ptr i</div><div class="am-ptr" id="am-pj" style="top:254px">▲<br>ptr j</div></div></div>' +
@@ -108,7 +105,7 @@ html.am-lock,html.am-lock body{overflow:hidden!important}
 
   var $ = function (id) { return d.getElementById(id); };
   var stage = $('am-stage'), fit = $('am-fit'), bar = $('am-bar'), sw = $('am-sw'), pi = $('am-pi'), pj = $('am-pj'),
-    log = $('am-log'), stt = $('am-st'), fill = $('am-fill'), pct = $('am-pct');
+      log = $('am-log'), fill = $('am-fill'), pct = $('am-pct');
   'Algo'.split('').concat('Mania'.split('')).forEach(function (c, i) {
     var s = d.createElement('span'); s.textContent = c; if (i > 3) s.className = 'm'; s.style.transitionDelay = (i * 45) + 'ms'; $('am-w').appendChild(s);
   });
@@ -166,7 +163,7 @@ html.am-lock,html.am-lock body{overflow:hidden!important}
     try {
       await sleep(150); if (gone) return; bar.classList.add('in');
       cells.forEach(function (c, i) { setTimeout(function () { if (!gone) c.classList.add('in'); }, i * 45); });
-      stt.textContent = 'STATE: SORTING'; type('> selection_sort(arr)   // O(n²)');
+      type('> selection_sort(arr)   // O(n²)');
       await sleep(420); if (gone) return; pi.classList.add('on'); pj.classList.add('on');
       var cur = vals.slice(), i, j, m;
       for (i = 0; i < 3; i++) {
@@ -182,11 +179,11 @@ html.am-lock,html.am-lock body{overflow:hidden!important}
       if (gone) return;
       pi.classList.remove('on'); pj.classList.remove('on');
       cells.slice(3).forEach(function (c, k) { setTimeout(function () { if (!gone) c.classList.add('ok'); }, k * 50); });
-      stt.textContent = 'STATE: BUILDING'; type('> build_bst(sorted)   // mid → root');
+      type('> build_bst(sorted)   // mid → root');
       el.classList.add('tree'); await sleep(450); if (gone) return;
       el.classList.add('brand');
       await sleep(350); if (gone) return;
-      stt.textContent = 'STATE: READY'; type('> BST: BALANCED   TIME: O(n log n)  ✓');
+      type('> BST: BALANCED   TIME: O(n log n)  ✓');
       await sleep(520); tlDone = true;
     } catch (err) {
       console.warn('[AlgoMania Intro] Animation step fallback:', err);
@@ -228,7 +225,7 @@ html.am-lock,html.am-lock body{overflow:hidden!important}
       if (el && el.parentNode) el.parentNode.removeChild(el);
       if (st && st.parentNode) st.parentNode.removeChild(st);
       root.dispatchEvent(new CustomEvent('algomania:intro-done'));
-      try { sessionStorage.setItem('am-intro', '1'); } catch (e) { }
+      try { sessionStorage.setItem('am-intro', '1'); } catch (e) {}
     }, 1250);
   }
 

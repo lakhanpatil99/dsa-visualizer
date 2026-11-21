@@ -74,12 +74,16 @@ describe('AlgoMania Intro Animation Integration & Behavior Invariants', () => {
     assert.match(ALGOMANIA_INTRO_SCRIPT, /62,\s*12,\s*88,\s*50,\s*25,\s*75,\s*37/);
     assert.match(ALGOMANIA_INTRO_SCRIPT, /viewBox="0 0 344 150"/);
 
-    // Algorithm status and brand
-    assert.match(ALGOMANIA_INTRO_SCRIPT, /STATE: SORTING/);
+    // Explicitly removed HUD labels per design refinement
+    assert.doesNotMatch(ALGOMANIA_INTRO_SCRIPT, /ALGORITHM INTUITION/);
+    assert.doesNotMatch(ALGOMANIA_INTRO_SCRIPT, /STATE: SORTING/);
+    assert.doesNotMatch(ALGOMANIA_INTRO_SCRIPT, /STATE: BUILDING/);
+    assert.doesNotMatch(ALGOMANIA_INTRO_SCRIPT, /STATE: READY/);
+    assert.doesNotMatch(ALGOMANIA_INTRO_SCRIPT, /id=["']am-st["']/);
+
+    // Active algorithmic execution typing log and brand reveal
     assert.match(ALGOMANIA_INTRO_SCRIPT, /selection_sort/);
-    assert.match(ALGOMANIA_INTRO_SCRIPT, /STATE: BUILDING/);
     assert.match(ALGOMANIA_INTRO_SCRIPT, /build_bst/);
-    assert.match(ALGOMANIA_INTRO_SCRIPT, /STATE: READY/);
     assert.match(ALGOMANIA_INTRO_SCRIPT, /BST: BALANCED/);
     assert.match(ALGOMANIA_INTRO_SCRIPT, /INTERACTIVE ALGORITHM LAB/);
   });
